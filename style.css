@@ -7,21 +7,20 @@ body {
   font-family: 'VT323', monospace; user-select: none; -webkit-user-select: none;
   min-height: 100vh; overflow-x: hidden;
   
-  /* --- NEW BACKGROUND SETUP --- */
-  /* PASTE YOUR DISCORD BACKGROUND IMAGE LINK INSIDE THE QUOTES BELOW */
-  background-image: url('PASTE_YOUR_BACKGROUND_LINK_HERE');
+  /* Your new Vaporwave Office Background */
+  background-image: url('https://cdn.discordapp.com/attachments/479148520935522315/1475923711952687324/Gemini_Generated_Image_vskzf1vskzf1vskz.png?ex=699f4092&is=699def12&hm=ce97f2c4e3e3d46a5c50a95ee62f909aba3fa4c86ed7f529bd2e3d77aa016b69&');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  /* Ensures it sits behind the scanlines and game container */
+  background-attachment: fixed;
   z-index: -1; 
 }
 
 #game-container {
   position: relative; z-index: 2; width: 90%; max-width: 450px; text-align: center;
   padding: 20px; margin: 30px auto; 
-  /* Made background slightly more transparent to see office behind it */
-  background: rgba(20, 10, 40, 0.90);
+  /* Semi-transparent so the office shows through perfectly */
+  background: rgba(20, 10, 40, 0.85);
   border: 3px solid #0ff; box-shadow: 0 0 20px #0ff, inset 0 0 15px #f0f; border-radius: 10px;
 }
 
@@ -112,11 +111,11 @@ body {
   animation: floatUpFade 0.8s ease-out forwards;
 }
 
-/* --- NEW CORPORATE QUOTE STYLES --- */
+/* Corporate Quote Styles */
 .quote-popup {
   position: fixed; color: #0ff; text-shadow: 2px 2px #f0f;
   font-size: 22px; font-weight: bold; pointer-events: none; z-index: 190;
-  white-space: nowrap; animation: floatQuoteFade 1s ease-out forwards;
+  white-space: nowrap; animation: floatQuoteFade 1.2s ease-out forwards;
 }
 
 @keyframes floatUpFade {
@@ -125,6 +124,7 @@ body {
 }
 
 @keyframes floatQuoteFade {
-    0% { opacity: 1; transform: translateY(0) scale(0.8); }
-    100% { opacity: 0; transform: translateY(-40px) scale(1.1); }
+    0% { opacity: 1; transform: translate(0, 0) scale(0.8); }
+    /* Moves up and randomly left or right based on the --dirX variable */
+    100% { opacity: 0; transform: translate(calc(var(--dirX) * 50px), -60px) scale(1.1); }
 }
