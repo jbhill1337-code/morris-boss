@@ -1,17 +1,27 @@
 @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
-/* Strip mobile gray tap highlight */
 * { -webkit-tap-highlight-color: transparent; }
 
 body {
   margin: 0; padding: 0; background-color: #120a1f; color: #fff;
   font-family: 'VT323', monospace; user-select: none; -webkit-user-select: none;
   min-height: 100vh; overflow-x: hidden;
+  
+  /* --- NEW BACKGROUND SETUP --- */
+  /* PASTE YOUR DISCORD BACKGROUND IMAGE LINK INSIDE THE QUOTES BELOW */
+  background-image: url('PASTE_YOUR_BACKGROUND_LINK_HERE');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  /* Ensures it sits behind the scanlines and game container */
+  z-index: -1; 
 }
 
 #game-container {
   position: relative; z-index: 2; width: 90%; max-width: 450px; text-align: center;
-  padding: 20px; margin: 30px auto; background: rgba(20, 10, 40, 0.85);
+  padding: 20px; margin: 30px auto; 
+  /* Made background slightly more transparent to see office behind it */
+  background: rgba(20, 10, 40, 0.90);
   border: 3px solid #0ff; box-shadow: 0 0 20px #0ff, inset 0 0 15px #f0f; border-radius: 10px;
 }
 
@@ -102,24 +112,19 @@ body {
   animation: floatUpFade 0.8s ease-out forwards;
 }
 
+/* --- NEW CORPORATE QUOTE STYLES --- */
+.quote-popup {
+  position: fixed; color: #0ff; text-shadow: 2px 2px #f0f;
+  font-size: 22px; font-weight: bold; pointer-events: none; z-index: 190;
+  white-space: nowrap; animation: floatQuoteFade 1s ease-out forwards;
+}
+
 @keyframes floatUpFade {
     0% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
     100% { opacity: 0; transform: translateY(-60px) scale(1.2) rotate(Math.random() * 10 - 5 + 'deg'); }
 }
-/* --- CORPORATE QUOTE POPUPS --- */
-.quote-popup {
-  position: fixed;
-  color: #0ff; /* Neon cyan */
-  text-shadow: 2px 2px #f0f; /* Neon pink shadow */
-  font-size: 20px;
-  font-weight: bold;
-  pointer-events: none;
-  z-index: 150;
-  white-space: nowrap;
-  animation: floatSideFade 1s ease-out forwards;
-}
 
-@keyframes floatSideFade {
-    0% { opacity: 1; transform: translate(0, 0) scale(0.8); }
-    100% { opacity: 0; transform: translate(calc(var(--dirX) * 60px), -50px) scale(1.2); }
+@keyframes floatQuoteFade {
+    0% { opacity: 1; transform: translateY(0) scale(0.8); }
+    100% { opacity: 0; transform: translateY(-40px) scale(1.1); }
 }
