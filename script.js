@@ -8,7 +8,6 @@ let currentHealth = BASE_HEALTH;
 let currentMaxHealth = BASE_HEALTH;
 let currentLevel = 1;
 
-// Anti-Corruption Filter: Prevents "NaN" bugs from breaking the buttons
 function getSavedNum(key, defaultVal) {
   let val = localStorage.getItem(key);
   if (!val) return defaultVal;
@@ -32,10 +31,9 @@ const corpQuotes = ["SYNERGY!", "PIVOT!", "BANDWIDTH!", "TOUCH BASE!", "ACTIONAB
 // UI Elements
 const coinDisplay = document.getElementById('coin-count');
 const autoDisplay = document.getElementById('auto-power');
-const bossImageEl = document.getElementById('boss-image');
-const attackBtn = document.getElementById('btn-attack');
+const bossImageEl = document.getElementById('boss-image'); // Frank is the target now
 
-// --- 3. FIREBASE SYNC (OPTIONAL/SAFE) ---
+// --- 3. FIREBASE SYNC (SAFE MODE) ---
 let bossRef = null;
 if (typeof firebase !== 'undefined' && firebase.apps) {
   try {
@@ -51,7 +49,6 @@ if (typeof firebase !== 'undefined' && firebase.apps) {
     if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
     bossRef = firebase.database().ref('frank_corporate_data');
     
-    // Listen for database changes
     bossRef.on('value', (snapshot) => {
       let boss = snapshot.val();
       if (!boss || isNaN(boss.health)) {
@@ -81,7 +78,6 @@ function processDamage(amount) {
   if (amount <= 0 || isNaN(amount)) return;
   
   if (bossRef) {
-    // Send to database if connected
     bossRef.transaction((boss) => {
       if (!boss) return { health: BASE_HEALTH, level: 1 };
       let nH = boss.health - amount;
@@ -90,7 +86,6 @@ function processDamage(amount) {
       return { health: nH, level: nL };
     });
   } else {
-    // Local fallback if offline
     currentHealth -= amount;
     if (currentHealth <= 0) {
       currentLevel++;
@@ -160,39 +155,16 @@ function spawnFloatingText(x, y, text, type) {
   setTimeout(() => el.remove(), 2000);
 }
 
-// The Main Click Event
-if (attackBtn) {
-  attackBtn.addEventListener('click', (e) => {
+// --- CLICK FRANK TO ATTACK ---
+if (bossImageEl) {
+  bossImageEl.addEventListener('click', (e) => {
     const totalDmg = myClickDamage * multiplier;
     processDamage(totalDmg);
     myCoins += (1 * multiplier);
     
-    if (bossImageEl) {
-      bossImageEl.classList.add('boss-shake');
-      setTimeout(() => bossImageEl.classList.remove('boss-shake'), 100);
-    }
+    bossImageEl.classList.add('boss-shake');
+    setTimeout(() => bossImageEl.classList.remove('boss-shake'), 100);
     
     spawnFloatingText(e.clientX, e.clientY, `+${Math.floor(totalDmg).toLocaleString()}`, 'damage');
     
-    if (Math.random() > 0.8) {
-      const rect = bossImageEl.getBoundingClientRect();
-      spawnFloatingText(rect.left + rect.width/2, rect.top, corpQuotes[Math.floor(Math.random()*corpQuotes.length)], 'quote');
-    }
-    updateUI();
-    saveGame();
-  });
-}
-
-// Passive Auto-Damage Loop
-setInterval(() => {
-  if (myAutoDamage > 0) {
-    const totalAuto = myAutoDamage * multiplier;
-    processDamage(totalAuto);
-    myCoins += (totalAuto * 0.01);
-    updateUI();
-    saveGame();
-  }
-}, 1000);
-
-// Set initial screen numbers
-updateUI();
+    if (Math.random()
