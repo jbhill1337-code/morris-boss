@@ -11,8 +11,6 @@ const firebaseConfig = {
 
 if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
 const db = firebase.database();
-
-// THE CLEAN SLATE: A brand new database file to fix any corruption!
 const bossRef = db.ref('frank_corporate_data'); 
 
 const BASE_HEALTH = 1000000000; 
@@ -25,10 +23,11 @@ const bossTitles = [
   "Corp. Frank: VP of Downsizing", "Corp. Frank: The CEO", "Corp. Frank: Chairman of the Board"
 ];
 
+// NEW CORPORATE QUOTES LIST
 const corpQuotes = [
   "SYNERGY!", "LET'S CIRCLE BACK!", "THINK OUTSIDE THE BOX!", 
   "WE NEED MORE BANDWIDTH!", "RETURN TO OFFICE!", "PIVOT!", 
-  "TOUCH BASE!", "ACTIONABLE ITEMS!"
+  "TOUCH BASE!", "ACTIONABLE ITEMS!", "LOW HANGING FRUIT!", "PARADIGM SHIFT!"
 ];
 
 let myCoins = 0;
@@ -123,15 +122,22 @@ function spawnDamageNumber(startX, startY, amount) {
     setTimeout(() => { damageEl.remove(); }, 800);
 }
 
-function spawnQuote(startX, startY) {
+// NEW FUNCTION: Spawns quotes from Frank's head
+function spawnQuote() {
+    if (!bossImageEl) return;
+    const bossRect = bossImageEl.getBoundingClientRect();
+    // Calculate position near the top middle of Frank's image (his head)
+    const headX = bossRect.left + bossRect.width / 2;
+    const headY = bossRect.top + (bossRect.height * 0.2); 
+
     const quoteEl = document.createElement('div');
     quoteEl.className = 'quote-popup';
     quoteEl.innerText = corpQuotes[Math.floor(Math.random() * corpQuotes.length)];
-    // Randomly float left or right
-    quoteEl.style.setProperty('--dirX', Math.random() > 0.5 ? 1 : -1);
     document.body.appendChild(quoteEl);
-    quoteEl.style.left = `${startX + (Math.random() * 60 - 30)}px`;
-    quoteEl.style.top = `${startY - 50}px`;
+    
+    // Offset slightly randomly around his head
+    quoteEl.style.left = `${headX + (Math.random() * 60 - 30)}px`;
+    quoteEl.style.top = `${headY}px`;
     setTimeout(() => { quoteEl.remove(); }, 1000);
 }
 
@@ -159,9 +165,9 @@ function attack(e) {
   spawnSwords(clickX, clickY);
   spawnDamageNumber(clickX, clickY, actualDamage);
   
-  // 20% chance to spawn a corporate quote when clicked
-  if (Math.random() < 0.20) {
-      spawnQuote(clickX, clickY);
+  // 30% chance to yell a corporate quote on click
+  if (Math.random() < 0.30) {
+      spawnQuote();
   }
 }
 
