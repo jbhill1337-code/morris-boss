@@ -34,10 +34,15 @@ body {
 .attack-btn { background: linear-gradient(90deg, #ff0055, #f0f); color: white; margin-bottom: 10px; }
 .shop-btn { background: #222; color: #fff; border: 2px solid #00ffcc; font-size: 18px; width: 100%; margin-bottom: 10px; cursor: pointer; }
 
-.damage-popup { position: fixed; color: #ffeb3b; font-size: 28px; font-weight: bold; pointer-events: none; animation: floatUp 0.8s forwards; }
-@keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-60px); } }
+/* ANIMATIONS */
+.damage-popup { position: fixed; color: #ffeb3b; text-shadow: 2px 2px #ff0055; font-size: 28px; font-weight: bold; pointer-events: none; z-index: 250; animation: floatUp 0.8s forwards; }
+.quote-popup { position: fixed; color: #0ff; text-shadow: 2px 2px #f0f; font-size: 22px; font-weight: bold; pointer-events: none; z-index: 190; animation: floatQuote 1s ease-out forwards; }
+
+@keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-70px); } }
+@keyframes floatQuote { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-40px); } }
 
 #employee-container { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
 .employee-tag { position: absolute; transition: transform 2.5s linear; }
+.employee-emoji { font-size: 28px; }
 .employee-name { font-size: 14px; color: #fff; background: rgba(0,0,0,0.7); padding: 2px 5px; border: 1px solid #0ff; }
 .scanlines { position: fixed; inset: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%); background-size: 100% 4px; pointer-events: none; z-index: 10; }
