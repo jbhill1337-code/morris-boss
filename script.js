@@ -23,17 +23,22 @@ const bossTitles = [
   "Corp. Frank: VP of Downsizing", "Corp. Frank: The CEO", "Corp. Frank: Chairman of the Board"
 ];
 
-// --- PLAYER STATS & COINS ---
-let myCoins = 0; // Added back for your "Vaper Coins" logic
+// Added back the Corporate Lingo
+const corpQuotes = [
+  "SYNERGY!", "LET'S CIRCLE BACK!", "THINK OUTSIDE THE BOX!", 
+  "WE NEED MORE BANDWIDTH!", "RETURN TO OFFICE!", "PIVOT!", 
+  "TOUCH BASE!", "ACTIONABLE ITEMS!", "LOW HANGING FRUIT!", "PARADIGM SHIFT!"
+];
+
+let myCoins = 0;
 let myClickDamage = 2500;
 const SWORD_IMAGE_URL = "https://cdn.discordapp.com/attachments/479148520935522315/1475889414352801924/d56pg7g-4bca25f8-2cd0-4ac1-86fb-2d6fb41def78.png?ex=699f20a1&is=699dcf21&hm=ac5b6ff711c0e58af775dd56159f3534aa46ed9d01137b840e24cf827907e7dd&";
 
-// UI Elements
 const bossNameEl = document.getElementById('boss-name');
 const bossImageEl = document.getElementById('boss-image');
 const healthFill = document.getElementById('health-bar-fill');
 const healthText = document.getElementById('health-text');
-const coinDisplay = document.getElementById('coin-count'); // The coin counter element
+const coinDisplay = document.getElementById('coin-count');
 const attackBtn = document.getElementById('btn-attack');
 const loader = document.getElementById('loading-screen');
 
@@ -48,11 +53,7 @@ bossRef.on('value', (snapshot) => {
   currentLevel = boss.level;
   currentMaxHealth = BASE_HEALTH * currentLevel; 
   updateBossUI();
-  
-  if(loader) {
-      loader.style.opacity = '0';
-      setTimeout(() => { loader.style.display = 'none'; }, 500);
-  }
+  if(loader) { loader.style.display = 'none'; }
 });
 
 function dealGlobalDamage(amount) {
@@ -61,10 +62,7 @@ function dealGlobalDamage(amount) {
     if (boss === null) return { health: BASE_HEALTH, level: 1 };
     let newHealth = boss.health - amount;
     let newLevel = boss.level;
-    if (newHealth <= 0) { 
-      newLevel += 1; 
-      newHealth = BASE_HEALTH * newLevel; 
-    }
+    if (newHealth <= 0) { newLevel += 1; newHealth = BASE_HEALTH * newLevel; }
     return { health: newHealth, level: newLevel };
   });
 }
@@ -78,7 +76,19 @@ function updateBossUI() {
   bossNameEl.innerText = `[Lv. ${currentLevel}] ${bossTitles[titleIndex]}`;
 }
 
-// --- VISUAL FX ---
+// --- NEW: FLOATING TEXT LOGIC ---
+function spawnFloatingText(x, y, text, type) {
+  const el = document.createElement('div');
+  el.innerText = text;
+  el.className = `floating-text ${type}`; // 'damage' or 'quote'
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  document.body.appendChild(el);
+  
+  // Remove after animation ends
+  setTimeout(() => el.remove(), 2000);
+}
+
 function spawnSwords(startX, startY) {
   if (!bossImageEl) return;
   const bossRect = bossImageEl.getBoundingClientRect();
@@ -90,34 +100,39 @@ function spawnSwords(startX, startY) {
     sword.src = SWORD_IMAGE_URL;
     sword.className = 'sword-particle';
     document.body.appendChild(sword);
-
     const startLeft = startX + (Math.random() - 0.5) * 60;
     const startTop = startY + (Math.random() - 0.5) * 60;
     sword.style.left = startLeft + 'px';
     sword.style.top = startTop + 'px';
-
     setTimeout(() => {
-      sword.style.transform = `translate(${targetX - startLeft}px, ${targetY - startTop}px) rotate(45deg) scale(1.5)`;
+      sword.style.transform = `translate(${targetX - startLeft}px, ${targetY - startTop}px) rotate(45deg)`;
       sword.style.opacity = '0';
     }, 50);
-
-    setTimeout(() => { sword.remove(); }, 1000);
+    setTimeout(() => sword.remove(), 1000);
   }
 }
 
 // --- CLICK EVENT ---
 if (attackBtn) {
   attackBtn.addEventListener('click', (e) => {
-    // 1. Deal Damage
     dealGlobalDamage(myClickDamage);
     
-    // 2. Add Coins
-    myCoins += 1; // You can change this to give more coins per click
-    if (coinDisplay) {
-        coinDisplay.innerText = myCoins.toLocaleString();
-    }
+    // Update Coins
+    myCoins += 1;
+    if (coinDisplay) coinDisplay.innerText = myCoins.toLocaleString();
     
-    // 3. Visuals
+    // 1. Spawn Swords
     spawnSwords(e.clientX, e.clientY);
+    
+    // 2. Spawn +Damage indicator at mouse
+    spawnFloatingText(e.clientX, e.clientY, `+${myClickDamage.toLocaleString()}`, 'damage');
+    
+    // 3. Random chance to spawn Corporate Jargon from the Boss's head
+    if (Math.random() > 0.7 && bossImageEl) {
+      const rect = bossImageEl.getBoundingClientRect();
+      const randomQuote = corpQuotes[Math.floor(Math.random() * corpQuotes.length)];
+      // Position it near the top of the image (his head)
+      spawnFloatingText(rect.left + rect.width / 2, rect.top, randomQuote, 'quote');
+    }
   });
 }
