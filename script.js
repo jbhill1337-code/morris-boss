@@ -11,17 +11,24 @@ const firebaseConfig = {
 
 if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
 const db = firebase.database();
-const bossRef = db.ref('morris_raid_data'); 
+
+// THE CLEAN SLATE: A brand new database file to fix any corruption!
+const bossRef = db.ref('frank_corporate_data'); 
 
 const BASE_HEALTH = 1000000000; 
 let currentHealth = BASE_HEALTH;
 let currentLevel = 1;
 let currentMaxHealth = BASE_HEALTH;
 
-// UPDATED TITLES FOR FRANK
 const bossTitles = [
   "Corp. Frank: The Suit", "Corp. Frank: Middle Manager", "Corp. Frank: Regional Director",
   "Corp. Frank: VP of Downsizing", "Corp. Frank: The CEO", "Corp. Frank: Chairman of the Board"
+];
+
+const corpQuotes = [
+  "SYNERGY!", "LET'S CIRCLE BACK!", "THINK OUTSIDE THE BOX!", 
+  "WE NEED MORE BANDWIDTH!", "RETURN TO OFFICE!", "PIVOT!", 
+  "TOUCH BASE!", "ACTIONABLE ITEMS!"
 ];
 
 let myCoins = 0;
@@ -32,7 +39,6 @@ let autoUpgradeCost = 50;
 let frenzyLevel = 0;
 let comboMultiplier = 1;
 
-// Your HARDCODED Sword Link
 const SWORD_IMAGE_URL = "https://cdn.discordapp.com/attachments/479148520935522315/1475889414352801924/d56pg7g-4bca25f8-2cd0-4ac1-86fb-2d6fb41def78.png?ex=699f20a1&is=699dcf21&hm=ac5b6ff711c0e58af775dd56159f3534aa46ed9d01137b840e24cf827907e7dd&";
 
 const bossNameEl = document.getElementById('boss-name');
@@ -80,7 +86,7 @@ function updateBossUI() {
   bossNameEl.innerText = `[Lv. ${currentLevel}] ${bossTitles[titleIndex]}`;
 }
 
-// --- VISUAL FX (Swords & Damage Numbers) ---
+// --- VISUAL FX ---
 function spawnSwords(startX, startY) {
   if (!bossImageEl) return;
   const bossRect = bossImageEl.getBoundingClientRect();
@@ -117,6 +123,17 @@ function spawnDamageNumber(startX, startY, amount) {
     setTimeout(() => { damageEl.remove(); }, 800);
 }
 
+function spawnQuote(startX, startY) {
+    const quoteEl = document.createElement('div');
+    quoteEl.className = 'quote-popup';
+    quoteEl.innerText = corpQuotes[Math.floor(Math.random() * corpQuotes.length)];
+    // Randomly float left or right
+    quoteEl.style.setProperty('--dirX', Math.random() > 0.5 ? 1 : -1);
+    document.body.appendChild(quoteEl);
+    quoteEl.style.left = `${startX + (Math.random() * 60 - 30)}px`;
+    quoteEl.style.top = `${startY - 50}px`;
+    setTimeout(() => { quoteEl.remove(); }, 1000);
+}
 
 // --- PLAYER ATTACK LOGIC ---
 function attack(e) {
@@ -138,8 +155,14 @@ function attack(e) {
       if (e.clientX !== undefined && e.clientY !== undefined) { clickX = e.clientX; clickY = e.clientY; } 
       else if (e.touches && e.touches.length > 0) { clickX = e.touches[0].clientX; clickY = e.touches[0].clientY; }
   }
+  
   spawnSwords(clickX, clickY);
   spawnDamageNumber(clickX, clickY, actualDamage);
+  
+  // 20% chance to spawn a corporate quote when clicked
+  if (Math.random() < 0.20) {
+      spawnQuote(clickX, clickY);
+  }
 }
 
 setInterval(() => {
@@ -149,4 +172,45 @@ setInterval(() => {
 function updateFrenzyUI() {
     if (!frenzyFill || !frenzyText) return;
     if (frenzyLevel >= 100) comboMultiplier = 5;
-    else if (f
+    else if (frenzyLevel >= 75) comboMultiplier = 3;
+    else if (frenzyLevel >= 50) comboMultiplier = 2;
+    else comboMultiplier = 1;
+
+    frenzyFill.style.width = frenzyLevel + '%';
+    if (comboMultiplier > 1) { frenzyText.innerText = `COMBO: ${comboMultiplier}x DAMAGE!`; frenzyFill.style.backgroundColor = '#ff0055'; } 
+    else { frenzyText.innerText = `CHARGE METER`; frenzyFill.style.backgroundColor = '#ffeb3b'; }
+}
+
+function updateStatsUI() {
+  if (!coinDisplay || !clickDisplay || !autoDisplay) return; 
+  coinDisplay.innerText = myCoins.toLocaleString();
+  clickDisplay.innerText = myClickDamage.toLocaleString();
+  autoDisplay.innerText = myAutoDamage.toLocaleString();
+  const buyClickEl = document.getElementById('buy-click');
+  const buyAutoEl = document.getElementById('buy-auto');
+  if (buyClickEl) buyClickEl.innerHTML = `Sharpen Blade (+2,500 Click Dmg) <br><span>Cost: ${clickUpgradeCost} Coins</span>`;
+  if (buyAutoEl) buyAutoEl.innerHTML = `Hire Mercenary (+1,000 Auto Dmg/sec) <br><span>Cost: ${autoUpgradeCost} Coins</span>`;
+}
+
+// --- SHOP & TIP LOGIC ---
+const buyClickBtn = document.getElementById('buy-click');
+if (buyClickBtn) {
+    buyClickBtn.addEventListener('click', () => {
+      if (myCoins >= clickUpgradeCost) { myCoins -= clickUpgradeCost; myClickDamage += 2500; clickUpgradeCost = Math.floor(clickUpgradeCost * 1.5); updateStatsUI(); }
+    });
+}
+const buyAutoBtn = document.getElementById('buy-auto');
+if (buyAutoBtn) {
+    buyAutoBtn.addEventListener('click', () => {
+      if (myCoins >= autoUpgradeCost) { myCoins -= autoUpgradeCost; myAutoDamage += 1000; autoUpgradeCost = Math.floor(autoUpgradeCost * 1.5); updateStatsUI(); }
+    });
+}
+const tipBtn = document.getElementById('btn-tip');
+if(tipBtn) {
+    tipBtn.addEventListener('click', () => { window.open("https://streamlabs.com/sl_id_9660e12d-ebbd-3a30-8e86-46081327a6a4/tip", '_blank'); });
+}
+
+// --- EVENT LISTENERS ---
+if (attackBtn) attackBtn.addEventListener('pointerdown', (e) => attack(e));
+if (bossImageEl) bossImageEl.addEventListener('pointerdown', (e) => attack(e)); 
+setInterval(() => { if (myAutoDamage > 0) { dealGlobalDamage(myAutoDamage); } }, 1000);
