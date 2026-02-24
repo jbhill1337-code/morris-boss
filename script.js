@@ -1,3 +1,4 @@
+// --- 1. FIREBASE SETUP ---
 const firebaseConfig = {
   apiKey: "AIzaSyAEA1pc8eNG4NhiC_mDpssbFIzdtaSHLkM",
   authDomain: "raid-clicker.firebaseapp.com",
@@ -13,6 +14,7 @@ const db = firebase.database();
 const bossRef = db.ref('frank_raid_v5'); 
 const employeesRef = db.ref('active_employees_v5');
 
+// --- OBS SYNC CHECK ---
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
 if (isOBS) {
@@ -23,6 +25,7 @@ if (isOBS) {
     document.querySelector('.action-buttons').style.display = 'none';
 }
 
+// --- GAME VARIABLES ---
 const BASE_HEALTH = 1000000000; 
 let currentHealth = BASE_HEALTH;
 let lastKnownHealth = BASE_HEALTH; 
@@ -47,7 +50,7 @@ const autoDisplay = document.getElementById('auto-power');
 const frenzyFill = document.getElementById('frenzy-bar-fill');
 const frenzyText = document.getElementById('frenzy-text');
 
-// --- 1. LOGIN & EMPLOYEES ---
+// --- 2. LOGIN & EMPLOYEES ---
 if (document.getElementById('btn-clock-in')) {
     document.getElementById('btn-clock-in').addEventListener('click', () => {
         const username = document.getElementById('username-input').value.trim().toUpperCase();
@@ -62,12 +65,20 @@ if (document.getElementById('btn-clock-in')) {
     });
 }
 
-// --- 2. GLOBAL SYNC ---
+// --- 3. GLOBAL SYNC & HIT VARIATION ---
 bossRef.on('value', (snapshot) => {
   let boss = snapshot.val();
   if (boss === null || isNaN(boss.health)) { boss = { health: BASE_HEALTH, level: 1 }; bossRef.set(boss); }
-  if (boss.health < lastKnownHealth) triggerGlobalHit();
-  lastKnownHealth = boss.health; currentHealth = boss.health; currentLevel = boss.level; currentMaxHealth = BASE_HEALTH * currentLevel; 
+  
+  // Detect damage and trigger the animation globally
+  if (boss.health < lastKnownHealth) {
+      triggerGlobalHit();
+  }
+  
+  lastKnownHealth = boss.health; 
+  currentHealth = boss.health; 
+  currentLevel = boss.level; 
+  currentMaxHealth = BASE_HEALTH * currentLevel; 
   updateBossUI();
 });
 
@@ -89,32 +100,23 @@ function updateBossUI() {
   bossNameEl.innerText = `[Lv. ${currentLevel}] ${bossTitles[titleIndex]}`;
 }
 
-// --- 3. FIX: AUTO CLICKER TIMER ---
-// This runs once per second and deals the total accumulated auto-damage to the boss globally.
-setInterval(() => { 
-    if (myAutoDamage > 0) {
-        dealGlobalDamage(myAutoDamage); 
-    }
-}, 1000);
-
-// --- 4. FX & MERC EMOJIS ---
-function spawnMercEmoji(x, y) {
-    if (isOBS) return; 
-    const emo = document.createElement('div');
-    emo.className = 'merc-emoji-popup';
-    emo.innerText = emojiRoster[Math.floor(Math.random() * emojiRoster.length)];
-    emo.style.left = `${x}px`;
-    emo.style.top = `${y}px`;
-    document.body.appendChild(emo);
-    setTimeout(() => emo.remove(), 1000);
-}
-
+// --- 4. FX & HIT VARIATIONS ---
 function triggerGlobalHit() {
     if (bossImageEl) { 
-        bossImageEl.src = 'boss-hit.png';
-        bossImageEl.classList.remove('shake'); void bossImageEl.offsetWidth; bossImageEl.classList.add('shake'); 
+        // RANDOM VARIATION: Pick between hit-var-1 and hit-var-2
+        const hitFrame = Math.random() > 0.5 ? 'boss-hit.png' : 'boss-hit-var-2.png';
+        bossImageEl.src = hitFrame;
+        
+        bossImageEl.classList.remove('shake'); 
+        void bossImageEl.offsetWidth; 
+        bossImageEl.classList.add('shake'); 
+        
+        // Return to standard standing image
         setTimeout(() => { bossImageEl.src = 'boss-standing.png'; }, 150);
     }
+    
+    // 10% chance to spawn a quote globally
+    if (Math.random() < 0.10) spawnQuote();
 }
 
 function spawnDamageNumber(startX, startY, amount) {
@@ -124,6 +126,24 @@ function spawnDamageNumber(startX, startY, amount) {
     document.body.appendChild(damageEl);
     damageEl.style.left = `${startX}px`; damageEl.style.top = `${startY}px`;
     setTimeout(() => damageEl.remove(), 800);
+}
+
+function spawnQuote() {
+    if (!bossImageEl) return;
+    const bossRect = bossImageEl.getBoundingClientRect();
+    const headX = bossRect.left + bossRect.width / 2;
+    const headY = bossRect.top + (bossRect.height * 0.2); 
+    const quoteEl = document.createElement('div');
+    quoteEl.className = 'quote-popup';
+    quoteEl.innerText = corpQuotes[Math.floor(Math.random() * corpQuotes.length)];
+    document.body.appendChild(quoteEl);
+    quoteEl.style.left = `${headX + (Math.random() * 60 - 30)}px`;
+    quoteEl.style.top = `${headY}px`;
+    const floatDir = Math.random() > 0.5 ? 60 : -60;
+    quoteEl.animate([
+      { opacity: 1, transform: `translate(0, 0) scale(0.8)` },
+      { opacity: 0, transform: `translate(${floatDir}px, -40px) scale(1.1)` }
+    ], { duration: 1000, easing: 'ease-out' }).onfinish = () => quoteEl.remove();
 }
 
 // --- 5. ATTACK & SHOP ---
@@ -139,14 +159,14 @@ function attack(e) {
   spawnDamageNumber(clickX, clickY, actualDamage);
 }
 
+setInterval(() => { if (myAutoDamage > 0) dealGlobalDamage(myAutoDamage); }, 1000);
+
 const buyAutoBtn = document.getElementById('buy-auto');
 if (buyAutoBtn) {
     buyAutoBtn.addEventListener('click', (e) => {
       if (myCoins >= autoUpgradeCost) { 
-          myCoins -= autoUpgradeCost; 
-          myAutoDamage += 1000; // Adds 1k damage per second
+          myCoins -= autoUpgradeCost; myAutoDamage += 1000;
           autoUpgradeCost = Math.floor(autoUpgradeCost * 1.5); 
-          spawnMercEmoji(e.clientX, e.clientY); // POPUP EMOJI FOR USER
           updateStatsUI(); 
       }
     });
