@@ -99,3 +99,30 @@ function spawnSwords(startX, startY) {
     document.body.appendChild(sword);
 
     const offsetX = startX + (Math.random() - 0
+// --- VISUAL FX ---
+function spawnSwords(startX, startY) {
+  if (!bossImageEl) return;
+  const bossRect = bossImageEl.getBoundingClientRect();
+  const targetX = bossRect.left + bossRect.width / 2;
+  const targetY = bossRect.top + bossRect.height / 2;
+
+  for (let i = 0; i < 4; i++) {
+    const sword = document.createElement('img');
+    sword.src = SWORD_IMAGE_URL;
+    sword.className = 'sword-particle';
+    sword.style.left = '0px'; sword.style.top = '0px';
+    document.body.appendChild(sword);
+
+    // Fixed and completed the cut-off math equation
+    const offsetX = startX + (Math.random() - 0.5) * 50; 
+    const offsetY = startY + (Math.random() - 0.5) * 50;
+
+    // Moving the sword to the target (you can adjust this animation later)
+    sword.style.transform = `translate(${targetX}px, ${targetY}px)`;
+    
+    // Cleaning up the swords so they don't lag your game
+    setTimeout(() => {
+        sword.remove();
+    }, 1000);
+  }
+}
