@@ -132,13 +132,13 @@ document.getElementById('buy-auto').addEventListener('click', () => {
   }
 });
 
-// Update the placeholder URL with your actual Streamlabs tip page URL
+// Premium Tip Redirect
 if(document.getElementById('btn-tip')) {
     document.getElementById('btn-tip').addEventListener('click', () => {
-      window.open("https://streamlabs.com/YOUR_USERNAME_HERE/tip", '_blank');
+      // Your official Streamlabs tip page
+      window.open("https://streamlabs.com/sl_id_9660e12d-ebbd-3a30-8e86-46081327a6a4/tip", '_blank');
     });
 }
-
 // --- 6. EVENT LISTENERS & TIMERS ---
 document.getElementById('btn-attack').addEventListener('click', attack);
 bossImageEl.addEventListener('click', attack); 
@@ -148,3 +148,4 @@ setInterval(() => {
     dealGlobalDamage(myAutoDamage);
   }
 }, 1000);
+
