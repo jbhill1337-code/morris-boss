@@ -1,0 +1,51 @@
+let currentHealth = 1000000000;
+const maxHealth = 1000000000;
+
+const bossImage = document.getElementById('boss-image');
+const flashOverlay = document.getElementById('flash-overlay');
+const healthFill = document.getElementById('health-bar-fill');
+const healthText = document.getElementById('health-text');
+
+const subBtn = document.getElementById('btn-sub');
+const tipBtn = document.getElementById('btn-tip');
+
+// Replace these with your actual links!
+const YOUTUBE_SUB_LINK = "https://www.youtube.com/@GamesWeMiss?sub_confirmation=1";
+const STREAMLABS_TIP_LINK = "https://streamlabs.com/YOUR_USERNAME_HERE/tip"; 
+
+function takeDamage(amount, redirectUrl) {
+  // 1. Calculate new health
+  currentHealth -= amount;
+  if (currentHealth < 0) currentHealth = 0;
+  
+  // 2. Update UI
+  const percentage = (currentHealth / maxHealth) * 100;
+  healthFill.style.width = percentage + '%';
+  healthText.innerText = currentHealth.toLocaleString() + " / " + maxHealth.toLocaleString();
+
+  // 3. Play animations
+  bossImage.classList.add('shake');
+  flashOverlay.style.opacity = '1';
+  
+  setTimeout(() => {
+    flashOverlay.style.opacity = '0';
+  }, 100);
+
+  setTimeout(() => {
+    bossImage.classList.remove('shake');
+  }, 300);
+
+  // 4. Redirect the user to the actual tipping/subscribing page after a short delay so they see the impact
+  setTimeout(() => {
+    window.open(redirectUrl, '_blank');
+  }, 600);
+}
+
+// Event Listeners for the buttons
+subBtn.addEventListener('click', () => {
+  takeDamage(2500, YOUTUBE_SUB_LINK);
+});
+
+tipBtn.addEventListener('click', () => {
+  takeDamage(100000, STREAMLABS_TIP_LINK);
+});

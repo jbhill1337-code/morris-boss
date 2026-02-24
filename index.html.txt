@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Defeat Morris! | Games We Miss</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="scanlines"></div>
+  
+  <div id="game-container">
+    <h1 class="title">MORRIS: CORPORATE OVERLORD</h1>
+    
+    <div id="boss-area">
+      <img id="boss-image" src="https://cdn.discordapp.com/attachments/479148520935522315/1475856129144787004/latest.png?ex=699f01a1&is=699db021&hm=480f18c6fa336d8d1f8bca88cefd4b5d9677c55df0d66adbddad15fa87ca48e0&" alt="Morris">
+      <div id="flash-overlay"></div>
+    </div>
+
+    <div id="health-bar-container">
+      <div id="health-bar-fill"></div>
+      <span id="health-text">1,000,000,000 / 1,000,000,000</span>
+    </div>
+
+    <div class="action-buttons">
+      <button id="btn-sub" class="vapor-btn sub-btn">⚔️ ATTACK (Subscribe)</button>
+      <button id="btn-tip" class="vapor-btn tip-btn">💥 CRITICAL HIT (Tip)</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
