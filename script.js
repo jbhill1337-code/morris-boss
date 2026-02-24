@@ -1,51 +1,52 @@
-// --- 1. THE 3-SECOND INTRO SEQUENCE ---
+// --- 1. PLAYER IDENTITY SETUP ---
+let myPlayerId = localStorage.getItem('employeeId');
+let myPlayerName = localStorage.getItem('employeeName');
+let myEmoji = localStorage.getItem('employeeEmoji');
+const employeeEmojis = ["💼", "☕", "📈", "🖨️", "📎", "💻", "🗑️"];
+
+// --- 2. THE INTRO & POP-UP SEQUENCE ---
 window.addEventListener('load', () => {
   setTimeout(() => {
     const loader = document.getElementById('loading-screen');
     const gameUI = document.getElementById('game-container');
+    const nameModal = document.getElementById('name-modal');
+    
     if (loader) loader.style.display = 'none';
-    if (gameUI) gameUI.style.display = 'block'; 
+    
+    // Check if they need to "Clock In"
+    if (!myPlayerId || !myPlayerName) {
+      if (nameModal) nameModal.style.display = 'flex';
+    } else {
+      if (gameUI) gameUI.style.display = 'block'; 
+    }
   }, 3000); 
 });
 
-// --- 2. GAME DATA SETUP ---
-// --- PLAYER IDENTITY SETUP ---
-let myPlayerId = localStorage.getItem('employeeId');
-let myPlayerName = localStorage.getItem('employeeName');
-let myEmoji = localStorage.getItem('employeeEmoji');
-
-const nameModal = document.getElementById('name-modal');
-const nameInput = document.getElementById('player-name-input');
+// Handle the "Clock In" Button
 const joinBtn = document.getElementById('btn-join-raid');
-
-// Array of random corporate/office emojis for the users
-const employeeEmojis = ["💼", "☕", "📈", "🖨️", "📎", "💻", "🗑️"];
-
-if (!myPlayerId || !myPlayerName) {
-  // Show the modal if they are a new visitor
-  if (nameModal) nameModal.style.display = 'flex';
-}
-
 if (joinBtn) {
   joinBtn.addEventListener('click', () => {
+    const nameInput = document.getElementById('player-name-input');
     const enteredName = nameInput.value.trim();
+    
     if (enteredName.length > 0) {
-      // Generate a random ID and assign a random emoji
       myPlayerId = 'emp_' + Math.random().toString(36).substr(2, 9);
       myPlayerName = enteredName;
       myEmoji = employeeEmojis[Math.floor(Math.random() * employeeEmojis.length)];
       
-      // Save to their browser
       localStorage.setItem('employeeId', myPlayerId);
       localStorage.setItem('employeeName', myPlayerName);
       localStorage.setItem('employeeEmoji', myEmoji);
       
-      nameModal.style.display = 'none';
+      document.getElementById('name-modal').style.display = 'none';
+      document.getElementById('game-container').style.display = 'block';
     } else {
       alert("Corporate requires a valid name!");
     }
   });
 }
+
+// --- 3. GAME DATA SETUP ---
 const BASE_HEALTH = 1000000000; 
 let currentHealth = BASE_HEALTH;
 let currentMaxHealth = BASE_HEALTH;
@@ -57,9 +58,7 @@ function getSavedNum(key, defaultVal) {
     if (!val) return defaultVal;
     let parsed = parseFloat(val);
     return isNaN(parsed) ? defaultVal : parsed;
-  } catch (e) {
-    return defaultVal;
-  }
+  } catch (e) { return defaultVal; }
 }
 
 let myCoins = getSavedNum('vaperCoins_v2', 0);
@@ -83,12 +82,13 @@ const coinDisplay = document.getElementById('coin-count');
 const autoDisplay = document.getElementById('auto-power');
 const bossImageEl = document.getElementById('boss-image'); 
 
-// Image sources for swapping
 const frankBaseImage = "https://cdn.discordapp.com/attachments/479148520935522315/1475923508126027859/Gemini_Generated_Image_ko01sxko01sxko01-removebg-preview.png?ex=699f4061&is=699deee1&hm=4b906dc663568cd151e4ad0552f8f1e570af1c61f04fb48d2b38972abd341b5d&";
 const frankDamagedImage = "https://cdn.discordapp.com/attachments/479148520935522315/1475947203385364631/unnamed__2_-removebg-preview.png?ex=699f5673&is=699e04f3&hm=b4bf446ecd920676bc8d776ad99251d2a70fbefa464ee3209e1b0d8945e55425&";
 
-// --- 3. FIREBASE SYNC (SAFE MODE) ---
+// --- 4. FIREBASE SYNC (SAFE MODE) ---
 let bossRef = null;
+let activeEmployeesRef = null;
+
 if (typeof firebase !== 'undefined' && firebase.apps) {
   try {
     const firebaseConfig = {
@@ -101,7 +101,9 @@ if (typeof firebase !== 'undefined' && firebase.apps) {
       appId: "1:32296108457:web:ddeca6185e8821626744b8"
     };
     if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+    
     bossRef = firebase.database().ref('frank_corporate_data');
+    activeEmployeesRef = firebase.database().ref('active_employees');
     
     bossRef.on('value', (snapshot) => {
       let boss = snapshot.val();
@@ -114,12 +116,10 @@ if (typeof firebase !== 'undefined' && firebase.apps) {
         updateBossUI();
       }
     });
-  } catch (err) {
-    console.error("Firebase sync failed, running locally.", err);
-  }
+  } catch (err) { console.error("Firebase sync failed.", err); }
 }
 
-// --- 4. CORE MECHANICS ---
+// --- 5. CORE MECHANICS ---
 function saveGame() {
   try {
     localStorage.setItem('vaperCoins_v2', myCoins);
@@ -139,20 +139,14 @@ function processDamage(amount) {
       if (!boss) return { health: BASE_HEALTH, level: 1 };
       let nH = boss.health - amount;
       let nL = boss.level;
-      if (nH <= 0) { 
-        nL++; 
-        nH = BASE_HEALTH * nL; 
-        didDie = true; 
-      }
+      if (nH <= 0) { nL++; nH = BASE_HEALTH * nL; didDie = true; }
       return { health: nH, level: nL };
     });
   } else {
     currentHealth -= amount;
     if (currentHealth <= 0) {
-      currentLevel++;
-      currentHealth = BASE_HEALTH * currentLevel;
-      currentMaxHealth = BASE_HEALTH * currentLevel;
-      didDie = true;
+      currentLevel++; currentHealth = BASE_HEALTH * currentLevel;
+      currentMaxHealth = BASE_HEALTH * currentLevel; didDie = true;
     }
     updateBossUI();
   }
@@ -169,8 +163,7 @@ window.buyUpgrade = function(type) {
     if (type === 'parachute') { myClickDamage *= 1.5; myAutoDamage *= 1.5; }
 
     upgradeCosts[type] = Math.ceil(upgradeCosts[type] * 1.15);
-    updateUI();
-    saveGame();
+    updateUI(); saveGame();
   }
 };
 
@@ -210,63 +203,23 @@ function spawnFloatingText(x, y, text, type) {
   setTimeout(() => el.remove(), 2000);
 }
 
-// --- CLICK FRANK TO ATTACK & SPRITE SWAP ---
+// --- 6. CLICK FRANK TO ATTACK & BROADCAST ---
 let flashTimeout;
 if (bossImageEl) {
   bossImageEl.addEventListener('click', (e) => {
     const totalDmg = myClickDamage * multiplier;
     let frankDied = processDamage(totalDmg);
-    // --- BROADCAST PLAYER CLICK TO OBS ---
-    if (bossRef && myPlayerId && myPlayerName) {
-      const activeEmployeesRef = firebase.database().ref('active_employees/' + myPlayerId);
-      activeEmployeesRef.set({
+    myCoins += (1 * multiplier);
+    
+    // BROADCAST TO OBS WIDGET
+    if (activeEmployeesRef && myPlayerId && myPlayerName) {
+      activeEmployeesRef.child(myPlayerId).set({
         name: myPlayerName,
         emoji: myEmoji,
         damage: Math.floor(totalDmg),
-        x: e.clientX,
-        y: e.clientY,
-        timestamp: Date.now() // Tells OBS this is a fresh click
+        timestamp: Date.now()
       });
     }
-    myCoins += (1 * multiplier);
-    
-    // Clear any existing timer so rapid clicking doesn't mess up the animation
+
     clearTimeout(flashTimeout);
-    
-    // Swap to Damaged Sprite
-    bossImageEl.src = frankDamagedImage;
-    bossImageEl.classList.remove('boss-shake'); 
-    void bossImageEl.offsetWidth; 
-    bossImageEl.classList.add('boss-shake');
-    
-    // If he died, stay damaged longer. Otherwise, quick flash.
-    const flashDuration = frankDied ? 800 : 150;
-    
-    flashTimeout = setTimeout(() => {
-        bossImageEl.src = frankBaseImage;
-    }, flashDuration);
-    
-    spawnFloatingText(e.clientX, e.clientY, `+${Math.floor(totalDmg).toLocaleString()}`, 'damage');
-    
-    if (Math.random() > 0.5) {
-      const randomQuote = corpQuotes[Math.floor(Math.random() * corpQuotes.length)];
-      spawnFloatingText(e.clientX, e.clientY - 40, randomQuote, 'quote');
-    }
-    updateUI();
-    saveGame();
-  });
-}
-
-setInterval(() => {
-  if (myAutoDamage > 0) {
-    const totalAuto = myAutoDamage * multiplier;
-    processDamage(totalAuto);
-    myCoins += (totalAuto * 0.01);
-    updateUI();
-    saveGame();
-  }
-}, 1000);
-
-updateUI();
-
-
+    boss
