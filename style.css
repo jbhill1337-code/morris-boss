@@ -31,13 +31,35 @@ body {
   box-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
 }
 
+/* --- NEW: MOBILE CLICK PROMPT --- */
+.pulse-text {
+  color: #ff00ff;
+  font-size: 1.5rem;
+  text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff;
+  animation: pulse 1.5s infinite;
+  margin: 10px 0;
+  cursor: default;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+}
+
 /* --- BOSS & HEALTH --- */
 #boss-image {
   max-width: 300px;
-  cursor: crosshair;
-  transition: filter 0.2s;
+  cursor: pointer; /* Tells the user it's clickable */
+  transition: filter 0.1s, transform 0.1s;
+  user-select: none; /* Prevents accidental image dragging on mobile */
+  -webkit-user-drag: none;
 }
-#boss-image:active { filter: brightness(1.5) contrast(1.2); }
+
+/* Make Frank squish slightly when clicked */
+#boss-image:active { 
+  filter: brightness(1.5) contrast(1.2); 
+  transform: scale(0.92);
+}
 
 .boss-shake { animation: shake 0.1s ease-in-out; }
 @keyframes shake {
@@ -59,19 +81,10 @@ body {
   transition: width 0.1s ease-out;
 }
 
-#btn-attack {
-  font-size: 1.5em; font-family: 'Courier New', monospace; font-weight: bold;
-  padding: 15px 40px; margin: 20px 0;
-  background: #ff00ff; color: #fff;
-  border: 2px solid #fff; cursor: pointer;
-  box-shadow: 0 0 15px #ff00ff; text-transform: uppercase;
-}
-#btn-attack:hover { background: #fff; color: #ff00ff; }
-
 /* --- SHOP STYLING --- */
 #upgrade-container {
   background: rgba(0, 0, 0, 0.7);
-  padding: 20px; margin: 0 auto 50px auto;
+  padding: 20px; margin: 20px auto 50px auto;
   max-width: 500px; border: 1px solid #ff00ff;
 }
 
