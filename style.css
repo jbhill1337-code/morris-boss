@@ -1,6 +1,11 @@
-/* --- CORE AESTHETIC --- */
+/* --- CORE AESTHETIC WITH YOUR BACKGROUND --- */
 body {
-  background-color: #1a1a2e;
+  /* This calls the exact file name you uploaded */
+  background-image: url('Gemini_Generated_Image_vskzf1vskzf1vskz.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-color: #1a1a2e; /* Fallback color */
   color: #00ffcc;
   font-family: 'Courier New', Courier, monospace;
   text-align: center;
@@ -15,6 +20,17 @@ body {
   z-index: 9999; font-size: 2em; text-shadow: 0 0 10px #ff00ff;
 }
 
+/* Added a dark panel so the UI pops off the busy background */
+#game-container {
+  background: rgba(15, 15, 25, 0.85);
+  border: 2px solid #ff00ff;
+  border-radius: 10px;
+  margin: 20px auto;
+  max-width: 800px;
+  padding: 20px;
+  box-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+}
+
 #sub-text {
   color: #ff00ff;
   text-shadow: 2px 2px #000;
@@ -22,7 +38,7 @@ body {
 }
 
 #stats-board {
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.8);
   border: 1px solid #00ffcc;
   display: inline-block;
   padding: 10px 20px;
@@ -31,7 +47,6 @@ body {
   box-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
 }
 
-/* --- NEW: MOBILE CLICK PROMPT --- */
 .pulse-text {
   color: #ff00ff;
   font-size: 1.5rem;
@@ -46,27 +61,21 @@ body {
   50% { opacity: 0.7; transform: scale(1.05); }
 }
 
-/* --- BOSS & HEALTH --- */
+/* --- BOSS & SAFE RED FLASH --- */
 #boss-image {
   max-width: 300px;
-  cursor: pointer; /* Tells the user it's clickable */
-  transition: filter 0.1s, transform 0.1s;
-  user-select: none; /* Prevents accidental image dragging on mobile */
+  cursor: pointer;
+  user-select: none;
   -webkit-user-drag: none;
 }
 
-/* Make Frank squish slightly when clicked */
-#boss-image:active { 
-  filter: brightness(1.5) contrast(1.2); 
-  transform: scale(0.92);
-}
+/* Soft, epilepsy-safe red flash */
+.boss-shake { animation: safeHit 0.15s ease-out; }
 
-.boss-shake { animation: shake 0.1s ease-in-out; }
-@keyframes shake {
-  0% { transform: translate(0,0) scale(1); }
-  25% { transform: translate(8px, -8px) scale(0.98); }
-  75% { transform: translate(-8px, 8px) scale(1.02); }
-  100% { transform: translate(0,0) scale(1); }
+@keyframes safeHit {
+  0% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(0.95); filter: sepia(0.8) hue-rotate(315deg) saturate(300%) brightness(0.8); }
+  100% { transform: scale(1); filter: brightness(1); }
 }
 
 #health-bar-container {
@@ -81,10 +90,9 @@ body {
   transition: width 0.1s ease-out;
 }
 
-/* --- SHOP STYLING --- */
 #upgrade-container {
-  background: rgba(0, 0, 0, 0.7);
-  padding: 20px; margin: 20px auto 50px auto;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 20px; margin: 20px auto 10px auto;
   max-width: 500px; border: 1px solid #ff00ff;
 }
 
@@ -95,14 +103,14 @@ body {
   font-family: inherit; font-size: 1.1em; text-transform: uppercase;
   transition: all 0.2s;
 }
-.shop-btn:hover {
-  background: #00ffcc; color: #000; box-shadow: 0 0 15px #00ffcc;
-}
+.shop-btn:hover { background: #00ffcc; color: #000; box-shadow: 0 0 15px #00ffcc; }
 
-/* --- FLOATING ANIMATIONS --- */
+/* --- FLOATING TEXT (Thick outlines like the mock-up) --- */
 .floating-text {
-  position: fixed; pointer-events: none; font-weight: bold;
-  z-index: 9999; text-shadow: 2px 2px #000;
+  position: fixed; pointer-events: none; font-weight: 900;
+  z-index: 9999; 
+  -webkit-text-stroke: 1px black; /* Bold black outline */
+  text-shadow: 3px 3px 0 #000;
 }
 
 .animate-float { animation: floatAndRotate 2s ease-out forwards; }
@@ -112,5 +120,5 @@ body {
   100% { transform: translateY(-150px) rotate(var(--rot)) scale(1.5); opacity: 0; }
 }
 
-.damage { color: #ff00ff; font-size: 1.8rem; }
-.quote { color: #00ffcc; font-size: 1.3rem; font-style: italic; background: rgba(0,0,0,0.7); padding: 5px; border-radius: 5px;}
+.damage { color: #ff3333; font-size: 2.2rem; }
+.quote { color: #00ffcc; font-size: 1.8rem; font-style: italic; }
