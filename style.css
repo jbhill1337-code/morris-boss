@@ -159,4 +159,15 @@ body {
   font-family: 'VT323', monospace;
   font-size: 20px;
   padding: 10px;
+  /* --- SWORD PARTICLE SYSTEM --- */
+.sword-particle {
+  position: fixed;
+  width: 40px; /* Adjust size of the sword here */
+  height: 40px;
+  pointer-events: none; /* Stops the swords from blocking your clicks */
+  z-index: 100;
+  image-rendering: pixelated; /* Keeps the 8-bit sword looking crisp */
+  filter: drop-shadow(2px 2px 0px #0ff); /* Vaporwave shadow for the sword */
+}
   width:
+
