@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frank Boss Health Widget</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <style>
+    /* TRANSPARENT BACKGROUND FOR OBS */
+    body {
+      background: transparent;
+      color: #00ffcc;
+      font-family: 'Courier New', Courier, monospace;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+      overflow: hidden; /* Prevents scrollbars in OBS */
+    }
+
+    #widget-container {
+      background: rgba(15, 15, 25, 0.7); /* Slight dark box so you can read text over gameplay */
+      border: 2px solid #ff00ff;
+      border-radius: 10px;
+      display: inline-block;
+      padding: 20px;
+      box-shadow: 0 0 15px rgba(255, 0, 255, 0.5);
+    }
+
+    #boss-name { text-shadow: 2px 2px #000; font-size: 1.8rem; margin-top: 0;}
+    #sub-text { color: #ff00ff; text-shadow: 2px 2px #000; letter-spacing: 2px; font-size: 1rem; }
+
+    #boss-image {
+      max-width: 250px;
+      user-select: none;
+    }
+
+    .boss-shake { animation: safeHit 0.15s ease-out; }
+    @keyframes safeHit {
+      0% { transform: scale(1); filter: brightness(1); }
+      50% { transform: scale(0.95); filter: sepia(0.8) hue-rotate(315deg) saturate(300%) brightness(0.8); }
+      100% { transform: scale(1); filter: brightness(1); }
+    }
+
+    #health-bar-container {
+      width: 100%; max-width: 400px; height: 35px;
+      background: #222; margin: 15px auto 5px auto;
+      border: 3px solid #ff00ff; box-shadow: 0 0 10px #ff00ff;
+    }
+
+    #health-bar-fill {
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, #ff00ff, #00ffcc);
+      transition: width 0.1s ease-out;
+    }
+    
+    #health-text { font-size: 1.2rem; font-weight: bold; text-shadow: 2px 2px #000; margin: 0; }
+
+    /* Damage Number Animations */
+    .floating-text {
+      position: fixed; pointer-events: none; font-weight: 900;
+      z-index: 9999; -webkit-text-stroke: 1px black; text-shadow: 3px 3px 0 #000;
+    }
+    .animate-float { animation: floatAndRotate 2s ease-out forwards; }
+    @keyframes floatAndRotate {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(-150px) rotate(var(--rot)) scale(1.5); opacity: 0; }
+    }
+    .damage { color: #ff3333; font-size: 2.2rem; }
+  </style>
+</head>
+<body>
+
+  <div id="widget-container">
+    <h1 id="boss-name">Corp. Frank: The Suit</h1>
+    <h3 id="sub-text">CHAT IS ATTACKING!</h3>
+
+    <img id="boss-image" src="https://cdn.discordapp.com/attachments/479148520935522315/1475923508126027859/Gemini_Generated_Image_ko01sxko01sxko01-removebg-preview.png?ex=699f4061&is=699deee1&hm=4b906dc663568cd151e4ad0552f8f1e570af1c61f04fb48d2b38972abd341b5d&" alt="Boss">
+    <img id="boss-image-damaged" src="https://cdn.discordapp.com/attachments/479148520935522315/1475947203385364631/unnamed__2_-removebg-preview.png?ex=699f5673&is=699e04f3&hm=b4bf446ecd920676bc8d776ad99251d2a70fbefa464ee3209e1b0d8945e55425&" style="display: none;">
+
+    <div id="health-bar-container">
+      <div id="health-bar-fill"></div>
+    </div>
+    <p id="health-text">1,000,000,000 / 1,000,000,000</p>
+  </div>
+
+  <script src="widget.js"></script>
+</body>
+</html>
