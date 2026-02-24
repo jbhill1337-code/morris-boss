@@ -25,14 +25,13 @@ function getSavedNum(key, defaultVal) {
   }
 }
 
-// Keys updated to _v2 to wipe the bugged prices and start fresh
 let myCoins = getSavedNum('vaperCoins_v2', 0);
 let myClickDamage = getSavedNum('clickDamage_v2', 2500);
 let myAutoDamage = getSavedNum('autoDamage_v2', 0);
 let multiplier = getSavedNum('multiplier_v2', 1);
 
 let defaultCosts = { interns: 50, management: 500, synergy: 2000, aiBot: 10000, parachute: 50000 };
-let upgradeCosts = { ...defaultCosts }; // Prevents missing keys from breaking the shop
+let upgradeCosts = { ...defaultCosts }; 
 try {
   let savedCosts = JSON.parse(localStorage.getItem('upgradeCosts_v2'));
   if (savedCosts && typeof savedCosts === 'object') {
@@ -46,6 +45,10 @@ const corpQuotes = ["SYNERGY!", "PIVOT!", "BANDWIDTH!", "TOUCH BASE!", "ACTIONAB
 const coinDisplay = document.getElementById('coin-count');
 const autoDisplay = document.getElementById('auto-power');
 const bossImageEl = document.getElementById('boss-image'); 
+
+// Image sources for swapping
+const frankBaseImage = "https://cdn.discordapp.com/attachments/479148520935522315/1475923508126027859/Gemini_Generated_Image_ko01sxko01sxko01-removebg-preview.png?ex=699f4061&is=699deee1&hm=4b906dc663568cd151e4ad0552f8f1e570af1c61f04fb48d2b38972abd341b5d&";
+const frankDamagedImage = "https://cdn.discordapp.com/attachments/479148520935522315/1475947203385364631/unnamed__2_-removebg-preview.png?ex=699f5673&is=699e04f3&hm=b4bf446ecd920676bc8d776ad99251d2a70fbefa464ee3209e1b0d8945e55425&";
 
 // --- 3. FIREBASE SYNC (SAFE MODE) ---
 let bossRef = null;
@@ -91,14 +94,19 @@ function saveGame() {
 }
 
 function processDamage(amount) {
-  if (amount <= 0 || isNaN(amount)) return;
+  if (amount <= 0 || isNaN(amount)) return false;
+  let didDie = false;
   
   if (bossRef) {
     bossRef.transaction((boss) => {
       if (!boss) return { health: BASE_HEALTH, level: 1 };
       let nH = boss.health - amount;
       let nL = boss.level;
-      if (nH <= 0) { nL++; nH = BASE_HEALTH * nL; }
+      if (nH <= 0) { 
+        nL++; 
+        nH = BASE_HEALTH * nL; 
+        didDie = true; 
+      }
       return { health: nH, level: nL };
     });
   } else {
@@ -107,25 +115,23 @@ function processDamage(amount) {
       currentLevel++;
       currentHealth = BASE_HEALTH * currentLevel;
       currentMaxHealth = BASE_HEALTH * currentLevel;
+      didDie = true;
     }
     updateBossUI();
   }
+  return didDie;
 }
 
-// The Shop Math has been balanced here
 window.buyUpgrade = function(type) {
   if (myCoins >= upgradeCosts[type]) {
     myCoins -= upgradeCosts[type];
-    
     if (type === 'interns') myAutoDamage += 500;
     if (type === 'management') myClickDamage += 1000;
     if (type === 'synergy') multiplier += 0.2;
     if (type === 'aiBot') myAutoDamage += 5000;
     if (type === 'parachute') { myClickDamage *= 1.5; myAutoDamage *= 1.5; }
 
-    // Industry standard scaling multiplier is 1.15
     upgradeCosts[type] = Math.ceil(upgradeCosts[type] * 1.15);
-    
     updateUI();
     saveGame();
   }
@@ -167,16 +173,29 @@ function spawnFloatingText(x, y, text, type) {
   setTimeout(() => el.remove(), 2000);
 }
 
-// --- CLICK FRANK TO ATTACK ---
+// --- CLICK FRANK TO ATTACK & SPRITE SWAP ---
+let flashTimeout;
 if (bossImageEl) {
   bossImageEl.addEventListener('click', (e) => {
     const totalDmg = myClickDamage * multiplier;
-    processDamage(totalDmg);
+    let frankDied = processDamage(totalDmg);
     myCoins += (1 * multiplier);
     
+    // Clear any existing timer so rapid clicking doesn't mess up the animation
+    clearTimeout(flashTimeout);
+    
+    // Swap to Damaged Sprite
+    bossImageEl.src = frankDamagedImage;
     bossImageEl.classList.remove('boss-shake'); 
     void bossImageEl.offsetWidth; 
     bossImageEl.classList.add('boss-shake');
+    
+    // If he died, stay damaged longer. Otherwise, quick flash.
+    const flashDuration = frankDied ? 800 : 150;
+    
+    flashTimeout = setTimeout(() => {
+        bossImageEl.src = frankBaseImage;
+    }, flashDuration);
     
     spawnFloatingText(e.clientX, e.clientY, `+${Math.floor(totalDmg).toLocaleString()}`, 'damage');
     
