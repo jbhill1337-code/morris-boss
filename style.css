@@ -143,3 +143,36 @@ body {
   0% { transform: translateY(0); opacity: 1; }
   100% { transform: translateY(-100px); opacity: 0; }
 }
+/* Boss Hit Animation */
+.boss-shake {
+  animation: shake 0.1s ease-in-out;
+}
+
+@keyframes shake {
+  0% { transform: translate(0,0) scale(1); }
+  25% { transform: translate(5px, -5px) scale(0.98); }
+  75% { transform: translate(-5px, 5px) scale(1.02); }
+  100% { transform: translate(0,0) scale(1); }
+}
+
+/* Floating Text with Rotation */
+.floating-text {
+  position: fixed;
+  pointer-events: none;
+  font-weight: bold;
+  z-index: 9999;
+  font-family: 'Courier New', monospace;
+  text-shadow: 2px 2px #000;
+}
+
+.animate-float {
+  animation: floatAndRotate 2s ease-out forwards;
+}
+
+@keyframes floatAndRotate {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(-150px) rotate(var(--rot)) scale(1.5); opacity: 0; }
+}
+
+.damage { color: #ff00ff; font-size: 1.5rem; }
+.quote { color: #00ffcc; font-size: 1.2rem; }
