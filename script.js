@@ -112,4 +112,119 @@ function spawnSwords(startX, startY) {
 // --- PLAYER ATTACK LOGIC ---
 function attack(e) {
   dealGlobalDamage(myClickDamage * comboMultiplier);
-  myCoins += 1 * comboMultiplier;
+  myCoins += 1 * comboMultiplier; 
+  
+  frenzyLevel += 8;
+  if (frenzyLevel > 100) frenzyLevel = 100;
+  updateFrenzyUI();
+  updateStatsUI();
+
+  if (bossImageEl) {
+      bossImageEl.classList.remove('shake');
+      void bossImageEl.offsetWidth; 
+      bossImageEl.classList.add('shake');
+  }
+  
+  if (flashOverlay) {
+      flashOverlay.style.opacity = '1';
+      setTimeout(() => flashOverlay.style.opacity = '0', 30);
+  }
+
+  // Fallback coordinates if the touch event fails
+  let clickX = window.innerWidth / 2; 
+  let clickY = window.innerHeight - 100;
+
+  // Safely grab the exact tap location
+  if (e) {
+      if (e.clientX !== undefined && e.clientY !== undefined) {
+          clickX = e.clientX;
+          clickY = e.clientY;
+      } else if (e.touches && e.touches.length > 0) {
+          clickX = e.touches[0].clientX;
+          clickY = e.touches[0].clientY;
+      }
+  }
+  spawnSwords(clickX, clickY);
+}
+
+setInterval(() => {
+    if (frenzyLevel > 0) {
+        frenzyLevel -= 3; 
+        if (frenzyLevel < 0) frenzyLevel = 0;
+        updateFrenzyUI();
+    }
+}, 100);
+
+function updateFrenzyUI() {
+    if (!frenzyFill || !frenzyText) return;
+    if (frenzyLevel >= 100) comboMultiplier = 5;
+    else if (frenzyLevel >= 75) comboMultiplier = 3;
+    else if (frenzyLevel >= 50) comboMultiplier = 2;
+    else comboMultiplier = 1;
+
+    frenzyFill.style.width = frenzyLevel + '%';
+    
+    if (comboMultiplier > 1) {
+        frenzyText.innerText = `COMBO: ${comboMultiplier}x DAMAGE!`;
+        frenzyFill.style.backgroundColor = '#ff0055'; 
+    } else {
+        frenzyText.innerText = `CHARGE METER`;
+        frenzyFill.style.backgroundColor = '#ffeb3b'; 
+    }
+}
+
+function updateStatsUI() {
+  if (!coinDisplay || !clickDisplay || !autoDisplay) return; 
+  coinDisplay.innerText = myCoins.toLocaleString();
+  clickDisplay.innerText = myClickDamage.toLocaleString();
+  autoDisplay.innerText = myAutoDamage.toLocaleString();
+  
+  const buyClickEl = document.getElementById('buy-click');
+  const buyAutoEl = document.getElementById('buy-auto');
+  
+  if (buyClickEl) buyClickEl.innerHTML = `Sharpen Blade (+2,500 Click Dmg) <br><span>Cost: ${clickUpgradeCost} Coins</span>`;
+  if (buyAutoEl) buyAutoEl.innerHTML = `Hire Mercenary (+1,000 Auto Dmg/sec) <br><span>Cost: ${autoUpgradeCost} Coins</span>`;
+}
+
+// --- SHOP & TIP LOGIC ---
+const buyClickBtn = document.getElementById('buy-click');
+if (buyClickBtn) {
+    buyClickBtn.addEventListener('click', () => {
+      if (myCoins >= clickUpgradeCost) {
+        myCoins -= clickUpgradeCost;
+        myClickDamage += 2500;
+        clickUpgradeCost = Math.floor(clickUpgradeCost * 1.5); 
+        updateStatsUI();
+      }
+    });
+}
+
+const buyAutoBtn = document.getElementById('buy-auto');
+if (buyAutoBtn) {
+    buyAutoBtn.addEventListener('click', () => {
+      if (myCoins >= autoUpgradeCost) {
+        myCoins -= autoUpgradeCost;
+        myAutoDamage += 1000;
+        autoUpgradeCost = Math.floor(autoUpgradeCost * 1.5); 
+        updateStatsUI();
+      }
+    });
+}
+
+const tipBtn = document.getElementById('btn-tip');
+if(tipBtn) {
+    tipBtn.addEventListener('click', () => {
+      window.open("https://streamlabs.com/sl_id_9660e12d-ebbd-3a30-8e86-46081327a6a4/tip", '_blank');
+    });
+}
+
+// --- EVENT LISTENERS & TIMERS ---
+const attackBtn = document.getElementById('btn-attack');
+if (attackBtn) attackBtn.addEventListener('pointerdown', (e) => attack(e));
+if (bossImageEl) bossImageEl.addEventListener('pointerdown', (e) => attack(e)); 
+
+setInterval(() => {
+  if (myAutoDamage > 0) {
+    dealGlobalDamage(myAutoDamage);
+  }
+}, 1000);
