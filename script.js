@@ -4,8 +4,8 @@ let myPlayerName = localStorage.getItem('employeeName');
 let myEmoji = localStorage.getItem('employeeEmoji');
 const employeeEmojis = ["💼", "☕", "📈", "🖨️", "📎", "💻", "🗑️"];
 
-// --- 2. THE INTRO & POP-UP SEQUENCE (FIXED) ---
-// This now runs strictly on a 3-second timer, ignoring slow image downloads.
+// --- 2. THE INTRO & POP-UP SEQUENCE ---
+// This now runs strictly on a 3-second timer, completely ignoring slow image downloads.
 setTimeout(() => {
   const loader = document.getElementById('loading-screen');
   const gameUI = document.getElementById('game-container');
@@ -84,7 +84,7 @@ const bossImageEl = document.getElementById('boss-image');
 const frankBaseImage = "https://cdn.discordapp.com/attachments/479148520935522315/1475923508126027859/Gemini_Generated_Image_ko01sxko01sxko01-removebg-preview.png?ex=699f4061&is=699deee1&hm=4b906dc663568cd151e4ad0552f8f1e570af1c61f04fb48d2b38972abd341b5d&";
 const frankDamagedImage = "https://cdn.discordapp.com/attachments/479148520935522315/1475947203385364631/unnamed__2_-removebg-preview.png?ex=699f5673&is=699e04f3&hm=b4bf446ecd920676bc8d776ad99251d2a70fbefa464ee3209e1b0d8945e55425&";
 
-// --- 4. FIREBASE SYNC (SAFE MODE) ---
+// --- 4. FIREBASE SYNC ---
 let bossRef = null;
 let activeEmployeesRef = null;
 
@@ -186,40 +186,4 @@ function updateBossUI() {
   if (!healthFill) return;
   
   const percentage = Math.max(0, (currentHealth / currentMaxHealth) * 100);
-  healthFill.style.width = percentage + '%';
-  healthText.innerText = `${Math.floor(currentHealth).toLocaleString()} / ${currentMaxHealth.toLocaleString()}`;
-  bossNameEl.innerText = `[Lv. ${currentLevel}] ${bossTitles[(currentLevel - 1) % bossTitles.length]}`;
-}
-
-function spawnFloatingText(x, y, text, type) {
-  const el = document.createElement('div');
-  el.innerText = text;
-  el.className = `floating-text ${type} animate-float`;
-  const randomRot = (Math.random() - 0.5) * 40; 
-  el.style.left = x + 'px'; el.style.top = y + 'px';
-  el.style.setProperty('--rot', `${randomRot}deg`);
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 2000);
-}
-
-// --- 6. CLICK FRANK TO ATTACK & BROADCAST ---
-let flashTimeout;
-if (bossImageEl) {
-  bossImageEl.addEventListener('click', (e) => {
-    const totalDmg = myClickDamage * multiplier;
-    let frankDied = processDamage(totalDmg);
-    myCoins += (1 * multiplier);
-    
-    // BROADCAST TO OBS WIDGET
-    if (activeEmployeesRef && myPlayerId && myPlayerName) {
-      activeEmployeesRef.child(myPlayerId).set({
-        name: myPlayerName,
-        emoji: myEmoji,
-        damage: Math.floor(totalDmg),
-        timestamp: Date.now()
-      });
-    }
-
-    clearTimeout(flashTimeout);
-    boss
-
+  healthFill.style.width = percentage
