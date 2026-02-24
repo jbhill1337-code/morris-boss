@@ -34,7 +34,7 @@ let frenzyLevel = 0; // Goes from 0 to 100
 let comboMultiplier = 1;
 
 // PASTE YOUR DISCORD SWORD LINK HERE!
-const SWORD_IMAGE_URL = "YOUR_DISCORD_SWORD_LINK_HERE";
+const SWORD_IMAGE_URL = "https://cdn.discordapp.com/attachments/479148520935522315/1475889414352801924/d56pg7g-4bca25f8-2cd0-4ac1-86fb-2d6fb41def78.png?ex=699f20a1&is=699dcf21&hm=ac5b6ff711c0e58af775dd56159f3534aa46ed9d01137b840e24cf827907e7dd&";
 
 const bossNameEl = document.getElementById('boss-name');
 const bossImageEl = document.getElementById('boss-image');
@@ -98,3 +98,4 @@ function spawnSwords(startX, startY) {
 
     sword.animate([
       { transform: `translate(-5
+
