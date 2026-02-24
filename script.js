@@ -10,11 +10,9 @@ const firebaseConfig = {
 
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const bossRef = db.ref('frank_raid_v7'); 
-const employeesRef = db.ref('active_employees_v7');
+const bossRef = db.ref('frank_raid_v8'); 
+const employeesRef = db.ref('active_employees_v8');
 
-// --- AUTOMATIC OBS DETECTION ---
-// Detects vertical 1080x1920 source or ?obs=true tag
 const isOBS = (window.innerHeight > window.innerWidth) || (new URLSearchParams(window.location.search).get('obs') === 'true');
 
 if (isOBS) {
@@ -31,10 +29,11 @@ let curHP = 1000000000, maxHP = 1000000000, lastHP = 1000000000, frenzy = 0, mul
 const bossImg = document.getElementById('boss-image');
 const hpFill = document.getElementById('health-bar-fill');
 const hpText = document.getElementById('health-text');
+const corpQuotes = [ "SYNERGY!", "LET'S CIRCLE BACK!", "BANDWIDTH!", "RETURN TO OFFICE!", "PIVOT!", "ACTION ITEMS!" ];
 
-function save() { if(!isOBS) localStorage.setItem('frank_v7', JSON.stringify({c:myCoins, cd:myClickDmg, ad:myAutoDmg, cc:clickCost, ac:autoCost, u:myUser})); }
+function save() { if(!isOBS) localStorage.setItem('frank_v8', JSON.stringify({c:myCoins, cd:myClickDmg, ad:myAutoDmg, cc:clickCost, ac:autoCost, u:myUser})); }
 function load() {
-    const s = localStorage.getItem('frank_v7');
+    const s = localStorage.getItem('frank_v8');
     if(s) {
         const d = JSON.parse(s);
         myCoins=d.c; myClickDmg=d.cd; myAutoDmg=d.ad; clickCost=d.cc; autoCost=d.ac; myUser=d.u;
@@ -50,28 +49,38 @@ document.getElementById('btn-clock-in').onclick = () => {
     if(val) { myUser=val; document.getElementById('login-screen').style.display='none'; document.getElementById('game-container').style.display='block'; clockIn(myUser); save(); }
 };
 
-// --- SYNC ---
+// --- GLOBAL SYNC ---
 bossRef.on('value', (snap) => {
     let b = snap.val();
     if(!b) { b={health:1000000000, level:1}; bossRef.set(b); }
-    if(b.health < lastHP) hitFX();
+    if(b.health < lastHP) triggerGlobalFX();
     lastHP = b.health; curHP = b.health; maxHP = 1000000000 * b.level;
     hpFill.style.width = (curHP/maxHP)*100 + '%';
     hpText.innerText = curHP.toLocaleString() + " / " + maxHP.toLocaleString();
     document.getElementById('boss-name').innerText = "FRANK LV." + b.level;
 });
 
-// --- UPDATED HIT LOGIC WITH 3 VARIATIONS ---
-function hitFX() {
+function triggerGlobalFX() {
     if(!bossImg) return;
-    const rand = Math.random();
-    // Randomly pick between standing, hit, hit-var-2, and hit-var-3
-    if (rand < 0.33) bossImg.src = 'boss-hit.png';
-    else if (rand < 0.66) bossImg.src = 'boss-hit-var-2.png';
-    else bossImg.src = 'boss-hit-var-3.png';
+    const r = Math.random();
+    if (r < 0.33) bossImg.src = 'boss-hit.png';
+    else if (r < 0.66) bossImg.src = 'boss-hit-var-2.png';
+    else bossImg.src = 'boss-hit-variation-3.png';
     
     bossImg.classList.add('shake');
     setTimeout(() => { bossImg.src = 'boss-standing.png'; bossImg.classList.remove('shake'); }, 150);
+    if(Math.random() < 0.15) spawnQuote();
+}
+
+function spawnQuote() {
+    const bRect = bossImg.getBoundingClientRect();
+    const q = document.createElement('div');
+    q.className = 'quote-popup';
+    q.innerText = corpQuotes[Math.floor(Math.random()*corpQuotes.length)];
+    document.body.appendChild(q);
+    q.style.left = (bRect.left + bRect.width/2) + 'px';
+    q.style.top = bRect.top + 'px';
+    setTimeout(()=>q.remove(), 1000);
 }
 
 function attack(e) {
@@ -81,7 +90,11 @@ function attack(e) {
     myCoins += (1 * multi); frenzy = Math.min(100, frenzy+8); updateUI(); save();
     const x = e.clientX || (e.touches ? e.touches[0].clientX : 0);
     const y = e.clientY || (e.touches ? e.touches[0].clientY : 0);
-    const p = document.createElement('div'); p.className='damage-popup'; p.innerText='+'+dmg.toLocaleString(); p.style.left=x+'px'; p.style.top=y+'px'; document.body.appendChild(p); setTimeout(()=>p.remove(),800);
+    const p = document.createElement('div');
+    p.className='damage-popup'; p.innerText='+'+dmg.toLocaleString();
+    p.style.left=x+'px'; p.style.top=y+'px';
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),800);
 }
 
 function updateUI() {
