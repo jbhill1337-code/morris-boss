@@ -10,10 +10,20 @@ const firebaseConfig = {
 
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const bossRef = db.ref('frank_raid_v6'); 
-const employeesRef = db.ref('active_employees_v6');
+const bossRef = db.ref('frank_raid_v7'); 
+const employeesRef = db.ref('active_employees_v7');
 
-const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
+// --- AUTOMATIC OBS DETECTION ---
+// Detects vertical 1080x1920 source or ?obs=true tag
+const isOBS = (window.innerHeight > window.innerWidth) || (new URLSearchParams(window.location.search).get('obs') === 'true');
+
+if (isOBS) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('game-container').style.display = 'block';
+    document.getElementById('player-stats').style.display = 'none';
+    document.getElementById('shop').style.display = 'none';
+    document.querySelector('.action-buttons').style.display = 'none';
+}
 
 let myCoins = 0, myClickDmg = 2500, myAutoDmg = 0, clickCost = 10, autoCost = 50, myUser = "";
 let curHP = 1000000000, maxHP = 1000000000, lastHP = 1000000000, frenzy = 0, multi = 1;
@@ -22,10 +32,9 @@ const bossImg = document.getElementById('boss-image');
 const hpFill = document.getElementById('health-bar-fill');
 const hpText = document.getElementById('health-text');
 
-// --- PERSISTENCE ---
-function save() { if(!isOBS) localStorage.setItem('frank_v6', JSON.stringify({c:myCoins, cd:myClickDmg, ad:myAutoDmg, cc:clickCost, ac:autoCost, u:myUser})); }
+function save() { if(!isOBS) localStorage.setItem('frank_v7', JSON.stringify({c:myCoins, cd:myClickDmg, ad:myAutoDmg, cc:clickCost, ac:autoCost, u:myUser})); }
 function load() {
-    const s = localStorage.getItem('frank_v6');
+    const s = localStorage.getItem('frank_v7');
     if(s) {
         const d = JSON.parse(s);
         myCoins=d.c; myClickDmg=d.cd; myAutoDmg=d.ad; clickCost=d.cc; autoCost=d.ac; myUser=d.u;
@@ -52,9 +61,15 @@ bossRef.on('value', (snap) => {
     document.getElementById('boss-name').innerText = "FRANK LV." + b.level;
 });
 
+// --- UPDATED HIT LOGIC WITH 3 VARIATIONS ---
 function hitFX() {
     if(!bossImg) return;
-    bossImg.src = Math.random() > 0.5 ? 'boss-hit.png' : 'boss-hit-var-2.png';
+    const rand = Math.random();
+    // Randomly pick between standing, hit, hit-var-2, and hit-var-3
+    if (rand < 0.33) bossImg.src = 'boss-hit.png';
+    else if (rand < 0.66) bossImg.src = 'boss-hit-var-2.png';
+    else bossImg.src = 'boss-hit-var-3.png';
+    
     bossImg.classList.add('shake');
     setTimeout(() => { bossImg.src = 'boss-standing.png'; bossImg.classList.remove('shake'); }, 150);
 }
