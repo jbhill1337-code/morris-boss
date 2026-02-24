@@ -2,53 +2,49 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Defeat Frank! | Games We Miss</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Morris: Corporate Overlord</title>
   <link rel="stylesheet" href="style.css">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
 <body>
-  <div class="scanlines"></div>
-  
+
+  <div id="loading-screen">
+    <h2>LOADING SYSTEM DATA...</h2>
+  </div>
+
   <div id="game-container">
-    <h1 id="boss-name" class="title">CORPORATE FRANK: THE SUIT</h1>
-    
+    <h1 id="boss-name">Corp. Frank: The Suit</h1>
+    <h3 id="sub-text">TIPS & SUBSCRIBERS DEAL DAMAGE</h3>
+
+    <div id="stats-board">
+      <p>VAPER COINS: <span id="coin-count">0</span></p>
+      <p>AUTO/SEC: <span id="auto-power">0</span></p>
+    </div>
+
     <div id="boss-area">
-      <img id="boss-image" src="https://cdn.discordapp.com/attachments/479148520935522315/1475923508126027859/Gemini_Generated_Image_ko01sxko01sxko01-removebg-preview.png?ex=699f4061&is=699deee1&hm=4b906dc663568cd151e4ad0552f8f1e570af1c61f04fb48d2b38972abd341b5d&" alt="Corporate Frank">
-      <div id="flash-overlay"></div>
+      <img id="boss-image" src="https://via.placeholder.com/300x300.png?text=Boss+Image" alt="Corporate Overlord">
+      
+      <div id="health-bar-container">
+        <div id="health-bar-fill"></div>
+      </div>
+      <p id="health-text">1,000,000,000 / 1,000,000,000</p>
     </div>
 
-    <div id="health-bar-container">
-      <div id="health-bar-fill"></div>
-      <span id="health-text">Loading Data...</span>
-    </div>
+    <button id="btn-attack">ATTACK!</button>
 
-    <div id="frenzy-container">
-      <div id="frenzy-bar-fill"></div>
-      <span id="frenzy-text">CHARGE METER</span>
-    </div>
-
-    <div id="player-stats">
-      <p>VAPOR COINS: <span id="coin-count">0</span></p>
-      <p>CLICK DMG: <span id="click-power">2,500</span> | AUTO: <span id="auto-power">0</span>/sec</p>
-    </div>
-
-    <div class="action-buttons">
-      <button id="btn-attack" class="vapor-btn attack-btn">⚔️ ATTACK!</button>
-      <button id="btn-tip" class="vapor-btn tip-btn">💥 HIRE PREMIUM MERCENARY (Tip)</button>
-    </div>
-
-    <div id="shop">
-      <h2 class="shop-title">-- UPGRADES --</h2>
-      <button id="buy-click" class="shop-btn">Sharpen Blade (+2.5k Dmg) <br><span>Cost: 10 Coins</span></button>
-      <button id="buy-auto" class="shop-btn">Hire Mercenary (+1k Auto/sec) <br><span>Cost: 50 Coins</span></button>
+    <div id="upgrade-container">
+      <h3>CORPORATE SHOP</h3>
+      <button id="buy-interns" class="shop-btn" onclick="buyUpgrade('interns')">Hire Interns (50 Coins)</button>
+      <button id="buy-management" class="shop-btn" onclick="buyUpgrade('management')">Middle Management (500 Coins)</button>
+      <button id="buy-synergy" class="shop-btn" onclick="buyUpgrade('synergy')">Synergy Seminar (2000 Coins)</button>
+      <button id="buy-aiBot" class="shop-btn" onclick="buyUpgrade('aiBot')">AI Downsizing Bot (10000 Coins)</button>
+      <button id="buy-parachute" class="shop-btn" onclick="buyUpgrade('parachute')">Golden Parachute (50000 Coins)</button>
     </div>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <script src="script.js?v=frank_final_v3"></script>
+  <script src="script.js"></script>
 </body>
 </html>
-
