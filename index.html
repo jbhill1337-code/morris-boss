@@ -4,16 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Defeat Frank! | Games We Miss</title>
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="stylesheet" href="style.css?v=final">
 </head>
 <body>
   <div class="scanlines"></div>
   
-  <div id="game-container">
-    <h1 id="boss-name" class="title">CORPORATE FRANK: THE SUIT</h1>
+  <div id="login-screen">
+    <div class="login-box">
+      <h2 class="title">COMPANY PORTAL</h2>
+      <p>Enter your Employee ID to clock in.</p>
+      <input type="text" id="username-input" placeholder="USERNAME..." maxlength="15">
+      <button id="btn-clock-in" class="vapor-btn attack-btn">CLOCK IN</button>
+    </div>
+  </div>
+
+  <div id="employee-container"></div>
+  
+  <div id="game-container" style="display: none;">
+    <h1 id="boss-name" class="title">CORPORATE FRANK</h1>
     
     <div id="boss-area">
-      <img id="boss-image" src="https://cdn.discordapp.com/attachments/479148520935522315/1475916443076792321/Gemini_Generated_Image_ko01sxko01sxko01.png?ex=699f39cd&is=699de84d&hm=964b3b8c2e6053e65ba214d3806b0fec519e054f650690138a9eecb97e99c638&" alt="Corporate Frank">
+      <img id="boss-image" src="PASTE_YOUR_TRANSPARENT_FRANK_LINK_HERE" alt="Corporate Frank">
       <div id="flash-overlay"></div>
     </div>
 
@@ -46,6 +57,6 @@
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <script src="script.js?v=frank_v4"></script>
+  <script src="script.js?v=final"></script>
 </body>
 </html>
