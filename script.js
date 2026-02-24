@@ -9,6 +9,43 @@ window.addEventListener('load', () => {
 });
 
 // --- 2. GAME DATA SETUP ---
+// --- PLAYER IDENTITY SETUP ---
+let myPlayerId = localStorage.getItem('employeeId');
+let myPlayerName = localStorage.getItem('employeeName');
+let myEmoji = localStorage.getItem('employeeEmoji');
+
+const nameModal = document.getElementById('name-modal');
+const nameInput = document.getElementById('player-name-input');
+const joinBtn = document.getElementById('btn-join-raid');
+
+// Array of random corporate/office emojis for the users
+const employeeEmojis = ["💼", "☕", "📈", "🖨️", "📎", "💻", "🗑️"];
+
+if (!myPlayerId || !myPlayerName) {
+  // Show the modal if they are a new visitor
+  if (nameModal) nameModal.style.display = 'flex';
+}
+
+if (joinBtn) {
+  joinBtn.addEventListener('click', () => {
+    const enteredName = nameInput.value.trim();
+    if (enteredName.length > 0) {
+      // Generate a random ID and assign a random emoji
+      myPlayerId = 'emp_' + Math.random().toString(36).substr(2, 9);
+      myPlayerName = enteredName;
+      myEmoji = employeeEmojis[Math.floor(Math.random() * employeeEmojis.length)];
+      
+      // Save to their browser
+      localStorage.setItem('employeeId', myPlayerId);
+      localStorage.setItem('employeeName', myPlayerName);
+      localStorage.setItem('employeeEmoji', myEmoji);
+      
+      nameModal.style.display = 'none';
+    } else {
+      alert("Corporate requires a valid name!");
+    }
+  });
+}
 const BASE_HEALTH = 1000000000; 
 let currentHealth = BASE_HEALTH;
 let currentMaxHealth = BASE_HEALTH;
@@ -219,3 +256,4 @@ setInterval(() => {
 }, 1000);
 
 updateUI();
+
