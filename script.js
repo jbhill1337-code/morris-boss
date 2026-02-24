@@ -1,4 +1,4 @@
-// --- 1. FIREBASE SETUP ---
+// --- 1. CONFIG & DATA ---
 const firebaseConfig = {
   apiKey: "AIzaSyAEA1pc8eNG4NhiC_mDpssbFIzdtaSHLkM",
   authDomain: "raid-clicker.firebaseapp.com",
@@ -13,36 +13,41 @@ if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
 const db = firebase.database();
 const bossRef = db.ref('frank_corporate_data'); 
 
-const BASE_HEALTH = 1000000000; 
+const BASE_HEALTH = 1000000000; // 1 Billion
 let currentHealth = BASE_HEALTH;
-let currentLevel = 1;
 let currentMaxHealth = BASE_HEALTH;
+let currentLevel = 1;
+
+// --- 2. PERSISTENCE & STATS ---
+// Load saved data or use defaults
+let myCoins = parseFloat(localStorage.getItem('vaperCoins')) || 0;
+let myClickDamage = parseFloat(localStorage.getItem('clickDamage')) || 2500;
+let myAutoDamage = parseFloat(localStorage.getItem('autoDamage')) || 0;
+let multiplier = parseFloat(localStorage.getItem('multiplier')) || 1;
 
 const bossTitles = [
   "Corp. Frank: The Suit", "Corp. Frank: Middle Manager", "Corp. Frank: Regional Director",
   "Corp. Frank: VP of Downsizing", "Corp. Frank: The CEO", "Corp. Frank: Chairman of the Board"
 ];
 
-// Added back the Corporate Lingo
-const corpQuotes = [
-  "SYNERGY!", "LET'S CIRCLE BACK!", "THINK OUTSIDE THE BOX!", 
-  "WE NEED MORE BANDWIDTH!", "RETURN TO OFFICE!", "PIVOT!", 
-  "TOUCH BASE!", "ACTIONABLE ITEMS!", "LOW HANGING FRUIT!", "PARADIGM SHIFT!"
-];
+const corpQuotes = ["SYNERGY!", "PIVOT!", "LOW HANGING FRUIT!", "BANDWIDTH!"];
 
-let myCoins = 0;
-let myClickDamage = 2500;
-const SWORD_IMAGE_URL = "https://cdn.discordapp.com/attachments/479148520935522315/1475889414352801924/d56pg7g-4bca25f8-2cd0-4ac1-86fb-2d6fb41def78.png?ex=699f20a1&is=699dcf21&hm=ac5b6ff711c0e58af775dd56159f3534aa46ed9d01137b840e24cf827907e7dd&";
-
-const bossNameEl = document.getElementById('boss-name');
-const bossImageEl = document.getElementById('boss-image');
-const healthFill = document.getElementById('health-bar-fill');
-const healthText = document.getElementById('health-text');
+// UI Elements
 const coinDisplay = document.getElementById('coin-count');
+const autoDisplay = document.getElementById('auto-power');
+const bossImageEl = document.getElementById('boss-image');
 const attackBtn = document.getElementById('btn-attack');
 const loader = document.getElementById('loading-screen');
 
-// --- DATABASE SYNC ---
+// --- 3. CORE LOGIC ---
+function saveGame() {
+  localStorage.setItem('vaperCoins', myCoins);
+  localStorage.setItem('clickDamage', myClickDamage);
+  localStorage.setItem('autoDamage', myAutoDamage);
+  localStorage.setItem('multiplier', multiplier);
+}
+
+// Global Sync
 bossRef.on('value', (snapshot) => {
   let boss = snapshot.val();
   if (boss === null || isNaN(boss.health)) { 
@@ -53,7 +58,7 @@ bossRef.on('value', (snapshot) => {
   currentLevel = boss.level;
   currentMaxHealth = BASE_HEALTH * currentLevel; 
   updateBossUI();
-  if(loader) { loader.style.display = 'none'; }
+  if(loader) loader.style.display = 'none'; // Fix loading hang
 });
 
 function dealGlobalDamage(amount) {
@@ -62,77 +67,78 @@ function dealGlobalDamage(amount) {
     if (boss === null) return { health: BASE_HEALTH, level: 1 };
     let newHealth = boss.health - amount;
     let newLevel = boss.level;
-    if (newHealth <= 0) { newLevel += 1; newHealth = BASE_HEALTH * newLevel; }
+    if (newHealth <= 0) { 
+      newLevel += 1; 
+      newHealth = BASE_HEALTH * newLevel; 
+    }
     return { health: newHealth, level: newLevel };
   });
 }
 
-function updateBossUI() {
-  if (!healthFill || !healthText || !bossNameEl) return; 
-  const percentage = Math.max(0, (currentHealth / currentMaxHealth) * 100);
-  healthFill.style.width = percentage + '%';
-  healthText.innerText = `${currentHealth.toLocaleString()} / ${currentMaxHealth.toLocaleString()}`;
-  let titleIndex = (currentLevel - 1) % bossTitles.length;
-  bossNameEl.innerText = `[Lv. ${currentLevel}] ${bossTitles[titleIndex]}`;
-}
-
-// --- NEW: FLOATING TEXT LOGIC ---
+// --- 4. ANIMATIONS (The "Cool Effects") ---
 function spawnFloatingText(x, y, text, type) {
   const el = document.createElement('div');
   el.innerText = text;
-  el.className = `floating-text ${type}`; // 'damage' or 'quote'
+  // Use 'rotating-out' for better readability
+  el.className = `floating-text ${type} animate-float`;
+  
+  // Random rotation for that "indie clicker" feel
+  const randomRot = (Math.random() - 0.5) * 40;
   el.style.left = x + 'px';
   el.style.top = y + 'px';
-  document.body.appendChild(el);
+  el.style.setProperty('--rot', `${randomRot}deg`);
   
-  // Remove after animation ends
+  document.body.appendChild(el);
   setTimeout(() => el.remove(), 2000);
 }
 
-function spawnSwords(startX, startY) {
+function triggerBossHit() {
   if (!bossImageEl) return;
-  const bossRect = bossImageEl.getBoundingClientRect();
-  const targetX = bossRect.left + bossRect.width / 2;
-  const targetY = bossRect.top + bossRect.height / 2;
-
-  for (let i = 0; i < 4; i++) {
-    const sword = document.createElement('img');
-    sword.src = SWORD_IMAGE_URL;
-    sword.className = 'sword-particle';
-    document.body.appendChild(sword);
-    const startLeft = startX + (Math.random() - 0.5) * 60;
-    const startTop = startY + (Math.random() - 0.5) * 60;
-    sword.style.left = startLeft + 'px';
-    sword.style.top = startTop + 'px';
-    setTimeout(() => {
-      sword.style.transform = `translate(${targetX - startLeft}px, ${targetY - startTop}px) rotate(45deg)`;
-      sword.style.opacity = '0';
-    }, 50);
-    setTimeout(() => sword.remove(), 1000);
-  }
+  bossImageEl.classList.add('boss-shake');
+  setTimeout(() => bossImageEl.classList.remove('boss-shake'), 100);
 }
 
-// --- CLICK EVENT ---
+// --- 5. INTERACTION ---
 if (attackBtn) {
   attackBtn.addEventListener('click', (e) => {
-    dealGlobalDamage(myClickDamage);
+    const totalDmg = myClickDamage * multiplier;
+    dealGlobalDamage(totalDmg);
+    myCoins += (1 * multiplier);
     
-    // Update Coins
-    myCoins += 1;
-    if (coinDisplay) coinDisplay.innerText = myCoins.toLocaleString();
+    triggerBossHit();
+    spawnFloatingText(e.clientX, e.clientY, `+${Math.floor(totalDmg).toLocaleString()}`, 'damage');
     
-    // 1. Spawn Swords
-    spawnSwords(e.clientX, e.clientY);
-    
-    // 2. Spawn +Damage indicator at mouse
-    spawnFloatingText(e.clientX, e.clientY, `+${myClickDamage.toLocaleString()}`, 'damage');
-    
-    // 3. Random chance to spawn Corporate Jargon from the Boss's head
-    if (Math.random() > 0.7 && bossImageEl) {
+    if (Math.random() > 0.8) {
       const rect = bossImageEl.getBoundingClientRect();
-      const randomQuote = corpQuotes[Math.floor(Math.random() * corpQuotes.length)];
-      // Position it near the top of the image (his head)
-      spawnFloatingText(rect.left + rect.width / 2, rect.top, randomQuote, 'quote');
+      spawnFloatingText(rect.left + rect.width/2, rect.top, corpQuotes[Math.floor(Math.random()*corpQuotes.length)], 'quote');
     }
+    updateUI();
   });
+}
+
+// Auto-Damage Tick
+setInterval(() => {
+  if (myAutoDamage > 0) {
+    dealGlobalDamage(myAutoDamage * multiplier);
+    myCoins += (myAutoDamage * 0.01); // Small coin gain from auto
+    updateUI();
+  }
+}, 1000);
+
+function updateUI() {
+  if (coinDisplay) coinDisplay.innerText = Math.floor(myCoins).toLocaleString();
+  if (autoDisplay) autoDisplay.innerText = (myAutoDamage * multiplier).toLocaleString();
+  saveGame();
+}
+
+function updateBossUI() {
+  const healthFill = document.getElementById('health-bar-fill');
+  const healthText = document.getElementById('health-text');
+  const bossNameEl = document.getElementById('boss-name');
+  if (!healthFill) return;
+
+  const percentage = Math.max(0, (currentHealth / currentMaxHealth) * 100);
+  healthFill.style.width = percentage + '%';
+  healthText.innerText = `${currentHealth.toLocaleString()} / ${currentMaxHealth.toLocaleString()}`;
+  bossNameEl.innerText = `[Lv. ${currentLevel}] ${bossTitles[(currentLevel - 1) % bossTitles.length]}`;
 }
