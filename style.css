@@ -8,7 +8,7 @@ body {
   min-height: 100vh; overflow-x: hidden;
   
   /* --- BACKGROUND IMAGE --- */
-  background-image: url('YOUR_DISCORD_BACKGROUND_LINK_HERE');
+  background-image: url('https://cdn.discordapp.com/attachments/479148520935522315/1475923711952687324/Gemini_Generated_Image_vskzf1vskzf1vskz.png?ex=699f4092&is=699def12&hm=ce97f2c4e3e3d46a5c50a95ee62f909aba3fa4c86ed7f529bd2e3d77aa016b69&');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -126,3 +126,4 @@ body {
     0% { opacity: 1; transform: translateY(0) scale(0.8); }
     100% { opacity: 0; transform: translateY(-40px) scale(1.1); }
 }
+
