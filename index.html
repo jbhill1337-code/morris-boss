@@ -2,60 +2,50 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Morris: Corporate Overlord</title>
-  <link rel="stylesheet" href="style.css">
-  
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Defeat Frank! | Games We Miss</title>
+  <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
-
-  <div id="loading-screen">
-    <h2>LOADING SYSTEM DATA...</h2>
-  </div>
-
-  <div id="name-modal" style="display: none;">
-    <div id="name-modal-content">
-      <h2 style="color: #00ffcc;">NEW HIRE ONBOARDING</h2>
-      <p>Enter your YouTube Channel Name to join the raid:</p>
-      <input type="text" id="player-name-input" placeholder="e.g. GamesWeMissFan" maxlength="20">
-      <button id="btn-join-raid">CLOCK IN</button>
-    </div>
-  </div>
-
+  <div class="scanlines"></div>
+  
   <div id="game-container">
-    <h1 id="boss-name">Corp. Frank: The Suit</h1>
-    <h3 id="sub-text">TIPS & SUBSCRIBERS DEAL DAMAGE</h3>
-
-    <div id="stats-board">
-      <p>VAPER COINS: <span id="coin-count">0</span></p>
-      <p>AUTO/SEC: <span id="auto-power">0</span></p>
-    </div>
-
+    <h1 id="boss-name" class="title">CORPORATE FRANK: THE SUIT</h1>
+    
     <div id="boss-area">
-      <h2 id="click-prompt" class="pulse-text">>>> CLICK FRANK TO ATTACK <<<</h2>
-
-      <img id="boss-image" src="https://cdn.discordapp.com/attachments/479148520935522315/1475923508126027859/Gemini_Generated_Image_ko01sxko01sxko01-removebg-preview.png?ex=699f4061&is=699deee1&hm=4b906dc663568cd151e4ad0552f8f1e570af1c61f04fb48d2b38972abd341b5d&" alt="Corporate Overlord">
-      
-      <img id="boss-image-damaged" src="https://cdn.discordapp.com/attachments/479148520935522315/1475947203385364631/unnamed__2_-removebg-preview.png?ex=699f5673&is=699e04f3&hm=b4bf446ecd920676bc8d776ad99251d2a70fbefa464ee3209e1b0d8945e55425&" style="display: none;">
-      
-      <div id="health-bar-container">
-        <div id="health-bar-fill"></div>
-      </div>
-      <p id="health-text">1,000,000,000 / 1,000,000,000</p>
+      <img id="boss-image" src="https://cdn.discordapp.com/attachments/479148520935522315/1475916443076792321/Gemini_Generated_Image_ko01sxko01sxko01.png?ex=699f39cd&is=699de84d&hm=964b3b8c2e6053e65ba214d3806b0fec519e054f650690138a9eecb97e99c638&" alt="Corporate Frank">
+      <div id="flash-overlay"></div>
     </div>
 
-    <div id="upgrade-container">
-      <h3>CORPORATE SHOP</h3>
-      <button id="buy-interns" class="shop-btn" onclick="buyUpgrade('interns')">Hire Interns (50 Coins)</button>
-      <button id="buy-management" class="shop-btn" onclick="buyUpgrade('management')">Middle Management (500 Coins)</button>
-      <button id="buy-synergy" class="shop-btn" onclick="buyUpgrade('synergy')">Synergy Seminar (2000 Coins)</button>
-      <button id="buy-aiBot" class="shop-btn" onclick="buyUpgrade('aiBot')">AI Downsizing Bot (10000 Coins)</button>
-      <button id="buy-parachute" class="shop-btn" onclick="buyUpgrade('parachute')">Golden Parachute (50000 Coins)</button>
+    <div id="health-bar-container">
+      <div id="health-bar-fill"></div>
+      <span id="health-text">Loading Data...</span>
+    </div>
+
+    <div id="frenzy-container">
+      <div id="frenzy-bar-fill"></div>
+      <span id="frenzy-text">CHARGE METER</span>
+    </div>
+
+    <div id="player-stats">
+      <p>VAPOR COINS: <span id="coin-count">0</span></p>
+      <p>CLICK DMG: <span id="click-power">2,500</span> | AUTO: <span id="auto-power">0</span>/sec</p>
+    </div>
+
+    <div class="action-buttons">
+      <button id="btn-attack" class="vapor-btn attack-btn">⚔️ ATTACK!</button>
+      <button id="btn-tip" class="vapor-btn tip-btn">💥 HIRE PREMIUM MERCENARY (Tip)</button>
+    </div>
+
+    <div id="shop">
+      <h2 class="shop-title">-- UPGRADES --</h2>
+      <button id="buy-click" class="shop-btn">Sharpen Blade (+2.5k Dmg) <br><span>Cost: 10 Coins</span></button>
+      <button id="buy-auto" class="shop-btn">Hire Mercenary (+1k Auto/sec) <br><span>Cost: 50 Coins</span></button>
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="script.js?v=frank_v4"></script>
 </body>
 </html>
