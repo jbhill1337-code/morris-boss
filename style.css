@@ -106,3 +106,20 @@ body {
     0% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
     100% { opacity: 0; transform: translateY(-60px) scale(1.2) rotate(Math.random() * 10 - 5 + 'deg'); }
 }
+/* --- CORPORATE QUOTE POPUPS --- */
+.quote-popup {
+  position: fixed;
+  color: #0ff; /* Neon cyan */
+  text-shadow: 2px 2px #f0f; /* Neon pink shadow */
+  font-size: 20px;
+  font-weight: bold;
+  pointer-events: none;
+  z-index: 150;
+  white-space: nowrap;
+  animation: floatSideFade 1s ease-out forwards;
+}
+
+@keyframes floatSideFade {
+    0% { opacity: 1; transform: translate(0, 0) scale(0.8); }
+    100% { opacity: 0; transform: translate(calc(var(--dirX) * 60px), -50px) scale(1.2); }
+}
