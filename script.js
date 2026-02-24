@@ -1,4 +1,3 @@
-// --- 1. FIREBASE SETUP ---
 const firebaseConfig = {
   apiKey: "AIzaSyAEA1pc8eNG4NhiC_mDpssbFIzdtaSHLkM",
   authDomain: "raid-clicker.firebaseapp.com",
@@ -9,265 +8,81 @@ const firebaseConfig = {
   appId: "1:32296108457:web:ddeca6185e8821626744b8"
 };
 
-if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const bossRef = db.ref('frank_raid_v5'); 
-const employeesRef = db.ref('active_employees_v5');
+const bossRef = db.ref('frank_raid_v6'); 
+const employeesRef = db.ref('active_employees_v6');
 
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
-// --- 2. PLAYER DATA & PERSISTENCE ---
-let myCoins = 0;
-let myClickDamage = 2500;
-let myAutoDamage = 0;
-let clickUpgradeCost = 10;
-let autoUpgradeCost = 50;
-let myUsername = "";
+let myCoins = 0, myClickDmg = 2500, myAutoDmg = 0, clickCost = 10, autoCost = 50, myUser = "";
+let curHP = 1000000000, maxHP = 1000000000, lastHP = 1000000000, frenzy = 0, multi = 1;
 
-function savePlayerData() {
-    if (isOBS) return; // OBS doesn't need to save data
-    const playerData = {
-        coins: myCoins,
-        clickDamage: myClickDamage,
-        autoDamage: myAutoDamage,
-        clickCost: clickUpgradeCost,
-        autoCost: autoUpgradeCost,
-        username: myUsername
-    };
-    localStorage.setItem('frank_raid_save', JSON.stringify(playerData));
-}
+const bossImg = document.getElementById('boss-image');
+const hpFill = document.getElementById('health-bar-fill');
+const hpText = document.getElementById('health-text');
 
-function loadPlayerData() {
-    const saved = localStorage.getItem('frank_raid_save');
-    if (saved) {
-        const data = JSON.parse(saved);
-        myCoins = data.coins || 0;
-        myClickDamage = data.clickDamage || 2500;
-        myAutoDamage = data.autoDamage || 0;
-        clickUpgradeCost = data.clickCost || 10;
-        autoUpgradeCost = data.autoCost || 50;
-        myUsername = data.username || "";
-        
-        // If they have a username, skip login and go to game
-        if (myUsername && !isOBS) {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('game-container').style.display = 'block';
-            clockIn(myUsername);
-        }
-        updateStatsUI();
+// --- PERSISTENCE ---
+function save() { if(!isOBS) localStorage.setItem('frank_v6', JSON.stringify({c:myCoins, cd:myClickDmg, ad:myAutoDmg, cc:clickCost, ac:autoCost, u:myUser})); }
+function load() {
+    const s = localStorage.getItem('frank_v6');
+    if(s) {
+        const d = JSON.parse(s);
+        myCoins=d.c; myClickDmg=d.cd; myAutoDmg=d.ad; clickCost=d.cc; autoCost=d.ac; myUser=d.u;
+        if(myUser && !isOBS) { document.getElementById('login-screen').style.display='none'; document.getElementById('game-container').style.display='block'; clockIn(myUser); }
+        updateUI();
     }
 }
 
-// --- 3. OBS & GAME UI SETUP ---
-if (isOBS) {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('game-container').style.display = 'block';
-    document.getElementById('player-stats').style.display = 'none';
-    document.getElementById('shop').style.display = 'none';
-    document.querySelector('.action-buttons').style.display = 'none';
-} else {
-    loadPlayerData();
-}
+function clockIn(u) { const r = employeesRef.push(); r.set({name:u, e:'💼'}); r.onDisconnect().remove(); }
 
-// --- 4. GAME VARIABLES ---
-const BASE_HEALTH = 1000000000; 
-let currentHealth = BASE_HEALTH;
-let lastKnownHealth = BASE_HEALTH; 
-let currentLevel = 1;
-let currentMaxHealth = BASE_HEALTH;
+document.getElementById('btn-clock-in').onclick = () => {
+    const val = document.getElementById('username-input').value.trim().toUpperCase();
+    if(val) { myUser=val; document.getElementById('login-screen').style.display='none'; document.getElementById('game-container').style.display='block'; clockIn(myUser); save(); }
+};
 
-const bossTitles = [ "Corp. Frank: The Suit", "Corp. Frank: Middle Manager", "Corp. Frank: Regional Director", "Corp. Frank: VP of Downsizing", "Corp. Frank: The CEO", "Corp. Frank: Chairman of the Board" ];
-const corpQuotes = [ "SYNERGY!", "LET'S CIRCLE BACK!", "THINK OUTSIDE THE BOX!", "WE NEED MORE BANDWIDTH!", "RETURN TO OFFICE!", "PIVOT!", "TOUCH BASE!", "ACTIONABLE ITEMS!" ];
-const emojiRoster = ['💼', '👔', '📉', '🗄️', '☕', '📠', '🖥️', '📞', '🗑️', '📎', '🍕', '💸'];
-
-let frenzyLevel = 0; let comboMultiplier = 1;
-
-const bossNameEl = document.getElementById('boss-name');
-const bossImageEl = document.getElementById('boss-image');
-const healthFill = document.getElementById('health-bar-fill');
-const healthText = document.getElementById('health-text');
-const coinDisplay = document.getElementById('coin-count');
-const clickDisplay = document.getElementById('click-power');
-const autoDisplay = document.getElementById('auto-power');
-const frenzyFill = document.getElementById('frenzy-bar-fill');
-const frenzyText = document.getElementById('frenzy-text');
-const attackBtn = document.getElementById('btn-attack');
-
-// --- 5. CLOCK IN & EMPLOYEES ---
-function clockIn(username) {
-    const newEmpRef = employeesRef.push();
-    const randomEmoji = emojiRoster[Math.floor(Math.random() * emojiRoster.length)];
-    newEmpRef.set({ name: username, emoji: randomEmoji });
-    newEmpRef.onDisconnect().remove();
-}
-
-document.getElementById('btn-clock-in').addEventListener('click', () => {
-    const inputName = document.getElementById('username-input').value.trim().toUpperCase();
-    if (inputName.length > 0) {
-        myUsername = inputName;
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('game-container').style.display = 'block';
-        clockIn(myUsername);
-        savePlayerData();
-    }
+// --- SYNC ---
+bossRef.on('value', (snap) => {
+    let b = snap.val();
+    if(!b) { b={health:1000000000, level:1}; bossRef.set(b); }
+    if(b.health < lastHP) hitFX();
+    lastHP = b.health; curHP = b.health; maxHP = 1000000000 * b.level;
+    hpFill.style.width = (curHP/maxHP)*100 + '%';
+    hpText.innerText = curHP.toLocaleString() + " / " + maxHP.toLocaleString();
+    document.getElementById('boss-name').innerText = "FRANK LV." + b.level;
 });
 
-const empContainer = document.getElementById('employee-container');
-let activeEmployees = {};
-
-employeesRef.on('child_added', (snapshot) => {
-    const data = snapshot.val();
-    const key = snapshot.key;
-    const tag = document.createElement('div');
-    tag.className = 'employee-tag';
-    tag.id = `emp-${key}`;
-    tag.innerHTML = `<div class="employee-emoji">${data.emoji}</div><div class="employee-name">${data.name}</div>`;
-    empContainer.appendChild(tag);
-    activeEmployees[key] = {
-        element: tag,
-        x: Math.random() * (window.innerWidth - 50),
-        y: Math.random() * (window.innerHeight - 50)
-    };
-    moveEmployee(key);
-});
-
-employeesRef.on('child_removed', (snapshot) => {
-    const key = snapshot.key;
-    const el = document.getElementById(`emp-${key}`);
-    if (el) el.remove();
-    delete activeEmployees[key];
-});
-
-function moveEmployee(key) {
-    if (!activeEmployees[key]) return;
-    const emp = activeEmployees[key];
-    emp.x = Math.random() * (window.innerWidth - 80);
-    emp.y = Math.random() * (window.innerHeight - 80);
-    emp.element.style.transform = `translate(${emp.x}px, ${emp.y}px)`;
-    setTimeout(() => moveEmployee(key), 2500); 
+function hitFX() {
+    if(!bossImg) return;
+    bossImg.src = Math.random() > 0.5 ? 'boss-hit.png' : 'boss-hit-var-2.png';
+    bossImg.classList.add('shake');
+    setTimeout(() => { bossImg.src = 'boss-standing.png'; bossImg.classList.remove('shake'); }, 150);
 }
 
-// --- 6. GLOBAL SYNC & BOSS ---
-bossRef.on('value', (snapshot) => {
-  let boss = snapshot.val();
-  if (boss === null || isNaN(boss.health)) { boss = { health: BASE_HEALTH, level: 1 }; bossRef.set(boss); }
-  if (boss.health < lastKnownHealth) triggerGlobalHit();
-  lastKnownHealth = boss.health; currentHealth = boss.health; currentLevel = boss.level; currentMaxHealth = BASE_HEALTH * currentLevel; 
-  updateBossUI();
-});
-
-function dealGlobalDamage(amount) {
-  if (amount <= 0 || isNaN(amount)) return;
-  bossRef.transaction((boss) => {
-    if (boss === null || isNaN(boss.health)) return { health: BASE_HEALTH, level: 1 };
-    let newHealth = boss.health - amount; let newLevel = boss.level;
-    if (newHealth <= 0) { newLevel += 1; newHealth = BASE_HEALTH * newLevel; }
-    return { health: newHealth, level: newLevel };
-  });
-}
-
-function updateBossUI() {
-  const percentage = (currentHealth / currentMaxHealth) * 100;
-  healthFill.style.width = percentage + '%';
-  healthText.innerText = currentHealth.toLocaleString() + " / " + currentMaxHealth.toLocaleString();
-  let titleIndex = (currentLevel - 1) % bossTitles.length;
-  bossNameEl.innerText = `[Lv. ${currentLevel}] ${bossTitles[titleIndex]}`;
-}
-
-// --- 7. VISUAL FX ---
-function triggerGlobalHit() {
-    if (bossImageEl) { 
-        const hitFrame = Math.random() > 0.5 ? 'boss-hit.png' : 'boss-hit-var-2.png';
-        bossImageEl.src = hitFrame;
-        bossImageEl.classList.remove('shake'); 
-        void bossImageEl.offsetWidth; 
-        bossImageEl.classList.add('shake'); 
-        setTimeout(() => { bossImageEl.src = 'boss-standing.png'; }, 150);
-    }
-}
-
-function spawnDamageNumber(startX, startY, amount) {
-    const damageEl = document.createElement('div');
-    damageEl.className = 'damage-popup';
-    damageEl.innerText = `+${amount.toLocaleString()}`;
-    document.body.appendChild(damageEl);
-    damageEl.style.left = `${startX}px`; damageEl.style.top = `${startY}px`;
-    setTimeout(() => damageEl.remove(), 800);
-}
-
-function spawnQuote() {
-    if (!bossImageEl) return;
-    const bossRect = bossImageEl.getBoundingClientRect();
-    const headX = bossRect.left + bossRect.width / 2;
-    const headY = bossRect.top + (bossRect.height * 0.2); 
-    const quoteEl = document.createElement('div');
-    quoteEl.className = 'quote-popup';
-    quoteEl.innerText = corpQuotes[Math.floor(Math.random() * corpQuotes.length)];
-    document.body.appendChild(quoteEl);
-    quoteEl.style.left = `${headX + (Math.random() * 60 - 30)}px`;
-    quoteEl.style.top = `${headY}px`;
-    const floatDir = Math.random() > 0.5 ? 60 : -60;
-    quoteEl.animate([
-      { opacity: 1, transform: `translate(0, 0) scale(0.8)` },
-      { opacity: 0, transform: `translate(${floatDir}px, -40px) scale(1.1)` }
-    ], { duration: 1000, easing: 'ease-out' }).onfinish = () => quoteEl.remove();
-}
-
-// --- 8. ATTACK & SHOP ---
 function attack(e) {
-  if (isOBS) return; 
-  let actualDamage = myClickDamage * comboMultiplier;
-  dealGlobalDamage(actualDamage);
-  myCoins += 1 * comboMultiplier; 
-  frenzyLevel = Math.min(100, frenzyLevel + 8);
-  updateFrenzyUI(); updateStatsUI();
-  let clickX = e.clientX || (e.touches ? e.touches[0].clientX : window.innerWidth/2);
-  let clickY = e.clientY || (e.touches ? e.touches[0].clientY : window.innerHeight/2);
-  spawnDamageNumber(clickX, clickY, actualDamage);
-  savePlayerData(); // Save coins every click
+    if(isOBS) return;
+    const dmg = myClickDmg * multi;
+    bossRef.transaction(b => { if(b) { b.health -= dmg; if(b.health<=0){ b.level++; b.health=1000000000*b.level; } } return b; });
+    myCoins += (1 * multi); frenzy = Math.min(100, frenzy+8); updateUI(); save();
+    const x = e.clientX || (e.touches ? e.touches[0].clientX : 0);
+    const y = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+    const p = document.createElement('div'); p.className='damage-popup'; p.innerText='+'+dmg.toLocaleString(); p.style.left=x+'px'; p.style.top=y+'px'; document.body.appendChild(p); setTimeout(()=>p.remove(),800);
 }
 
-setInterval(() => { if (myAutoDamage > 0) dealGlobalDamage(myAutoDamage); }, 1000);
-
-const buyAutoBtn = document.getElementById('buy-auto');
-if (buyAutoBtn) {
-    buyAutoBtn.addEventListener('click', () => {
-      if (myCoins >= autoUpgradeCost) { 
-          myCoins -= autoUpgradeCost; myAutoDamage += 1000;
-          autoUpgradeCost = Math.floor(autoUpgradeCost * 1.5); 
-          updateStatsUI(); 
-          savePlayerData(); 
-      }
-    });
+function updateUI() {
+    document.getElementById('coin-count').innerText = myCoins.toLocaleString();
+    document.getElementById('click-power').innerText = myClickDmg.toLocaleString();
+    document.getElementById('auto-power').innerText = myAutoDmg.toLocaleString();
+    document.getElementById('buy-click').innerHTML = `Sharpen Blade (+2.5k) <br><span>Cost: ${clickCost}</span>`;
+    document.getElementById('buy-auto').innerHTML = `Hire Merc (+1k/s) <br><span>Cost: ${autoCost}</span>`;
 }
 
-const buyClickBtn = document.getElementById('buy-click');
-if (buyClickBtn) {
-    buyClickBtn.addEventListener('click', () => {
-      if (myCoins >= clickUpgradeCost) { 
-          myCoins -= clickUpgradeCost; myClickDamage += 2500; 
-          clickUpgradeCost = Math.floor(clickUpgradeCost * 1.5); 
-          updateStatsUI(); 
-          savePlayerData(); 
-      }
-    });
-}
+document.getElementById('buy-click').onclick = () => { if(myCoins>=clickCost){ myCoins-=clickCost; myClickDmg+=2500; clickCost=Math.floor(clickCost*1.5); updateUI(); save(); } };
+document.getElementById('buy-auto').onclick = () => { if(myCoins>=autoCost){ myCoins-=autoCost; myAutoDmg+=1000; autoCost=Math.floor(autoCost*1.5); updateUI(); save(); } };
 
-function updateFrenzyUI() {
-    comboMultiplier = frenzyLevel >= 100 ? 5 : frenzyLevel >= 75 ? 3 : frenzyLevel >= 50 ? 2 : 1;
-    frenzyFill.style.width = frenzyLevel + '%';
-    frenzyText.innerText = comboMultiplier > 1 ? `COMBO: ${comboMultiplier}x!` : `CHARGE METER`;
-}
+setInterval(() => { if(myAutoDmg>0) bossRef.transaction(b => { if(b) b.health -= myAutoDmg; return b; }); }, 1000);
+setInterval(() => { frenzy=Math.max(0, frenzy-2); multi=frenzy>=100?5:frenzy>=75?3:frenzy>=50?2:1; document.getElementById('frenzy-bar-fill').style.width=frenzy+'%'; document.getElementById('frenzy-text').innerText=multi>1?`COMBO ${multi}x` : `CHARGE METER`; }, 100);
 
-setInterval(() => { frenzyLevel = Math.max(0, frenzyLevel - 3); updateFrenzyUI(); }, 100);
-
-function updateStatsUI() {
-  coinDisplay.innerText = myCoins.toLocaleString();
-  clickDisplay.innerText = myClickDamage.toLocaleString();
-  autoDisplay.innerText = myAutoDamage.toLocaleString();
-  document.getElementById('buy-click').innerHTML = `Sharpen Blade (+2.5k) <br><span>Cost: ${clickUpgradeCost}</span>`;
-  document.getElementById('buy-auto').innerHTML = `Hire Merc (+1k/s) <br><span>Cost: ${autoUpgradeCost}</span>`;
-}
-
-document.getElementById('btn-attack').addEventListener('pointerdown', attack);
-bossImageEl.addEventListener('pointerdown', attack);
+if(!isOBS) load();
+document.getElementById('btn-attack').onpointerdown = attack;
+bossImg.onpointerdown = attack;
