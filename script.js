@@ -13,7 +13,6 @@ if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 const db = firebase.database();
-// Syncs health AND level globally
 const bossRef = db.ref('morris_raid_data');
 
 // --- 2. GAME VARIABLES & BOSS LEVELS ---
@@ -38,6 +37,9 @@ let myAutoDamage = 0;
 let clickUpgradeCost = 10;
 let autoUpgradeCost = 50;
 
+// PASTE YOUR SWORD IMAGE LINK HERE!
+const SWORD_IMAGE_URL = "YOUR_DISCORD_SWORD_LINK_HERE";
+
 const bossNameEl = document.getElementById('boss-name');
 const bossImageEl = document.getElementById('boss-image');
 const flashOverlay = document.getElementById('flash-overlay');
@@ -58,7 +60,7 @@ bossRef.on('value', (snapshot) => {
   
   currentHealth = boss.health;
   currentLevel = boss.level;
-  currentMaxHealth = BASE_HEALTH * currentLevel; // Health multiplies every level
+  currentMaxHealth = BASE_HEALTH * currentLevel; 
   
   updateBossUI();
 });
@@ -72,7 +74,6 @@ function dealGlobalDamage(amount) {
     let newHealth = boss.health - amount;
     let newLevel = boss.level;
     
-    // Level Up: Health restores fully and increases maximum capacity
     if (newHealth <= 0) {
         newLevel += 1;
         newHealth = BASE_HEALTH * newLevel; 
@@ -92,8 +93,44 @@ function updateBossUI() {
   bossNameEl.innerText = `[Lv. ${currentLevel}] ${newTitle}`;
 }
 
-// --- 4. PLAYER ACTIONS ---
-function attack() {
+// --- 4. PLAYER ACTIONS & PARTICLE SYSTEM ---
+
+// Spawns swords at the click location and flies them at Morris
+function spawnSwords(startX, startY) {
+  // Find where Morris is on the screen right now
+  const bossRect = bossImageEl.getBoundingClientRect();
+  const targetX = bossRect.left + bossRect.width / 2;
+  const targetY = bossRect.top + bossRect.height / 2;
+
+  // Spawn 4 swords per click
+  for (let i = 0; i < 4; i++) {
+    const sword = document.createElement('img');
+    sword.src = SWORD_IMAGE_URL;
+    sword.className = 'sword-particle';
+    document.body.appendChild(sword);
+
+    // Spread them out slightly around the finger/mouse
+    const offsetX = startX + (Math.random() - 0.5) * 80;
+    const offsetY = startY + (Math.random() - 0.5) * 80;
+    
+    sword.style.left = `${offsetX}px`;
+    sword.style.top = `${offsetY}px`;
+
+    // Calculate the angle to point the sword directly at Morris
+    const angle = Math.atan2(targetY - offsetY, targetX - offsetX) * (180 / Math.PI);
+
+    // Use Web Animations API to fly them over
+    sword.animate([
+      { transform: `translate(-50%, -50%) rotate(${angle + 45}deg) scale(0.5)`, opacity: 1 },
+      { transform: `translate(${targetX - offsetX}px, ${targetY - offsetY}px) rotate(${angle + 45}deg) scale(1.2)`, opacity: 0 }
+    ], {
+      duration: 300 + Math.random() * 200, // Slightly randomized speed for a shotgun effect
+      easing: 'cubic-bezier(0.25, 1, 0.5, 1)'
+    }).onfinish = () => sword.remove(); // Delete the image after it hits so the phone doesn't lag
+  }
+}
+
+function attack(e) {
   dealGlobalDamage(myClickDamage);
   myCoins += 1;
   updateStatsUI();
@@ -102,6 +139,21 @@ function attack() {
   flashOverlay.style.opacity = '1';
   setTimeout(() => flashOverlay.style.opacity = '0', 50);
   setTimeout(() => bossImageEl.classList.remove('shake'), 150);
+
+  // Grab coordinates from mouse click or mobile touch
+  let clickX = window.innerWidth / 2; // Default to center if something fails
+  let clickY = window.innerHeight;
+
+  if (e) {
+      if (e.type.includes('touch')) {
+          clickX = e.touches[0].clientX;
+          clickY = e.touches[0].clientY;
+      } else {
+          clickX = e.clientX;
+          clickY = e.clientY;
+      }
+      spawnSwords(clickX, clickY);
+  }
 }
 
 function updateStatsUI() {
@@ -109,8 +161,9 @@ function updateStatsUI() {
   clickDisplay.innerText = myClickDamage.toLocaleString();
   autoDisplay.innerText = myAutoDamage.toLocaleString();
   
-  document.getElementById('buy-click').innerHTML = `Sharpen Blade (+2.5k Dmg) <br><span>Cost: ${clickUpgradeCost} Coins</span>`;
-  document.getElementById('buy-auto').innerHTML = `Hire Mercenary (+1k Auto/sec) <br><span>Cost: ${autoUpgradeCost} Coins</span>`;
+  // Explicitly state the exact damage amounts here
+  document.getElementById('buy-click').innerHTML = `Sharpen Blade (+2,500 Click Dmg) <br><span>Cost: ${clickUpgradeCost} Coins</span>`;
+  document.getElementById('buy-auto').innerHTML = `Hire Mercenary (+1,000 Auto Dmg/sec) <br><span>Cost: ${autoUpgradeCost} Coins</span>`;
 }
 
 // --- 5. SHOP & TIP LOGIC ---
@@ -132,20 +185,19 @@ document.getElementById('buy-auto').addEventListener('click', () => {
   }
 });
 
-// Premium Tip Redirect
 if(document.getElementById('btn-tip')) {
     document.getElementById('btn-tip').addEventListener('click', () => {
-      // Your official Streamlabs tip page
       window.open("https://streamlabs.com/sl_id_9660e12d-ebbd-3a30-8e86-46081327a6a4/tip", '_blank');
     });
 }
+
 // --- 6. EVENT LISTENERS & TIMERS ---
-document.getElementById('btn-attack').addEventListener('click', attack);
-bossImageEl.addEventListener('click', attack); 
+// Using pointerdown instead of click so it feels instantly responsive on mobile touchscreens
+document.getElementById('btn-attack').addEventListener('pointerdown', (e) => attack(e));
+bossImageEl.addEventListener('pointerdown', (e) => attack(e)); 
 
 setInterval(() => {
   if (myAutoDamage > 0) {
     dealGlobalDamage(myAutoDamage);
   }
 }, 1000);
-
