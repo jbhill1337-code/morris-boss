@@ -4,23 +4,22 @@ let myPlayerName = localStorage.getItem('employeeName');
 let myEmoji = localStorage.getItem('employeeEmoji');
 const employeeEmojis = ["💼", "☕", "📈", "🖨️", "📎", "💻", "🗑️"];
 
-// --- 2. THE INTRO & POP-UP SEQUENCE ---
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    const loader = document.getElementById('loading-screen');
-    const gameUI = document.getElementById('game-container');
-    const nameModal = document.getElementById('name-modal');
-    
-    if (loader) loader.style.display = 'none';
-    
-    // Check if they need to "Clock In"
-    if (!myPlayerId || !myPlayerName) {
-      if (nameModal) nameModal.style.display = 'flex';
-    } else {
-      if (gameUI) gameUI.style.display = 'block'; 
-    }
-  }, 3000); 
-});
+// --- 2. THE INTRO & POP-UP SEQUENCE (FIXED) ---
+// This now runs strictly on a 3-second timer, ignoring slow image downloads.
+setTimeout(() => {
+  const loader = document.getElementById('loading-screen');
+  const gameUI = document.getElementById('game-container');
+  const nameModal = document.getElementById('name-modal');
+  
+  if (loader) loader.style.display = 'none';
+  
+  // Check if they need to "Clock In"
+  if (!myPlayerId || !myPlayerName) {
+    if (nameModal) nameModal.style.display = 'flex';
+  } else {
+    if (gameUI) gameUI.style.display = 'block'; 
+  }
+}, 3000); 
 
 // Handle the "Clock In" Button
 const joinBtn = document.getElementById('btn-join-raid');
@@ -223,3 +222,4 @@ if (bossImageEl) {
 
     clearTimeout(flashTimeout);
     boss
+
