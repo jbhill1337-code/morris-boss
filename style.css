@@ -1,20 +1,21 @@
 @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
+/* Strip the ugly mobile gray tap highlight from everything */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   margin: 0;
   padding: 0;
   background-color: #120a1f;
   color: #fff;
   font-family: 'VT323', monospace;
-  /* Anti-highlighting for spam clicking */
   user-select: none; 
   -webkit-user-select: none;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  /* Removed flexbox centering so the box cannot shift left or right */
   min-height: 100vh;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: hidden; /* Stops swords from causing horizontal jitter */
 }
 
 #game-container {
@@ -24,8 +25,8 @@ body {
   max-width: 450px;
   text-align: center;
   padding: 20px;
-  /* Hard-centers the box so it can't run away to the left */
-  margin: 20px auto; 
+  /* Strict centering that ignores invisible scrollbars */
+  margin: 30px auto; 
   background: rgba(20, 10, 40, 0.85);
   border: 3px solid #0ff;
   box-shadow: 0 0 20px #0ff, inset 0 0 15px #f0f;
@@ -41,7 +42,6 @@ body {
   object-fit: contain;
   filter: drop-shadow(0 0 10px #f0f);
   cursor: pointer;
-  /* Prevents double-tap zoom on phones */
   touch-action: manipulation; 
 }
 
@@ -54,7 +54,7 @@ body {
 
 #flash-overlay {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  background: white; opacity: 0; pointer-events: none;
+  background: white; opacity: 0; pointer-events: none; border-radius: 5px;
 }
 
 #health-bar-container {
@@ -67,7 +67,6 @@ body {
   font-size: 22px; color: #fff; text-shadow: 2px 2px #000; white-space: nowrap;
 }
 
-/* --- NEW FRENZY METER --- */
 #frenzy-container {
   width: 100%; height: 25px; background-color: #111; border: 1px solid #ffeb3b;
   margin: 0 auto 15px auto; position: relative;
@@ -92,10 +91,19 @@ body {
 .vapor-btn {
   font-family: 'VT323', monospace; font-size: 24px; padding: 12px; width: 100%;
   border: none; border-radius: 5px; cursor: pointer; text-transform: uppercase;
-  font-weight: bold; transition: transform 0.1s, box-shadow 0.1s;
-  touch-action: manipulation; /* Anti-zoom */
+  font-weight: bold; touch-action: manipulation;
 }
-.vapor-btn:active { transform: scale(0.95); }
+
+/* NEW: The spark animation for the button */
+.spark {
+  animation: sparkAnim 0.15s ease-out;
+}
+@keyframes sparkAnim {
+  0% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(0.98); filter: brightness(1.5) drop-shadow(0 0 10px #fff); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
 .attack-btn { background: linear-gradient(90deg, #ff0055, #f0f); color: white; box-shadow: 0 0 15px #f0f; }
 .tip-btn { background: linear-gradient(90deg, #00ffcc, #0099ff); color: white; box-shadow: 0 0 15px #00ffcc; text-shadow: 1px 1px #000; }
 
@@ -111,4 +119,12 @@ body {
 
 .scanlines {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0,
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  background-size: 100% 4px, 3px 100%; pointer-events: none; z-index: 10;
+}
+
+.sword-particle {
+  position: fixed; width: 45px; height: 45px; object-fit: contain;
+  pointer-events: none; z-index: 100; image-rendering: pixelated; 
+  filter: drop-shadow(2px 2px 0px #0ff); 
+}
