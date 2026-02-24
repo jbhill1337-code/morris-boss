@@ -28,6 +28,7 @@ if (isOBS) {
 // --- GAME VARIABLES ---
 const BASE_HEALTH = 1000000000; 
 let currentHealth = BASE_HEALTH;
+let lastKnownHealth = BASE_HEALTH; // Used to track when he takes damage globally
 let currentLevel = 1;
 let currentMaxHealth = BASE_HEALTH;
 
@@ -52,18 +53,20 @@ const frenzyText = document.getElementById('frenzy-text');
 const attackBtn = document.getElementById('btn-attack');
 
 // --- 2. CLOCK IN & FLOATING EMOJI LOGIC ---
-document.getElementById('btn-clock-in').addEventListener('click', () => {
-    const username = document.getElementById('username-input').value.trim().toUpperCase();
-    if (username.length > 0) {
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('game-container').style.display = 'block';
-        
-        const newEmpRef = employeesRef.push();
-        const randomEmoji = emojiRoster[Math.floor(Math.random() * emojiRoster.length)];
-        newEmpRef.set({ name: username, emoji: randomEmoji });
-        newEmpRef.onDisconnect().remove();
-    }
-});
+if (document.getElementById('btn-clock-in')) {
+    document.getElementById('btn-clock-in').addEventListener('click', () => {
+        const username = document.getElementById('username-input').value.trim().toUpperCase();
+        if (username.length > 0) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('game-container').style.display = 'block';
+            
+            const newEmpRef = employeesRef.push();
+            const randomEmoji = emojiRoster[Math.floor(Math.random() * emojiRoster.length)];
+            newEmpRef.set({ name: username, emoji: randomEmoji });
+            newEmpRef.onDisconnect().remove();
+        }
+    });
+}
 
 const empContainer = document.getElementById('employee-container');
 let activeEmployees = {};
@@ -76,7 +79,7 @@ employeesRef.on('child_added', (snapshot) => {
     tag.className = 'employee-tag';
     tag.id = `emp-${key}`;
     tag.innerHTML = `<div class="employee-emoji">${data.emoji}</div><div class="employee-name">${data.name}</div>`;
-    empContainer.appendChild(tag);
+    if(empContainer) empContainer.appendChild(tag);
     
     activeEmployees[key] = {
         element: tag,
@@ -102,11 +105,20 @@ function moveEmployee(key) {
     setTimeout(() => moveEmployee(key), 2500); 
 }
 
-// --- 3. DATABASE SYNC ---
+// --- 3. DATABASE SYNC & GLOBAL HIT DETECTION ---
 bossRef.on('value', (snapshot) => {
   let boss = snapshot.val();
   if (boss === null || isNaN(boss.health)) { boss = { health: BASE_HEALTH, level: 1 }; bossRef.set(boss); }
-  currentHealth = boss.health; currentLevel = boss.level; currentMaxHealth = BASE_HEALTH * currentLevel; 
+  
+  // GLOBAL HIT DETECTION: If health dropped, trigger the animation on ALL screens (including OBS)
+  if (boss.health < lastKnownHealth) {
+      triggerGlobalHit();
+  }
+  
+  lastKnownHealth = boss.health;
+  currentHealth = boss.health; 
+  currentLevel = boss.level; 
+  currentMaxHealth = BASE_HEALTH * currentLevel; 
   updateBossUI();
 });
 
@@ -129,7 +141,28 @@ function updateBossUI() {
   bossNameEl.innerText = `[Lv. ${currentLevel}] ${bossTitles[titleIndex]}`;
 }
 
-// --- 4. POPUPS (Damage & Quotes) ---
+// --- 4. VISUAL FX LOGIC ---
+function triggerGlobalHit() {
+    // This runs on OBS and all player screens when Firebase sees damage
+    if (bossImageEl) { 
+        bossImageEl.src = 'boss-hit.png';
+        bossImageEl.classList.remove('shake'); 
+        void bossImageEl.offsetWidth; 
+        bossImageEl.classList.add('shake'); 
+        
+        // Revert to standing frame after 150 milliseconds
+        setTimeout(() => { bossImageEl.src = 'boss-standing.png'; }, 150);
+    }
+    
+    if (flashOverlay) { 
+        flashOverlay.style.opacity = '0.5'; 
+        setTimeout(() => flashOverlay.style.opacity = '0', 30); 
+    }
+    
+    // 10% chance to spawn a quote globally on OBS/Browsers when taking damage
+    if (Math.random() < 0.10) spawnQuote();
+}
+
 function spawnDamageNumber(startX, startY, amount) {
     const damageEl = document.createElement('div');
     damageEl.className = 'damage-popup';
@@ -162,7 +195,7 @@ function spawnQuote() {
     ], { duration: 1000, easing: 'ease-out' }).onfinish = () => quoteEl.remove();
 }
 
-// --- 5. PLAYER ATTACK LOGIC WITH IMAGE SWAP ---
+// --- 5. PLAYER LOCAL ATTACK LOGIC ---
 function attack(e) {
   if (isOBS) return; 
 
@@ -175,23 +208,7 @@ function attack(e) {
   updateFrenzyUI();
   updateStatsUI();
 
-  // BOSS IMAGE SWAP & SHAKE LOGIC
-  if (bossImageEl) { 
-      // Change to hit frame
-      bossImageEl.src = 'boss-hit.png';
-      
-      bossImageEl.classList.remove('shake'); 
-      void bossImageEl.offsetWidth; 
-      bossImageEl.classList.add('shake'); 
-      
-      // Revert to standing frame after 150 milliseconds
-      setTimeout(() => {
-          bossImageEl.src = 'boss-standing.png';
-      }, 150);
-  }
-  
   if (attackBtn) { attackBtn.classList.remove('spark'); void attackBtn.offsetWidth; attackBtn.classList.add('spark'); }
-  if (flashOverlay) { flashOverlay.style.opacity = '0.5'; setTimeout(() => flashOverlay.style.opacity = '0', 30); }
 
   let clickX = window.innerWidth / 2; let clickY = window.innerHeight - 100;
   if (e) {
@@ -199,8 +216,8 @@ function attack(e) {
       else if (e.touches && e.touches.length > 0) { clickX = e.touches[0].clientX; clickY = e.touches[0].clientY; }
   }
   
+  // Local only: Spawn exact damage numbers where the user clicks
   spawnDamageNumber(clickX, clickY, actualDamage);
-  if (Math.random() < 0.30) spawnQuote();
 }
 
 setInterval(() => {
@@ -215,40 +232,4 @@ function updateFrenzyUI() {
     else comboMultiplier = 1;
 
     frenzyFill.style.width = frenzyLevel + '%';
-    if (comboMultiplier > 1) { frenzyText.innerText = `COMBO: ${comboMultiplier}x!`; frenzyFill.style.backgroundColor = '#ff0055'; } 
-    else { frenzyText.innerText = `CHARGE METER`; frenzyFill.style.backgroundColor = '#ffeb3b'; }
-}
-
-function updateStatsUI() {
-  if (!coinDisplay || !clickDisplay || !autoDisplay) return; 
-  coinDisplay.innerText = myCoins.toLocaleString();
-  clickDisplay.innerText = myClickDamage.toLocaleString();
-  autoDisplay.innerText = myAutoDamage.toLocaleString();
-  const buyClickEl = document.getElementById('buy-click');
-  const buyAutoEl = document.getElementById('buy-auto');
-  if (buyClickEl) buyClickEl.innerHTML = `Sharpen Blade (+2.5k) <br><span>Cost: ${clickUpgradeCost}</span>`;
-  if (buyAutoEl) buyAutoEl.innerHTML = `Hire Merc (+1k/s) <br><span>Cost: ${autoUpgradeCost}</span>`;
-}
-
-// --- 6. SHOP & TIMERS ---
-const buyClickBtn = document.getElementById('buy-click');
-if (buyClickBtn) {
-    buyClickBtn.addEventListener('click', () => {
-      if (myCoins >= clickUpgradeCost) { myCoins -= clickUpgradeCost; myClickDamage += 2500; clickUpgradeCost = Math.floor(clickUpgradeCost * 1.5); updateStatsUI(); }
-    });
-}
-const buyAutoBtn = document.getElementById('buy-auto');
-if (buyAutoBtn) {
-    buyAutoBtn.addEventListener('click', () => {
-      if (myCoins >= autoUpgradeCost) { myCoins -= autoUpgradeCost; myAutoDamage += 1000; autoUpgradeCost = Math.floor(autoUpgradeCost * 1.5); updateStatsUI(); }
-    });
-}
-const tipBtn = document.getElementById('btn-tip');
-if(tipBtn) {
-    tipBtn.addEventListener('click', () => { window.open("https://streamlabs.com/sl_id_9660e12d-ebbd-3a30-8e86-46081327a6a4/tip", '_blank'); });
-}
-
-if (attackBtn) attackBtn.addEventListener('pointerdown', attack);
-if (bossImageEl) bossImageEl.addEventListener('pointerdown', attack); 
-
-setInterval(() => { if (myAutoDamage > 0) dealGlobalDamage(myAutoDamage); }, 1000);
+    if (combo
