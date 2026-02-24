@@ -1,4 +1,4 @@
-/* --- CORE AESTHETIC WITH YOUR NEW DISCORD BACKGROUND --- */
+/* --- CORE AESTHETIC WITH DISCORD BACKGROUND --- */
 body {
   background-image: url('https://cdn.discordapp.com/attachments/479148520935522315/1475923711952687324/Gemini_Generated_Image_vskzf1vskzf1vskz.png?ex=699f4092&is=699def12&hm=ce97f2c4e3e3d46a5c50a95ee62f909aba3fa4c86ed7f529bd2e3d77aa016b69&');
   background-size: cover;
@@ -20,7 +20,7 @@ body {
 }
 
 #game-container {
-  display: none; /* Hides game for 3 seconds */
+  display: none; /* Hides game for the 3-second intro */
   background: rgba(15, 15, 25, 0.85);
   border: 2px solid #ff00ff;
   border-radius: 10px;
@@ -66,6 +66,10 @@ body {
   cursor: pointer;
   user-select: none;
   -webkit-user-drag: none;
+}
+
+#boss-image-damaged {
+  display: none;
 }
 
 .boss-shake { animation: safeHit 0.15s ease-out; }
