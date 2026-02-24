@@ -96,15 +96,9 @@ body {
   filter: drop-shadow(2px 2px 0px #0ff); 
 }
 
-/* --- NEW DAMAGE POPUPS --- */
 .damage-popup {
-  position: fixed;
-  color: #ffeb3b; /* Neon yellow */
-  text-shadow: 2px 2px #ff0055; /* Neon pink shadow */
-  font-size: 28px;
-  font-weight: bold;
-  pointer-events: none; /* Let clicks pass through them */
-  z-index: 200; /* Above swords */
+  position: fixed; color: #ffeb3b; text-shadow: 2px 2px #ff0055;
+  font-size: 28px; font-weight: bold; pointer-events: none; z-index: 200;
   animation: floatUpFade 0.8s ease-out forwards;
 }
 
