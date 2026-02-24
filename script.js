@@ -9,22 +9,22 @@ const firebaseConfig = {
   appId: "1:32296108457:web:ddeca6185e8821626744b8"
 };
 
+// Initialize Firebase
 if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
 const db = firebase.database();
 const bossRef = db.ref('frank_corporate_data'); 
 
-const BASE_HEALTH = 1000000000; 
+const BASE_HEALTH = 1000000000; // 1 Billion Health per your request
 let currentHealth = BASE_HEALTH;
 let currentMaxHealth = BASE_HEALTH;
 let currentLevel = 1;
 
-// --- 2. PERSISTENCE & STATS ---
+// --- 2. PERSISTENCE (Vaporwave Progress) ---
 let myCoins = parseFloat(localStorage.getItem('vaperCoins')) || 0;
 let myClickDamage = parseFloat(localStorage.getItem('clickDamage')) || 2500;
 let myAutoDamage = parseFloat(localStorage.getItem('autoDamage')) || 0;
 let multiplier = parseFloat(localStorage.getItem('multiplier')) || 1;
 
-// Save/Load Costs so prices don't reset on refresh
 let upgradeCosts = JSON.parse(localStorage.getItem('upgradeCosts')) || {
   interns: 50,
   management: 500,
@@ -43,32 +43,29 @@ const bossImageEl = document.getElementById('boss-image');
 const attackBtn = document.getElementById('btn-attack');
 const loader = document.getElementById('loading-screen');
 
-// --- 3. THE SHOP LOGIC (FIXED) ---
+// --- 3. THE SHOP LOGIC ---
 window.buyUpgrade = function(type) {
   if (myCoins >= upgradeCosts[type]) {
     myCoins -= upgradeCosts[type];
     
-    // Apply Corporate Effects
+    // Applying effects based on corporate theme
     if (type === 'interns') myAutoDamage += 500;
     if (type === 'management') myClickDamage += 1000;
     if (type === 'synergy') multiplier += 0.2;
     if (type === 'aiBot') myAutoDamage += 5000;
     if (type === 'parachute') { myClickDamage *= 1.5; myAutoDamage *= 1.5; }
 
-    // Progressive Scaling
     upgradeCosts[type] = Math.floor(upgradeCosts[type] * 1.6);
     
     updateUI();
     saveGame();
-    
-    // Visual Feedback
     spawnFloatingText(window.innerWidth/2, window.innerHeight/2, "UPGRADED!", "quote");
   } else {
-    spawnFloatingText(window.innerWidth/2, window.innerHeight/2, "INSUFFICIENT FUNDS", "damage");
+    spawnFloatingText(window.innerWidth/2, window.innerHeight/2, "NEED MORE COINS", "damage");
   }
 };
 
-// --- 4. CORE ENGINE ---
+// --- 4. CORE ENGINE & SYNC ---
 function saveGame() {
   localStorage.setItem('vaperCoins', myCoins);
   localStorage.setItem('clickDamage', myClickDamage);
@@ -77,6 +74,82 @@ function saveGame() {
   localStorage.setItem('upgradeCosts', JSON.stringify(upgradeCosts));
 }
 
+// FAIL-SAFE: Hide loader after 3 seconds even if Firebase is slow
+setTimeout(() => { if(loader) loader.style.display = 'none'; }, 3000);
+
 bossRef.on('value', (snapshot) => {
   let boss = snapshot.val();
-  if (
+  if (boss === null || isNaN(boss.health)) { 
+     boss = { health: BASE_HEALTH, level: 1 }; 
+     bossRef.set(boss); 
+  }
+  currentHealth = boss.health;
+  currentLevel = boss.level;
+  currentMaxHealth = BASE_HEALTH * currentLevel; 
+  updateBossUI();
+  if(loader) loader.style.display = 'none'; // Normal loader hide
+});
+
+function dealGlobalDamage(amount) {
+  if (amount <= 0 || isNaN(amount)) return;
+  bossRef.transaction((boss) => {
+    if (!boss) return { health: BASE_HEALTH, level: 1 };
+    let newHealth = boss.health - amount;
+    let newLevel = boss.level;
+    if (newHealth <= 0) { newLevel += 1; newHealth = BASE_HEALTH * newLevel; }
+    return { health: newHealth, level: newLevel };
+  });
+}
+
+// --- 5. ANIMATIONS (Vaporwave Styling) ---
+function spawnFloatingText(x, y, text, type) {
+  const el = document.createElement('div');
+  el.innerText = text;
+  el.className = `floating-text ${type} animate-float`;
+  const randomRot = (Math.random() - 0.5) * 60;
+  el.style.left = x + 'px'; el.style.top = y + 'px';
+  el.style.setProperty('--rot', `${randomRot}deg`);
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2000);
+}
+
+if (attackBtn) {
+  attackBtn.addEventListener('click', (e) => {
+    const totalDmg = myClickDamage * multiplier;
+    dealGlobalDamage(totalDmg);
+    myCoins += (1 * multiplier);
+    
+    if (bossImageEl) {
+      bossImageEl.classList.add('boss-shake');
+      setTimeout(() => bossImageEl.classList.remove('boss-shake'), 100);
+    }
+    
+    // Rotating damage indicator per request
+    spawnFloatingText(e.clientX, e.clientY, `+${Math.floor(totalDmg).toLocaleString()}`, 'damage');
+    
+    if (Math.random() > 0.85) {
+      const rect = bossImageEl.getBoundingClientRect();
+      spawnFloatingText(rect.left + rect.width/2, rect.top, corpQuotes[Math.floor(Math.random()*corpQuotes.length)], 'quote');
+    }
+    updateUI();
+  });
+}
+
+// Passive Income loop
+setInterval(() => {
+  if (myAutoDamage > 0) {
+    dealGlobalDamage(myAutoDamage * multiplier);
+    myCoins += (myAutoDamage * 0.01 * multiplier);
+  }
+  updateUI();
+}, 1000);
+
+function updateUI() {
+  if (coinDisplay) coinDisplay.innerText = Math.floor(myCoins).toLocaleString();
+  if (autoDisplay) autoDisplay.innerText = Math.floor(myAutoDamage * multiplier).toLocaleString();
+  
+  for (let key in upgradeCosts) {
+    const btn = document.getElementById(`buy-${key}`);
+    if (btn) {
+      let label = key.charAt(0).toUpperCase() + key.slice(1);
+      btn
