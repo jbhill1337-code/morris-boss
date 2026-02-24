@@ -6,6 +6,9 @@ body {
   background-color: #120a1f;
   color: #fff;
   font-family: 'VT323', monospace;
+  /* Anti-highlighting for spam clicking */
+  user-select: none; 
+  -webkit-user-select: none;
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -21,153 +24,91 @@ body {
   max-width: 450px;
   text-align: center;
   padding: 20px;
-  margin-top: 20px;
-  margin-bottom: 20px;
+  /* Hard-centers the box so it can't run away to the left */
+  margin: 20px auto; 
   background: rgba(20, 10, 40, 0.85);
   border: 3px solid #0ff;
   box-shadow: 0 0 20px #0ff, inset 0 0 15px #f0f;
   border-radius: 10px;
 }
 
-.title {
-  color: #f0f;
-  text-shadow: 2px 2px #0ff;
-  font-size: 32px;
-  margin-bottom: 15px;
-  margin-top: 0;
-  letter-spacing: 2px;
-}
+.title { color: #f0f; text-shadow: 2px 2px #0ff; font-size: 30px; margin: 0 0 15px 0; letter-spacing: 1px; }
 
-#boss-area {
-  position: relative;
-  height: 200px;
-  margin-bottom: 20px;
-}
+#boss-area { position: relative; height: 200px; margin-bottom: 20px; }
 
 #boss-image {
   height: 100%;
   object-fit: contain;
   filter: drop-shadow(0 0 10px #f0f);
   cursor: pointer;
+  /* Prevents double-tap zoom on phones */
+  touch-action: manipulation; 
 }
 
-.shake { animation: shakeAction 0.2s; }
-
+.shake { animation: shakeAction 0.1s; }
 @keyframes shakeAction {
   0% { transform: translate(5px, 5px); }
-  25% { transform: translate(-5px, -5px); }
-  50% { transform: translate(5px, -5px); }
-  75% { transform: translate(-5px, 5px); }
+  50% { transform: translate(-5px, -5px); }
   100% { transform: translate(0, 0); }
 }
 
 #flash-overlay {
-  position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: white;
-  opacity: 0;
-  pointer-events: none;
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  background: white; opacity: 0; pointer-events: none;
 }
 
 #health-bar-container {
-  width: 100%;
-  height: 35px;
-  background-color: #222;
-  border: 2px solid #fff;
-  margin: 0 auto 15px auto;
-  position: relative;
-  box-shadow: 0 0 10px #f0f;
+  width: 100%; height: 30px; background-color: #222; border: 2px solid #fff;
+  margin: 0 auto 10px auto; position: relative; box-shadow: 0 0 10px #f0f;
 }
-
-#health-bar-fill {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, #f0f, #0ff);
-  transition: width 0.1s linear;
-}
-
+#health-bar-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #f0f, #0ff); transition: width 0.1s linear; }
 #health-text {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 24px;
-  color: #fff;
-  text-shadow: 2px 2px #000;
-  white-space: nowrap;
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  font-size: 22px; color: #fff; text-shadow: 2px 2px #000; white-space: nowrap;
+}
+
+/* --- NEW FRENZY METER --- */
+#frenzy-container {
+  width: 100%; height: 25px; background-color: #111; border: 1px solid #ffeb3b;
+  margin: 0 auto 15px auto; position: relative;
+}
+#frenzy-bar-fill {
+  width: 0%; height: 100%; background: #ffeb3b; transition: width 0.1s linear, background-color 0.2s;
+}
+#frenzy-text {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  font-size: 18px; color: #fff; text-shadow: 1px 1px #000; white-space: nowrap;
 }
 
 #player-stats {
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid #0ff;
-  border-radius: 5px;
-  padding: 10px;
-  margin-bottom: 15px;
-  font-size: 22px;
-  color: #0ff;
+  background: rgba(0, 0, 0, 0.5); border: 1px solid #0ff; border-radius: 5px;
+  padding: 10px; margin-bottom: 15px; font-size: 20px; color: #0ff;
 }
-
 #player-stats p { margin: 5px 0; }
-#coin-count { color: #ffeb3b; text-shadow: 1px 1px #ff0055; font-size: 28px;}
+#coin-count { color: #ffeb3b; text-shadow: 1px 1px #ff0055; font-size: 26px;}
 
-.action-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  margin-bottom: 20px;
-}
+.action-buttons { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
 
 .vapor-btn {
-  font-family: 'VT323', monospace;
-  font-size: 26px;
-  padding: 15px;
-  width: 100%;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  text-transform: uppercase;
-  font-weight: bold;
-  transition: transform 0.1s, box-shadow 0.1s;
+  font-family: 'VT323', monospace; font-size: 24px; padding: 12px; width: 100%;
+  border: none; border-radius: 5px; cursor: pointer; text-transform: uppercase;
+  font-weight: bold; transition: transform 0.1s, box-shadow 0.1s;
+  touch-action: manipulation; /* Anti-zoom */
 }
-
 .vapor-btn:active { transform: scale(0.95); }
+.attack-btn { background: linear-gradient(90deg, #ff0055, #f0f); color: white; box-shadow: 0 0 15px #f0f; }
+.tip-btn { background: linear-gradient(90deg, #00ffcc, #0099ff); color: white; box-shadow: 0 0 15px #00ffcc; text-shadow: 1px 1px #000; }
 
-.attack-btn {
-  background: linear-gradient(90deg, #ff0055, #f0f);
-  color: white;
-  box-shadow: 0 0 15px #f0f;
-}
-
-.tip-btn {
-  background: linear-gradient(90deg, #00ffcc, #0099ff);
-  color: white;
-  box-shadow: 0 0 15px #00ffcc;
-  text-shadow: 1px 1px #000;
-}
-
-#shop {
-  border-top: 2px dashed #0ff;
-  padding-top: 15px;
-}
-
-.shop-title {
-  color: #0ff;
-  font-size: 24px;
-  margin-top: 0;
-}
-
+#shop { border-top: 2px dashed #0ff; padding-top: 15px; }
+.shop-title { color: #0ff; font-size: 22px; margin-top: 0; }
 .shop-btn {
-  font-family: 'VT323', monospace;
-  font-size: 20px;
-  padding: 10px;
-  /* --- SWORD PARTICLE SYSTEM --- */
-.sword-particle {
-  position: fixed;
-  width: 40px; /* Adjust size of the sword here */
-  height: 40px;
-  pointer-events: none; /* Stops the swords from blocking your clicks */
-  z-index: 100;
-  image-rendering: pixelated; /* Keeps the 8-bit sword looking crisp */
-  filter: drop-shadow(2px 2px 0px #0ff); /* Vaporwave shadow for the sword */
+  font-family: 'VT323', monospace; font-size: 18px; padding: 10px; width: 100%; margin-bottom: 10px;
+  background: #222; color: #fff; border: 2px solid #00ffcc; cursor: pointer; border-radius: 5px;
+  touch-action: manipulation;
 }
-  width:
+.shop-btn span { color: #ffeb3b; }
+.shop-btn:active { transform: scale(0.98); }
 
+.scanlines {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0,
