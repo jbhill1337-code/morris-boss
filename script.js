@@ -1,11 +1,10 @@
 // --- 1. THE 3-SECOND INTRO SEQUENCE ---
-// This guarantees the game will show after exactly 3 seconds.
 window.addEventListener('load', () => {
   setTimeout(() => {
     const loader = document.getElementById('loading-screen');
     const gameUI = document.getElementById('game-container');
     if (loader) loader.style.display = 'none';
-    if (gameUI) gameUI.style.display = 'block'; // Reveals the game
+    if (gameUI) gameUI.style.display = 'block'; 
   }, 3000); 
 });
 
@@ -15,7 +14,6 @@ let currentHealth = BASE_HEALTH;
 let currentMaxHealth = BASE_HEALTH;
 let currentLevel = 1;
 
-// Anti-crash wrapper for saving data
 function getSavedNum(key, defaultVal) {
   try {
     let val = localStorage.getItem(key);
@@ -27,17 +25,18 @@ function getSavedNum(key, defaultVal) {
   }
 }
 
-let myCoins = getSavedNum('vaperCoins', 0);
-let myClickDamage = getSavedNum('clickDamage', 2500);
-let myAutoDamage = getSavedNum('autoDamage', 0);
-let multiplier = getSavedNum('multiplier', 1);
+// Keys updated to _v2 to wipe the bugged prices and start fresh
+let myCoins = getSavedNum('vaperCoins_v2', 0);
+let myClickDamage = getSavedNum('clickDamage_v2', 2500);
+let myAutoDamage = getSavedNum('autoDamage_v2', 0);
+let multiplier = getSavedNum('multiplier_v2', 1);
 
 let defaultCosts = { interns: 50, management: 500, synergy: 2000, aiBot: 10000, parachute: 50000 };
-let upgradeCosts = defaultCosts;
+let upgradeCosts = { ...defaultCosts }; // Prevents missing keys from breaking the shop
 try {
-  let savedCosts = JSON.parse(localStorage.getItem('upgradeCosts'));
+  let savedCosts = JSON.parse(localStorage.getItem('upgradeCosts_v2'));
   if (savedCosts && typeof savedCosts === 'object') {
-    upgradeCosts = savedCosts;
+    upgradeCosts = { ...defaultCosts, ...savedCosts };
   }
 } catch (e) {}
 
@@ -83,11 +82,11 @@ if (typeof firebase !== 'undefined' && firebase.apps) {
 // --- 4. CORE MECHANICS ---
 function saveGame() {
   try {
-    localStorage.setItem('vaperCoins', myCoins);
-    localStorage.setItem('clickDamage', myClickDamage);
-    localStorage.setItem('autoDamage', myAutoDamage);
-    localStorage.setItem('multiplier', multiplier);
-    localStorage.setItem('upgradeCosts', JSON.stringify(upgradeCosts));
+    localStorage.setItem('vaperCoins_v2', myCoins);
+    localStorage.setItem('clickDamage_v2', myClickDamage);
+    localStorage.setItem('autoDamage_v2', myAutoDamage);
+    localStorage.setItem('multiplier_v2', multiplier);
+    localStorage.setItem('upgradeCosts_v2', JSON.stringify(upgradeCosts));
   } catch (e) {}
 }
 
@@ -113,16 +112,20 @@ function processDamage(amount) {
   }
 }
 
+// The Shop Math has been balanced here
 window.buyUpgrade = function(type) {
   if (myCoins >= upgradeCosts[type]) {
     myCoins -= upgradeCosts[type];
+    
     if (type === 'interns') myAutoDamage += 500;
     if (type === 'management') myClickDamage += 1000;
     if (type === 'synergy') multiplier += 0.2;
     if (type === 'aiBot') myAutoDamage += 5000;
     if (type === 'parachute') { myClickDamage *= 1.5; myAutoDamage *= 1.5; }
 
-    upgradeCosts[type] = Math.floor(upgradeCosts[type] * 1.6);
+    // Industry standard scaling multiplier is 1.15
+    upgradeCosts[type] = Math.ceil(upgradeCosts[type] * 1.15);
+    
     updateUI();
     saveGame();
   }
