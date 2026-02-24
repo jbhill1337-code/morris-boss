@@ -11,13 +11,10 @@ const firebaseConfig = {
 
 if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
 const db = firebase.database();
-
-// Fresh databases to guarantee zero bugs from the sword era
 const bossRef = db.ref('frank_raid_v5'); 
 const employeesRef = db.ref('active_employees_v5');
 
 // --- OBS SYNC CHECK ---
-// Hides all the clutter if the URL has ?obs=true at the end
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
 if (isOBS) {
@@ -61,12 +58,9 @@ document.getElementById('btn-clock-in').addEventListener('click', () => {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('game-container').style.display = 'block';
         
-        // Register user in the database
         const newEmpRef = employeesRef.push();
         const randomEmoji = emojiRoster[Math.floor(Math.random() * emojiRoster.length)];
         newEmpRef.set({ name: username, emoji: randomEmoji });
-        
-        // The Magic OBS Trick: Delete the user automatically if their phone disconnects
         newEmpRef.onDisconnect().remove();
     }
 });
@@ -74,7 +68,6 @@ document.getElementById('btn-clock-in').addEventListener('click', () => {
 const empContainer = document.getElementById('employee-container');
 let activeEmployees = {};
 
-// Listen for new players joining
 employeesRef.on('child_added', (snapshot) => {
     const data = snapshot.val();
     const key = snapshot.key;
@@ -82,10 +75,7 @@ employeesRef.on('child_added', (snapshot) => {
     const tag = document.createElement('div');
     tag.className = 'employee-tag';
     tag.id = `emp-${key}`;
-    tag.innerHTML = `
-        <div class="employee-emoji">${data.emoji}</div>
-        <div class="employee-name">${data.name}</div>
-    `;
+    tag.innerHTML = `<div class="employee-emoji">${data.emoji}</div><div class="employee-name">${data.name}</div>`;
     empContainer.appendChild(tag);
     
     activeEmployees[key] = {
@@ -96,7 +86,6 @@ employeesRef.on('child_added', (snapshot) => {
     moveEmployee(key);
 });
 
-// Remove them from screen when they leave
 employeesRef.on('child_removed', (snapshot) => {
     const key = snapshot.key;
     const el = document.getElementById(`emp-${key}`);
@@ -104,14 +93,13 @@ employeesRef.on('child_removed', (snapshot) => {
     delete activeEmployees[key];
 });
 
-// Bounce the employees around the screen randomly
 function moveEmployee(key) {
     if (!activeEmployees[key]) return;
     const emp = activeEmployees[key];
     emp.x = Math.random() * (window.innerWidth - 80);
     emp.y = Math.random() * (window.innerHeight - 80);
     emp.element.style.transform = `translate(${emp.x}px, ${emp.y}px)`;
-    setTimeout(() => moveEmployee(key), 2500); // Pick a new spot every 2.5 seconds
+    setTimeout(() => moveEmployee(key), 2500); 
 }
 
 // --- 3. DATABASE SYNC ---
@@ -174,9 +162,9 @@ function spawnQuote() {
     ], { duration: 1000, easing: 'ease-out' }).onfinish = () => quoteEl.remove();
 }
 
-// --- 5. PLAYER ATTACK LOGIC ---
+// --- 5. PLAYER ATTACK LOGIC WITH IMAGE SWAP ---
 function attack(e) {
-  if (isOBS) return; // The OBS browser should not be clicking!
+  if (isOBS) return; 
 
   let actualDamage = myClickDamage * comboMultiplier;
   dealGlobalDamage(actualDamage);
@@ -187,7 +175,21 @@ function attack(e) {
   updateFrenzyUI();
   updateStatsUI();
 
-  if (bossImageEl) { bossImageEl.classList.remove('shake'); void bossImageEl.offsetWidth; bossImageEl.classList.add('shake'); }
+  // BOSS IMAGE SWAP & SHAKE LOGIC
+  if (bossImageEl) { 
+      // Change to hit frame
+      bossImageEl.src = 'boss-hit.png';
+      
+      bossImageEl.classList.remove('shake'); 
+      void bossImageEl.offsetWidth; 
+      bossImageEl.classList.add('shake'); 
+      
+      // Revert to standing frame after 150 milliseconds
+      setTimeout(() => {
+          bossImageEl.src = 'boss-standing.png';
+      }, 150);
+  }
+  
   if (attackBtn) { attackBtn.classList.remove('spark'); void attackBtn.offsetWidth; attackBtn.classList.add('spark'); }
   if (flashOverlay) { flashOverlay.style.opacity = '0.5'; setTimeout(() => flashOverlay.style.opacity = '0', 30); }
 
