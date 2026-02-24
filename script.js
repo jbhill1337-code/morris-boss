@@ -38,7 +38,7 @@ let clickUpgradeCost = 10;
 let autoUpgradeCost = 50;
 
 // PASTE YOUR SWORD IMAGE LINK HERE!
-const SWORD_IMAGE_URL = "YOUR_DISCORD_SWORD_LINK_HERE";
+const SWORD_IMAGE_URL = "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/89610245-731c-4afa-8a5b-0d8174875890/d56pg7g-4bca25f8-2cd0-4ac1-86fb-2d6fb41def78.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiIvZi84OTYxMDI0NS03MzFjLTRhZmEtOGE1Yi0wZDgxNzQ4NzU4OTAvZDU2cGc3Zy00YmNhMjVmOC0yY2QwLTRhYzEtODZmYi0yZDZmYjQxZGVmNzgucG5nIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.oMXwqFIvdUbMDgyf-RKAlc3d6bOY-z1Tv21dAbmtYys";
 
 const bossNameEl = document.getElementById('boss-name');
 const bossImageEl = document.getElementById('boss-image');
@@ -201,3 +201,4 @@ setInterval(() => {
     dealGlobalDamage(myAutoDamage);
   }
 }, 1000);
+
