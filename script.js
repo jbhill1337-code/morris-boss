@@ -216,6 +216,18 @@ if (bossImageEl) {
   bossImageEl.addEventListener('click', (e) => {
     const totalDmg = myClickDamage * multiplier;
     let frankDied = processDamage(totalDmg);
+    // --- BROADCAST PLAYER CLICK TO OBS ---
+    if (bossRef && myPlayerId && myPlayerName) {
+      const activeEmployeesRef = firebase.database().ref('active_employees/' + myPlayerId);
+      activeEmployeesRef.set({
+        name: myPlayerName,
+        emoji: myEmoji,
+        damage: Math.floor(totalDmg),
+        x: e.clientX,
+        y: e.clientY,
+        timestamp: Date.now() // Tells OBS this is a fresh click
+      });
+    }
     myCoins += (1 * multiplier);
     
     // Clear any existing timer so rapid clicking doesn't mess up the animation
@@ -256,4 +268,5 @@ setInterval(() => {
 }, 1000);
 
 updateUI();
+
 
