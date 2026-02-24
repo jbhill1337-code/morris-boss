@@ -6,7 +6,7 @@ body {
   margin: 0; padding: 0; background-color: #120a1f; color: #fff;
   font-family: 'VT323', monospace; user-select: none; -webkit-user-select: none;
   min-height: 100vh; overflow: hidden;
-  /* Ensure your local background image is uploaded to GitHub */
+  /* Local image background */
   background-image: url('background-level-1.png');
   background-size: cover; background-position: center; z-index: -1; 
 }
@@ -39,8 +39,6 @@ body {
 .shake { animation: shakeAction 0.1s; }
 @keyframes shakeAction { 0% { transform: translate(5px, 5px); } 50% { transform: translate(-5px, -5px); } 100% { transform: translate(0, 0); } }
 
-#flash-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; opacity: 0; pointer-events: none; border-radius: 5px; }
-
 #health-bar-container { width: 100%; height: 30px; background-color: #222; border: 2px solid #fff; margin: 0 auto 10px auto; position: relative; box-shadow: 0 0 10px #f0f; }
 #health-bar-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #f0f, #0ff); transition: width 0.1s linear; }
 #health-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 22px; color: #fff; text-shadow: 2px 2px #000; }
@@ -58,13 +56,13 @@ body {
 
 .damage-popup { position: fixed; color: #ffeb3b; text-shadow: 2px 2px #ff0055; font-size: 28px; font-weight: bold; pointer-events: none; z-index: 200; animation: floatUpFade 0.8s ease-out forwards; }
 .quote-popup { position: fixed; color: #0ff; text-shadow: 2px 2px #f0f; font-size: 22px; font-weight: bold; pointer-events: none; z-index: 190; animation: floatQuoteFade 1s ease-out forwards; }
-.merc-emoji-popup { position: fixed; font-size: 40px; pointer-events: none; z-index: 250; animation: floatUpFade 1s ease-in forwards; }
 
-@keyframes floatUpFade { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-100px) scale(1.5); } }
+@keyframes floatUpFade { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-60px) scale(1.2); } }
 @keyframes floatQuoteFade { 0% { opacity: 1; transform: translateY(0) scale(0.8); } 100% { opacity: 0; transform: translateY(-40px) scale(1.1); } }
 
 #employee-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden; }
 .employee-tag { position: absolute; text-align: center; transition: transform 2.5s linear; }
-.employee-name { font-size: 16px; color: #fff; background: rgba(0,0,0,0.7); padding: 2px 6px; border: 1px solid #0ff; border-radius: 4px; }
+.employee-emoji { font-size: 28px; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.8)); }
+.employee-name { font-size: 16px; color: #fff; background: rgba(0,0,0,0.7); padding: 2px 6px; border: 1px solid #0ff; border-radius: 4px; display: inline-block; white-space: nowrap; }
 
 .scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 4px, 3px 100%; pointer-events: none; z-index: 10; }
