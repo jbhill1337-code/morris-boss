@@ -19,3 +19,29 @@
 
     <div id="health-bar-container">
       <div id="health-bar-fill"></div>
+      <span id="health-text">Loading Data...</span>
+    </div>
+
+    <div id="player-stats">
+      <p>VAPOR COINS: <span id="coin-count">0</span></p>
+      <p>CLICK DMG: <span id="click-power">2,500</span> | AUTO DMG: <span id="auto-power">0</span>/sec</p>
+    </div>
+
+    <div class="action-buttons">
+      <button id="btn-attack" class="vapor-btn attack-btn">⚔️ ATTACK!</button>
+      <button id="btn-tip" class="vapor-btn tip-btn">💥 HIRE PREMIUM MERCENARY (Tip)</button>
+    </div>
+
+    <div id="shop">
+      <h2 class="shop-title">-- UPGRADES --</h2>
+      <button id="buy-click" class="shop-btn">Sharpen Blade (+2.5k Dmg) <br><span>Cost: 10 Coins</span></button>
+      <button id="buy-auto" class="shop-btn">Hire Mercenary (+1k Auto/sec) <br><span>Cost: 50 Coins</span></button>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  
+  <script src="script.js"></script>
+</body>
+</html>
