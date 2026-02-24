@@ -11,7 +11,8 @@ const firebaseConfig = {
 
 if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
 const db = firebase.database();
-const bossRef = db.ref('frank_corporate_data'); 
+// Brand new, uncorrupted save file
+const bossRef = db.ref('frank_corporate_data_v4'); 
 
 const BASE_HEALTH = 1000000000; 
 let currentHealth = BASE_HEALTH;
@@ -23,7 +24,6 @@ const bossTitles = [
   "Corp. Frank: VP of Downsizing", "Corp. Frank: The CEO", "Corp. Frank: Chairman of the Board"
 ];
 
-// NEW CORPORATE QUOTES LIST
 const corpQuotes = [
   "SYNERGY!", "LET'S CIRCLE BACK!", "THINK OUTSIDE THE BOX!", 
   "WE NEED MORE BANDWIDTH!", "RETURN TO OFFICE!", "PIVOT!", 
@@ -119,14 +119,15 @@ function spawnDamageNumber(startX, startY, amount) {
     document.body.appendChild(damageEl);
     damageEl.style.left = `${startX + (Math.random() * 20 - 10)}px`;
     damageEl.style.top = `${startY - 30}px`;
+    
+    // Dynamically assign slight random rotation so it doesn't break CSS
+    damageEl.style.transform = `rotate(${Math.random() * 10 - 5}deg)`;
     setTimeout(() => { damageEl.remove(); }, 800);
 }
 
-// NEW FUNCTION: Spawns quotes from Frank's head
 function spawnQuote() {
     if (!bossImageEl) return;
     const bossRect = bossImageEl.getBoundingClientRect();
-    // Calculate position near the top middle of Frank's image (his head)
     const headX = bossRect.left + bossRect.width / 2;
     const headY = bossRect.top + (bossRect.height * 0.2); 
 
@@ -135,10 +136,15 @@ function spawnQuote() {
     quoteEl.innerText = corpQuotes[Math.floor(Math.random() * corpQuotes.length)];
     document.body.appendChild(quoteEl);
     
-    // Offset slightly randomly around his head
     quoteEl.style.left = `${headX + (Math.random() * 60 - 30)}px`;
     quoteEl.style.top = `${headY}px`;
-    setTimeout(() => { quoteEl.remove(); }, 1000);
+    
+    // Determine float direction dynamically
+    const floatDir = Math.random() > 0.5 ? 60 : -60;
+    quoteEl.animate([
+      { opacity: 1, transform: `translate(0, 0) scale(0.8)` },
+      { opacity: 0, transform: `translate(${floatDir}px, -40px) scale(1.1)` }
+    ], { duration: 1000, easing: 'ease-out' }).onfinish = () => quoteEl.remove();
 }
 
 // --- PLAYER ATTACK LOGIC ---
@@ -165,7 +171,6 @@ function attack(e) {
   spawnSwords(clickX, clickY);
   spawnDamageNumber(clickX, clickY, actualDamage);
   
-  // 30% chance to yell a corporate quote on click
   if (Math.random() < 0.30) {
       spawnQuote();
   }
