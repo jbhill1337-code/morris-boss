@@ -43,6 +43,7 @@ const clickDisplay = document.getElementById('click-power');
 const autoDisplay = document.getElementById('auto-power');
 const frenzyFill = document.getElementById('frenzy-bar-fill');
 const frenzyText = document.getElementById('frenzy-text');
+const attackBtn = document.getElementById('btn-attack');
 
 // --- DATABASE SYNC ---
 bossRef.on('value', (snapshot) => {
@@ -77,7 +78,7 @@ function updateBossUI() {
   bossNameEl.innerText = `[Lv. ${currentLevel}] ${bossTitles[titleIndex]}`;
 }
 
-// --- VISUAL PARTICLE SYSTEM (FIXED MATH) ---
+// --- VISUAL PARTICLE SYSTEM ---
 function spawnSwords(startX, startY) {
   if (!bossImageEl) return;
   const bossRect = bossImageEl.getBoundingClientRect();
@@ -88,20 +89,23 @@ function spawnSwords(startX, startY) {
     const sword = document.createElement('img');
     sword.src = SWORD_IMAGE_URL;
     sword.className = 'sword-particle';
-    
-    // Lock them to the top left so our translate math works perfectly everywhere
-    sword.style.left = '0px';
-    sword.style.top = '0px';
     document.body.appendChild(sword);
 
-    const offsetX = startX + (Math.random() - 0.5) * 80;
-    const offsetY = startY + (Math.random() - 0.5) * 80;
-    const angle = Math.atan2(targetY - offsetY, targetX - offsetX) * (180 / Math.PI);
+    // Set the physical start location to exactly where the finger is
+    const offsetX = startX + (Math.random() - 0.5) * 60;
+    const offsetY = startY + (Math.random() - 0.5) * 60;
+    sword.style.left = `${offsetX}px`;
+    sword.style.top = `${offsetY}px`;
 
-    // Animate from raw start coordinates to raw target coordinates
+    // Calculate the distance to travel
+    const deltaX = targetX - offsetX;
+    const deltaY = targetY - offsetY;
+    const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+
+    // Animate across that distance
     sword.animate([
-      { transform: `translate(${offsetX - 20}px, ${offsetY - 20}px) rotate(${angle + 45}deg) scale(0.5)`, opacity: 1 },
-      { transform: `translate(${targetX - 20}px, ${targetY - 20}px) rotate(${angle + 45}deg) scale(1.2)`, opacity: 0 }
+      { transform: `translate(-50%, -50%) rotate(${angle + 45}deg) scale(0.5)`, opacity: 1 },
+      { transform: `translate(${deltaX}px, ${deltaY}px) rotate(${angle + 45}deg) scale(1.2)`, opacity: 0 }
     ], {
       duration: 250 + Math.random() * 150, 
       easing: 'cubic-bezier(0.25, 1, 0.5, 1)'
@@ -119,22 +123,30 @@ function attack(e) {
   updateFrenzyUI();
   updateStatsUI();
 
+  // Trigger Boss Shake
   if (bossImageEl) {
       bossImageEl.classList.remove('shake');
       void bossImageEl.offsetWidth; 
       bossImageEl.classList.add('shake');
   }
   
+  // Trigger Button Spark
+  if (attackBtn) {
+      attackBtn.classList.remove('spark');
+      void attackBtn.offsetWidth; 
+      attackBtn.classList.add('spark');
+  }
+  
+  // Trigger subtle flash
   if (flashOverlay) {
-      flashOverlay.style.opacity = '1';
+      flashOverlay.style.opacity = '0.5';
       setTimeout(() => flashOverlay.style.opacity = '0', 30);
   }
 
-  // Fallback coordinates if the touch event fails
+  // Get accurate click coordinates
   let clickX = window.innerWidth / 2; 
   let clickY = window.innerHeight - 100;
 
-  // Safely grab the exact tap location
   if (e) {
       if (e.clientX !== undefined && e.clientY !== undefined) {
           clickX = e.clientX;
@@ -219,7 +231,6 @@ if(tipBtn) {
 }
 
 // --- EVENT LISTENERS & TIMERS ---
-const attackBtn = document.getElementById('btn-attack');
 if (attackBtn) attackBtn.addEventListener('pointerdown', (e) => attack(e));
 if (bossImageEl) bossImageEl.addEventListener('pointerdown', (e) => attack(e)); 
 
