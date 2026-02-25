@@ -116,3 +116,12 @@ setInterval(() => { frenzy=Math.max(0, frenzy-2); multi=frenzy>=100?5:frenzy>=75
 if(!isOBS) load();
 document.getElementById('btn-attack').onpointerdown = attack;
 bossImg.onpointerdown = attack;
+// Add functionality to the Tip Button
+const tipBtn = document.getElementById('btn-tip');
+if (tipBtn) {
+    tipBtn.onpointerdown = (e) => {
+        e.preventDefault(); // Prevents zooming on mobile
+        // Replace this URL with your actual tipping link (Ko-fi, Streamlabs, etc.)
+        window.open("https://your-tip-link-here.com", "_blank"); 
+    };
+}
