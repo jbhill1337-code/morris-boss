@@ -13,8 +13,8 @@ const db = firebase.database();
 const bossRef = db.ref('frank_raid_v9'); 
 const employeesRef = db.ref('active_employees_v9');
 
-// Detect OBS (Vertical) or explicit tag
-const isOBS = (window.innerHeight > window.innerWidth) || (new URLSearchParams(window.location.search).get('obs') === 'true');
+// Detect OBS ONLY via explicit URL tag so phones work correctly
+const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
 if (isOBS) {
     document.getElementById('login-screen').style.display = 'none';
@@ -125,3 +125,4 @@ if (tipBtn) {
         window.open("https://your-tip-link-here.com", "_blank"); 
     };
 }
+
