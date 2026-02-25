@@ -53,15 +53,53 @@ body {
 .scanlines { position: fixed; inset: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%); background-size: 100% 4px; pointer-events: none; z-index: 10; }
 /* Mobile Optimization */
 /* Mobile Optimization */
+/* Mobile Optimization */
 @media screen and (max-width: 600px) {
-    /* Adjust the main container to take full width */
-    #game-container { ... }
-    /* Shrink the Boss so he's not off-screen */
-    #boss-container { ... }
-    /* Stack the upgrades and quotes vertically or in a scrollable area */
-    #ui-layer { ... }
-    .upgrade-button, .tip-button { ... }
-    /* Ensure damage indicators appear within the viewport */
-    .damage-indicator { ... }
+    #game-container {
+        width: 95vw;
+        padding: 10px;
+        margin: 10px auto;
+        /* Ensure the container doesn't get taller than the screen */
+        max-height: 95vh; 
+        overflow-y: auto; /* Let the inside scroll if needed */
+    }
+
+    /* Shrink the boss slightly so he fits with the UI */
+    #boss-area {
+        height: 150px; 
+    }
+
+    #boss-image {
+        transform: scale(0.9);
+    }
+
+    .title {
+        font-size: 24px;
+        margin-bottom: 10px;
+    }
+
+    /* Stack buttons nicely */
+    .action-buttons, #shop {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .vapor-btn, .shop-btn {
+        padding: 15px; /* Larger tap targets */
+        font-size: 18px;
+        margin-bottom: 5px;
+    }
+
+    /* Adjust text sizes so they don't break lines awkwardly */
+    #player-stats {
+        font-size: 16px;
+        padding: 5px;
+    }
+
+    #health-text {
+        font-size: 16px;
+    }
 }
+
 
