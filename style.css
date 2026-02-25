@@ -4,9 +4,13 @@
 body {
   margin: 0; padding: 0; background-color: #120a1f; color: #fff;
   font-family: 'VT323', monospace; user-select: none;
-  min-height: 100vh; overflow: hidden;
+  min-height: 100vh;
+  /* FIXED: Allow vertical scrolling but block horizontal jitter */
+  overflow-y: auto; 
+  overflow-x: hidden;
   background-image: url('background-level-1.png');
   background-size: cover; background-position: center;
+  background-attachment: fixed; /* Keeps background still while scrolling */
 }
 
 #login-screen { position: fixed; inset: 0; background: rgba(18, 10, 31, 0.95); z-index: 500; display: flex; justify-content: center; align-items: center; }
@@ -41,7 +45,8 @@ body {
 @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-70px); } }
 @keyframes floatQuote { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-40px); } }
 
-#employee-container { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
+/* OBS ELEMENTS */
+#employee-container { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
 .employee-tag { position: absolute; transition: transform 2.5s linear; }
 .employee-emoji { font-size: 28px; }
 .employee-name { font-size: 14px; color: #fff; background: rgba(0,0,0,0.7); padding: 2px 5px; border: 1px solid #0ff; }

@@ -10,9 +10,10 @@ const firebaseConfig = {
 
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const bossRef = db.ref('frank_raid_v8'); 
-const employeesRef = db.ref('active_employees_v8');
+const bossRef = db.ref('frank_raid_v9'); 
+const employeesRef = db.ref('active_employees_v9');
 
+// Detect OBS (Vertical) or explicit tag
 const isOBS = (window.innerHeight > window.innerWidth) || (new URLSearchParams(window.location.search).get('obs') === 'true');
 
 if (isOBS) {
@@ -31,9 +32,9 @@ const hpFill = document.getElementById('health-bar-fill');
 const hpText = document.getElementById('health-text');
 const corpQuotes = [ "SYNERGY!", "LET'S CIRCLE BACK!", "BANDWIDTH!", "RETURN TO OFFICE!", "PIVOT!", "ACTION ITEMS!" ];
 
-function save() { if(!isOBS) localStorage.setItem('frank_v8', JSON.stringify({c:myCoins, cd:myClickDmg, ad:myAutoDmg, cc:clickCost, ac:autoCost, u:myUser})); }
+function save() { if(!isOBS) localStorage.setItem('frank_v9', JSON.stringify({c:myCoins, cd:myClickDmg, ad:myAutoDmg, cc:clickCost, ac:autoCost, u:myUser})); }
 function load() {
-    const s = localStorage.getItem('frank_v8');
+    const s = localStorage.getItem('frank_v9');
     if(s) {
         const d = JSON.parse(s);
         myCoins=d.c; myClickDmg=d.cd; myAutoDmg=d.ad; clickCost=d.cc; autoCost=d.ac; myUser=d.u;
@@ -49,7 +50,7 @@ document.getElementById('btn-clock-in').onclick = () => {
     if(val) { myUser=val; document.getElementById('login-screen').style.display='none'; document.getElementById('game-container').style.display='block'; clockIn(myUser); save(); }
 };
 
-// --- GLOBAL SYNC ---
+// --- SYNC ---
 bossRef.on('value', (snap) => {
     let b = snap.val();
     if(!b) { b={health:1000000000, level:1}; bossRef.set(b); }
@@ -63,6 +64,7 @@ bossRef.on('value', (snap) => {
 function triggerGlobalFX() {
     if(!bossImg) return;
     const r = Math.random();
+    // Random hit frame variations
     if (r < 0.33) bossImg.src = 'boss-hit.png';
     else if (r < 0.66) bossImg.src = 'boss-hit-var-2.png';
     else bossImg.src = 'boss-hit-variation-3.png';
@@ -88,8 +90,8 @@ function attack(e) {
     const dmg = myClickDmg * multi;
     bossRef.transaction(b => { if(b) { b.health -= dmg; if(b.health<=0){ b.level++; b.health=1000000000*b.level; } } return b; });
     myCoins += (1 * multi); frenzy = Math.min(100, frenzy+8); updateUI(); save();
-    const x = e.clientX || (e.touches ? e.touches[0].clientX : 0);
-    const y = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+    const x = (e.clientX || (e.touches ? e.touches[0].clientX : 0));
+    const y = (e.clientY || (e.touches ? e.touches[0].clientY : 0));
     const p = document.createElement('div');
     p.className='damage-popup'; p.innerText='+'+dmg.toLocaleString();
     p.style.left=x+'px'; p.style.top=y+'px';
