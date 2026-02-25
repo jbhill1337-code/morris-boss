@@ -52,43 +52,16 @@ body {
 .employee-name { font-size: 14px; color: #fff; background: rgba(0,0,0,0.7); padding: 2px 5px; border: 1px solid #0ff; }
 .scanlines { position: fixed; inset: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%); background-size: 100% 4px; pointer-events: none; z-index: 10; }
 /* Mobile Optimization */
+/* Mobile Optimization */
 @media screen and (max-width: 600px) {
     /* Adjust the main container to take full width */
-    #game-container {
-        width: 100vw;
-        height: 100vh;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-
+    #game-container { ... }
     /* Shrink the Boss so he's not off-screen */
-    #boss-container {
-        transform: scale(0.7); /* Scales the boss and animations down */
-        margin-top: 20px;
-    }
-
+    #boss-container { ... }
     /* Stack the upgrades and quotes vertically or in a scrollable area */
-    #ui-layer {
-        position: relative;
-        width: 95%;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        bottom: 10px;
-    }
-
-    .upgrade-button, .tip-button {
-        padding: 12px; /* Larger buttons for easier tapping */
-        font-size: 16px;
-        width: 100%;
-        margin-bottom: 5px;
-    }
-
+    #ui-layer { ... }
+    .upgrade-button, .tip-button { ... }
     /* Ensure damage indicators appear within the viewport */
-    .damage-indicator {
-        font-size: 24px !important;
-        z-index: 100;
-    }
+    .damage-indicator { ... }
 }
+
