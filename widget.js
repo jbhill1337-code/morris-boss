@@ -2,9 +2,9 @@ const BASE_HEALTH = 1000000000;
 let currentMaxHealth = BASE_HEALTH;
 let previousHealth = BASE_HEALTH;
 
-// --- NEW PHASE SYSTEM VARIABLES ---
 let currentPhase = 1;
 let baseFrankImg = "phase1frank.png";
+let lastLevel = 0; // Tracks level to trigger victory screen on stream
 
 const bossImageEl = document.getElementById('boss-image');
 const healthFill = document.getElementById('health-bar-fill');
@@ -25,16 +25,23 @@ if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig); 
 }
 const db = firebase.database();
-// I added these two lines below so the widget actually knows where to look!
 const bossRef = db.ref('frank_corporate_data');
 const activeEmployeesRef = db.ref('active_employees');
 
 let flashTimeout;
 
-// 1. UPDATE BOSS HEALTH & PHASES
+// 1. UPDATE BOSS HEALTH, PHASES & VICTORY
 bossRef.on('value', (snapshot) => {
   let boss = snapshot.val();
   if (!boss) return;
+
+  // Check if the boss leveled up (was defeated)
+  if (lastLevel === 0) {
+      lastLevel = boss.level; // Initialize on first load
+  } else if (boss.level > lastLevel) {
+      triggerVictoryScreen(boss.level);
+      lastLevel = boss.level;
+  }
 
   const currentLevel = boss.level;
   const currentHealth = boss.health;
@@ -62,7 +69,6 @@ bossRef.on('value', (snapshot) => {
       baseFrankImg = "phase1frank.png";
   }
 
-  // Trigger image update only if the phase actually changed
   if (currentPhase !== newPhase) {
       currentPhase = newPhase;
       if (bossImageEl) bossImageEl.src = baseFrankImg;
@@ -73,11 +79,40 @@ bossRef.on('value', (snapshot) => {
   healthText.innerText = `${Math.floor(currentHealth).toLocaleString()} / ${currentMaxHealth.toLocaleString()}`;
   bossNameEl.innerText = newTitle;
 
-  if (currentHealth < previousHealth && previousHealth <= currentMaxHealth) {
+  if (currentHealth < previousHealth && currentHealth > 0) {
     triggerHitAnimation();
   }
   previousHealth = currentHealth;
 });
+
+// --- NEW DYNAMIC VICTORY SCREEN FOR WIDGET ---
+function triggerVictoryScreen(newLevel) {
+    const vScreen = document.createElement('div');
+    vScreen.style.position = 'fixed';
+    vScreen.style.top = '0'; vScreen.style.left = '0';
+    vScreen.style.width = '100vw'; vScreen.style.height = '100vh';
+    vScreen.style.backgroundColor = 'rgba(0, 0, 0, 0.85)';
+    vScreen.style.display = 'flex'; vScreen.style.flexDirection = 'column';
+    vScreen.style.justifyContent = 'center'; vScreen.style.alignItems = 'center';
+    vScreen.style.zIndex = '9999'; vScreen.style.fontFamily = 'monospace';
+    vScreen.style.textAlign = 'center'; vScreen.style.textShadow = '3px 3px 0px #00ffff';
+
+    vScreen.innerHTML = `
+        <h1 style="font-size: 5rem; color: #ff00ff; margin: 0; text-transform: uppercase;">PROMOTED!</h1>
+        <h2 style="font-size: 2rem; color: #fff; text-shadow: none;">FRANK RETREATED... FOR NOW.</h2>
+        <p style="font-size: 1.5rem; color: #00ffff; text-shadow: none; margin-top: 20px;">PREPARE FOR LEVEL ${newLevel}</p>
+    `;
+    document.body.appendChild(vScreen);
+
+    if(bossImageEl) bossImageEl.style.opacity = '0'; // Hide Frank while screen is up
+
+    setTimeout(() => {
+        vScreen.style.transition = 'opacity 1s';
+        vScreen.style.opacity = '0';
+        if(bossImageEl) bossImageEl.style.opacity = '1'; // Bring Frank back
+        setTimeout(() => vScreen.remove(), 1000);
+    }, 4000);
+}
 
 // 2. LISTEN FOR VIEWER CLICKS
 activeEmployeesRef.on('child_changed', (snapshot) => { 
@@ -98,16 +133,15 @@ function triggerHitAnimation() {
   clearTimeout(flashTimeout);
   
   bossImageEl.classList.add('boss-shake'); 
-  // Flashes the boss red without changing the image source
   bossImageEl.style.filter = 'brightness(1.5) sepia(1) hue-rotate(-50deg) saturate(5)'; 
   
   flashTimeout = setTimeout(() => {
       bossImageEl.classList.remove('boss-shake');
-      bossImageEl.style.filter = 'none'; // Reverts to normal
+      bossImageEl.style.filter = 'none'; 
   }, 150);
 }
 
 function spawnEmojiPopUp(emoji, name, damage) {
+  // ---> PASTE YOUR ORIGINAL EMOJI LOGIC HERE <---
   const el = document.createElement('div');
-  // ---> Paste the rest of your original emoji popup logic right here! <---
 }
