@@ -18,11 +18,11 @@ const employeesRef = db.ref('active_employees');
 
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
-// --- INTRO VIDEO LOGIC (WITH FAILSAFES) ---
+// --- INTRO VIDEO LOGIC (YOUTUBE API) ---
 const introContainer = document.getElementById('intro-container');
-const introVideo = document.getElementById('intro-video');
 const startIntroBtn = document.getElementById('start-intro-btn');
 const skipIntroBtn = document.getElementById('skip-intro-btn');
+let ytPlayer;
 
 const endIntro = () => {
     if (introContainer) {
@@ -42,32 +42,50 @@ if (isOBS) {
     document.getElementById('shop').style.display = 'none';
     document.querySelector('.action-buttons').style.display = 'none';
 } else {
-    if (introContainer) {
-        // FAILSAFE 1: If the video file is missing or misspelled, skip automatically.
-        introVideo.onerror = () => {
-            console.error("Video file missing or failed to load! Skipping to login...");
-            endIntro();
-        };
+    // This function is automatically called by the YouTube API script we put in the HTML
+    window.onYouTubeIframeAPIReady = function() {
+        if (!introContainer) return;
+        
+        ytPlayer = new YT.Player('yt-player', {
+            videoId: 'HeKNgnDyD7I',
+            playerVars: {
+                'playsinline': 1,
+                'controls': 0,      // Hides play/pause buttons
+                'disablekb': 1,     // Disables keyboard shortcuts
+                'fs': 0,            // Disables fullscreen button
+                'modestbranding': 1,// Hides YouTube logo
+                'rel': 0            // Prevents related videos at the end
+            },
+            events: {
+                'onReady': onPlayerReady,
+                'onStateChange': onPlayerStateChange
+            }
+        });
+    };
 
+    function onPlayerReady(event) {
+        // Only show the start button once the video is fully buffered and ready
+        startIntroBtn.style.display = 'block';
+        
         startIntroBtn.onclick = () => {
             startIntroBtn.style.display = 'none';
-            introVideo.style.display = 'block';
+            document.getElementById('yt-player').style.display = 'block';
             skipIntroBtn.style.display = 'block';
-            
-            // FAILSAFE 2: Catch browser autoplay blocks
-            let playPromise = introVideo.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(error => {
-                    console.error("Video playback prevented by browser:", error);
-                    endIntro();
-                });
-            }
+            event.target.playVideo();
         };
-        introVideo.onended = endIntro;
-        skipIntroBtn.onclick = endIntro;
     }
+
+    function onPlayerStateChange(event) {
+        // YT.PlayerState.ENDED is 0. This detects when the video finishes.
+        if (event.data === 0) {
+            endIntro();
+        }
+    }
+
+    if (skipIntroBtn) skipIntroBtn.onclick = endIntro;
 }
 
+// --- GAME VARIABLES ---
 let myCoins = 0, myClickDmg = 2500, myAutoDmg = 0, clickCost = 10, autoCost = 50, myUser = "";
 let curHP = 1000000000, maxHP = 1000000000, lastHP = 1000000000, frenzy = 0, multi = 1;
 
