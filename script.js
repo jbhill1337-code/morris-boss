@@ -29,7 +29,7 @@ const endIntro = () => {
         introContainer.style.opacity = '0';
         setTimeout(() => {
             introContainer.remove();
-            load(); // Load the game after the container is completely gone
+            load(); 
         }, 1000); 
     }
 };
@@ -42,7 +42,6 @@ if (isOBS) {
     document.getElementById('shop').style.display = 'none';
     document.querySelector('.action-buttons').style.display = 'none';
 } else {
-    // This function is automatically called by the YouTube API script we put in the HTML
     window.onYouTubeIframeAPIReady = function() {
         if (!introContainer) return;
         
@@ -50,11 +49,11 @@ if (isOBS) {
             videoId: 'HeKNgnDyD7I',
             playerVars: {
                 'playsinline': 1,
-                'controls': 0,      // Hides play/pause buttons
-                'disablekb': 1,     // Disables keyboard shortcuts
-                'fs': 0,            // Disables fullscreen button
-                'modestbranding': 1,// Hides YouTube logo
-                'rel': 0            // Prevents related videos at the end
+                'controls': 0,      
+                'disablekb': 1,     
+                'fs': 0,            
+                'modestbranding': 1,
+                'rel': 0            
             },
             events: {
                 'onReady': onPlayerReady,
@@ -64,9 +63,7 @@ if (isOBS) {
     };
 
     function onPlayerReady(event) {
-        // Only show the start button once the video is fully buffered and ready
         startIntroBtn.style.display = 'block';
-        
         startIntroBtn.onclick = () => {
             startIntroBtn.style.display = 'none';
             document.getElementById('yt-player').style.display = 'block';
@@ -76,7 +73,6 @@ if (isOBS) {
     }
 
     function onPlayerStateChange(event) {
-        // YT.PlayerState.ENDED is 0. This detects when the video finishes.
         if (event.data === 0) {
             endIntro();
         }
@@ -90,7 +86,8 @@ let myCoins = 0, myClickDmg = 2500, myAutoDmg = 0, clickCost = 10, autoCost = 50
 let curHP = 1000000000, maxHP = 1000000000, lastHP = 1000000000, frenzy = 0, multi = 1;
 
 let currentPhase = 1;
-let baseFrankImg = "phase1frank.png";
+// Fixed folder paths for phases!
+let baseFrankImg = "phases/phase1frank.png";
 let defMulti = 1.0; 
 let lastLevel = 0; 
 
@@ -105,10 +102,10 @@ function load() {
     if(s) {
         const d = JSON.parse(s);
         myCoins=d.c; myClickDmg=d.cd; myAutoDmg=d.ad; clickCost=d.cc; autoCost=d.ac; myUser=d.u;
-        if(myUser && !isOBS && !document.getElementById('intro-container')) { 
-            document.getElementById('login-screen').style.display='none'; 
-            document.getElementById('game-container').style.display='block'; 
-            clockIn(myUser); 
+        
+        // Auto-skip REMOVED! Now it just pre-fills the username field to look like remembered credentials.
+        if (myUser && !isOBS) {
+            document.getElementById('username-input').value = myUser;
         }
         updateUI();
     }
@@ -139,26 +136,27 @@ bossRef.on('value', (snap) => {
     let newPhase = 1;
     let newTitle = "FRANK LV." + b.level;
 
+    // Fixed folder paths for phases!
     if (hpPercent <= 0.25) {
         newPhase = 4;
         newTitle = "CEO FRANK (ABSOLUTE MALICE)";
         defMulti = 0.2; 
-        baseFrankImg = "phase4frank.png";
+        baseFrankImg = "phases/phase4frank.png";
     } else if (hpPercent <= 0.50) {
         newPhase = 3;
         newTitle = "VP FRANK (CRIMSON FURY)";
         defMulti = 0.5; 
-        baseFrankImg = "phase3frank.png";
+        baseFrankImg = "phases/phase3frank.png";
     } else if (hpPercent <= 0.75) {
         newPhase = 2;
         newTitle = "MANAGER FRANK (BURSTING)";
         defMulti = 0.8; 
-        baseFrankImg = "phase2frank.png";
+        baseFrankImg = "phases/phase2frank.png";
     } else {
         newPhase = 1;
         newTitle = "FRANK LV." + b.level;
         defMulti = 1.0; 
-        baseFrankImg = "phase1frank.png";
+        baseFrankImg = "phases/phase1frank.png";
     }
 
     if (currentPhase !== newPhase) {
