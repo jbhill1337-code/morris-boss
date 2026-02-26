@@ -13,13 +13,13 @@ const frankBaseImage = "https://cdn.discordapp.com/attachments/47914852093552231
 const frankDamagedImage = "https://cdn.discordapp.com/attachments/479148520935522315/1475947203385364631/unnamed__2_-removebg-preview.png?ex=699f5673&is=699e04f3&hm=b4bf446ecd920676bc8d776ad99251d2a70fbefa464ee3209e1b0d8945e55425&";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAEA1pc8eNG4NhiC_mDpssbFIzdtaSHLkM",
-  authDomain: "raid-clicker.firebaseapp.com",
-  databaseURL: "https://raid-clicker-default-rtdb.firebaseio.com",
-  projectId: "raid-clicker",
-  storageBucket: "raid-clicker.firebasestorage.app",
-  messagingSenderId: "32296108457",
-  appId: "1:32296108457:web:ddeca6185e8821626744b8"
+  apiKey: "AIzaSyBvx5u1OGwS6YAvmVhBF9bstiUn-Vp6TVY",
+  authDomain: "corporate-extraction.firebaseapp.com",
+  databaseURL: "https://corporate-extraction-default-rtdb.firebaseio.com",
+  projectId: "corporate-extraction",
+  storageBucket: "corporate-extraction.firebasestorage.app",
+  messagingSenderId: "184892788723",
+  appId: "1:184892788723:web:93959fe24c883a27088c86"
 };
 
 if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
@@ -82,3 +82,4 @@ function triggerHitAnimation() {
 
 function spawnEmojiPopUp(emoji, name, damage) {
   const el = document.createElement('div');
+
