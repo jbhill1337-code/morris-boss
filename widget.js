@@ -3,8 +3,9 @@ let currentMaxHealth = BASE_HEALTH;
 let previousHealth = BASE_HEALTH;
 
 let currentPhase = 1;
-let baseFrankImg = "phase1frank.png";
-let lastLevel = 0; // Tracks level to trigger victory screen on stream
+// Fixed folder paths for phases!
+let baseFrankImg = "phases/phase1frank.png";
+let lastLevel = 0; 
 
 const bossImageEl = document.getElementById('boss-image');
 const healthFill = document.getElementById('health-bar-fill');
@@ -35,9 +36,8 @@ bossRef.on('value', (snapshot) => {
   let boss = snapshot.val();
   if (!boss) return;
 
-  // Check if the boss leveled up (was defeated)
   if (lastLevel === 0) {
-      lastLevel = boss.level; // Initialize on first load
+      lastLevel = boss.level; 
   } else if (boss.level > lastLevel) {
       triggerVictoryScreen(boss.level);
       lastLevel = boss.level;
@@ -51,22 +51,23 @@ bossRef.on('value', (snapshot) => {
   let newPhase = 1;
   let newTitle = "FRANK LV." + currentLevel;
 
+  // Fixed folder paths for phases!
   if (hpPercent <= 0.25) {
       newPhase = 4;
       newTitle = "CEO FRANK (ABSOLUTE MALICE)";
-      baseFrankImg = "phase4frank.png";
+      baseFrankImg = "phases/phase4frank.png";
   } else if (hpPercent <= 0.50) {
       newPhase = 3;
       newTitle = "VP FRANK (CRIMSON FURY)";
-      baseFrankImg = "phase3frank.png";
+      baseFrankImg = "phases/phase3frank.png";
   } else if (hpPercent <= 0.75) {
       newPhase = 2;
       newTitle = "MANAGER FRANK (BURSTING)";
-      baseFrankImg = "phase2frank.png";
+      baseFrankImg = "phases/phase2frank.png";
   } else {
       newPhase = 1;
       newTitle = "FRANK LV." + currentLevel;
-      baseFrankImg = "phase1frank.png";
+      baseFrankImg = "phases/phase1frank.png";
   }
 
   if (currentPhase !== newPhase) {
@@ -85,7 +86,6 @@ bossRef.on('value', (snapshot) => {
   previousHealth = currentHealth;
 });
 
-// --- NEW DYNAMIC VICTORY SCREEN FOR WIDGET ---
 function triggerVictoryScreen(newLevel) {
     const vScreen = document.createElement('div');
     vScreen.style.position = 'fixed';
@@ -104,12 +104,12 @@ function triggerVictoryScreen(newLevel) {
     `;
     document.body.appendChild(vScreen);
 
-    if(bossImageEl) bossImageEl.style.opacity = '0'; // Hide Frank while screen is up
+    if(bossImageEl) bossImageEl.style.opacity = '0';
 
     setTimeout(() => {
         vScreen.style.transition = 'opacity 1s';
         vScreen.style.opacity = '0';
-        if(bossImageEl) bossImageEl.style.opacity = '1'; // Bring Frank back
+        if(bossImageEl) bossImageEl.style.opacity = '1'; 
         setTimeout(() => vScreen.remove(), 1000);
     }, 4000);
 }
