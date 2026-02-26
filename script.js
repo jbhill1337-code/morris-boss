@@ -8,15 +8,14 @@ const firebaseConfig = {
   appId: "1:184892788723:web:93959fe24c883a27088c86"
 };
 
-if (!firebase.apps.length) { 
-    firebase.initializeApp(firebaseConfig); 
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
 }
 const db = firebase.database();
 
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const bossRef = db.ref('frank_raid_v9'); 
-const employeesRef = db.ref('active_employees_v9');
+// Unified database paths so your game and widget actually talk to each other!
+const bossRef = db.ref('frank_corporate_data'); 
+const employeesRef = db.ref('active_employees');
 
 // Detect OBS ONLY via explicit URL tag so phones work correctly
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
@@ -130,6 +129,7 @@ if (tipBtn) {
         window.open("https://your-tip-link-here.com", "_blank"); 
     };
 }
+
 
 
 
