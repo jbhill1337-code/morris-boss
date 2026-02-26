@@ -1,9 +1,3 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBvx5u1OGwS6YAvmVhBF9bstiUn-Vp6TVY",
   authDomain: "corporate-extraction.firebaseapp.com",
@@ -14,8 +8,10 @@ const firebaseConfig = {
   appId: "1:184892788723:web:93959fe24c883a27088c86"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+if (!firebase.apps.length) { 
+    firebase.initializeApp(firebaseConfig); 
+}
+const db = firebase.database();
 
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
@@ -134,5 +130,6 @@ if (tipBtn) {
         window.open("https://your-tip-link-here.com", "_blank"); 
     };
 }
+
 
 
