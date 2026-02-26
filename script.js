@@ -18,23 +18,23 @@ const employeesRef = db.ref('active_employees');
 
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
-// --- INTRO VIDEO LOGIC ---
+// --- INTRO VIDEO LOGIC (WITH FAILSAFES) ---
 const introContainer = document.getElementById('intro-container');
 const introVideo = document.getElementById('intro-video');
 const startIntroBtn = document.getElementById('start-intro-btn');
 const skipIntroBtn = document.getElementById('skip-intro-btn');
 
 const endIntro = () => {
-    introContainer.style.opacity = '0';
-    setTimeout(() => {
-        introContainer.remove();
-        // Try to load saved game after video ends
-        load();
-    }, 1000); 
+    if (introContainer) {
+        introContainer.style.opacity = '0';
+        setTimeout(() => {
+            introContainer.remove();
+            load(); // Load the game after the container is completely gone
+        }, 1000); 
+    }
 };
 
 if (isOBS) {
-    // If running in OBS, skip intro and login screen entirely
     if (introContainer) introContainer.style.display = 'none';
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('game-container').style.display = 'block';
@@ -42,13 +42,26 @@ if (isOBS) {
     document.getElementById('shop').style.display = 'none';
     document.querySelector('.action-buttons').style.display = 'none';
 } else {
-    // Standard Player Logic
     if (introContainer) {
+        // FAILSAFE 1: If the video file is missing or misspelled, skip automatically.
+        introVideo.onerror = () => {
+            console.error("Video file missing or failed to load! Skipping to login...");
+            endIntro();
+        };
+
         startIntroBtn.onclick = () => {
             startIntroBtn.style.display = 'none';
             introVideo.style.display = 'block';
             skipIntroBtn.style.display = 'block';
-            introVideo.play();
+            
+            // FAILSAFE 2: Catch browser autoplay blocks
+            let playPromise = introVideo.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.error("Video playback prevented by browser:", error);
+                    endIntro();
+                });
+            }
         };
         introVideo.onended = endIntro;
         skipIntroBtn.onclick = endIntro;
@@ -74,7 +87,6 @@ function load() {
     if(s) {
         const d = JSON.parse(s);
         myCoins=d.c; myClickDmg=d.cd; myAutoDmg=d.ad; clickCost=d.cc; autoCost=d.ac; myUser=d.u;
-        // Only skip login screen if intro video is gone
         if(myUser && !isOBS && !document.getElementById('intro-container')) { 
             document.getElementById('login-screen').style.display='none'; 
             document.getElementById('game-container').style.display='block'; 
