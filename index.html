@@ -4,10 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Defeat Frank! | Games We Miss</title>
-  <link rel="stylesheet" href="style.css?v=9">
+  <link rel="stylesheet" href="style.css?v=10">
 </head>
 <body>
   <div class="scanlines"></div>
+  
+  <div id="intro-container">
+    <button id="start-intro-btn" class="vapor-btn">INITIALIZE SYSTEM</button>
+    <video id="intro-video" src="intro.mp4" playsinline></video>
+    <button id="skip-intro-btn" class="vapor-btn" style="display: none;">SKIP</button>
+  </div>
   
   <div id="login-screen">
     <div class="login-box">
@@ -24,7 +30,7 @@
     <h1 id="boss-name" class="title">CORPORATE FRANK</h1>
     
     <div id="boss-area">
-      <img id="boss-image" src="boss-standing.png" alt="Boss">
+      <img id="boss-image" src="phase1frank.png" alt="Boss">
       <div id="flash-overlay"></div>
     </div>
 
@@ -57,6 +63,6 @@
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <script src="script.js?v=9"></script>
+  <script src="script.js?v=10"></script>
 </body>
 </html>
