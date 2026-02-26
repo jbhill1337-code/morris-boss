@@ -18,12 +18,41 @@ const employeesRef = db.ref('active_employees');
 
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
+// --- INTRO VIDEO LOGIC ---
+const introContainer = document.getElementById('intro-container');
+const introVideo = document.getElementById('intro-video');
+const startIntroBtn = document.getElementById('start-intro-btn');
+const skipIntroBtn = document.getElementById('skip-intro-btn');
+
+const endIntro = () => {
+    introContainer.style.opacity = '0';
+    setTimeout(() => {
+        introContainer.remove();
+        // Try to load saved game after video ends
+        load();
+    }, 1000); 
+};
+
 if (isOBS) {
+    // If running in OBS, skip intro and login screen entirely
+    if (introContainer) introContainer.style.display = 'none';
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('game-container').style.display = 'block';
     document.getElementById('player-stats').style.display = 'none';
     document.getElementById('shop').style.display = 'none';
     document.querySelector('.action-buttons').style.display = 'none';
+} else {
+    // Standard Player Logic
+    if (introContainer) {
+        startIntroBtn.onclick = () => {
+            startIntroBtn.style.display = 'none';
+            introVideo.style.display = 'block';
+            skipIntroBtn.style.display = 'block';
+            introVideo.play();
+        };
+        introVideo.onended = endIntro;
+        skipIntroBtn.onclick = endIntro;
+    }
 }
 
 let myCoins = 0, myClickDmg = 2500, myAutoDmg = 0, clickCost = 10, autoCost = 50, myUser = "";
@@ -32,7 +61,7 @@ let curHP = 1000000000, maxHP = 1000000000, lastHP = 1000000000, frenzy = 0, mul
 let currentPhase = 1;
 let baseFrankImg = "phase1frank.png";
 let defMulti = 1.0; 
-let lastLevel = 0; // Tracks level to trigger victory screen
+let lastLevel = 0; 
 
 const bossImg = document.getElementById('boss-image');
 const hpFill = document.getElementById('health-bar-fill');
@@ -45,7 +74,12 @@ function load() {
     if(s) {
         const d = JSON.parse(s);
         myCoins=d.c; myClickDmg=d.cd; myAutoDmg=d.ad; clickCost=d.cc; autoCost=d.ac; myUser=d.u;
-        if(myUser && !isOBS) { document.getElementById('login-screen').style.display='none'; document.getElementById('game-container').style.display='block'; clockIn(myUser); }
+        // Only skip login screen if intro video is gone
+        if(myUser && !isOBS && !document.getElementById('intro-container')) { 
+            document.getElementById('login-screen').style.display='none'; 
+            document.getElementById('game-container').style.display='block'; 
+            clockIn(myUser); 
+        }
         updateUI();
     }
 }
@@ -62,9 +96,8 @@ bossRef.on('value', (snap) => {
     let b = snap.val();
     if(!b) { b={health:1000000000, level:1}; bossRef.set(b); }
     
-    // Check if the boss leveled up (was defeated)
     if (lastLevel === 0) {
-        lastLevel = b.level; // Initialize on first load
+        lastLevel = b.level; 
     } else if (b.level > lastLevel) {
         triggerVictoryScreen(b.level);
         lastLevel = b.level;
@@ -103,14 +136,13 @@ bossRef.on('value', (snap) => {
         if(bossImg) bossImg.src = baseFrankImg;
     }
 
-    if(b.health < lastHP && b.health > 0) triggerGlobalFX(); // Don't flash on respawn heal
+    if(b.health < lastHP && b.health > 0) triggerGlobalFX(); 
     
     hpFill.style.width = (curHP/maxHP)*100 + '%';
     hpText.innerText = curHP.toLocaleString() + " / " + maxHP.toLocaleString();
     document.getElementById('boss-name').innerText = newTitle;
 });
 
-// --- NEW DYNAMIC VICTORY SCREEN ---
 function triggerVictoryScreen(newLevel) {
     const vScreen = document.createElement('div');
     vScreen.style.position = 'fixed';
@@ -129,12 +161,12 @@ function triggerVictoryScreen(newLevel) {
     `;
     document.body.appendChild(vScreen);
 
-    if(bossImg) bossImg.style.opacity = '0'; // Hide Frank while screen is up
+    if(bossImg) bossImg.style.opacity = '0';
 
     setTimeout(() => {
         vScreen.style.transition = 'opacity 1s';
         vScreen.style.opacity = '0';
-        if(bossImg) bossImg.style.opacity = '1'; // Bring Frank back
+        if(bossImg) bossImg.style.opacity = '1'; 
         setTimeout(() => vScreen.remove(), 1000);
     }, 4000);
 }
@@ -193,7 +225,6 @@ setInterval(() => {
 }, 1000);
 setInterval(() => { frenzy=Math.max(0, frenzy-2); multi=frenzy>=100?5:frenzy>=75?3:frenzy>=50?2:1; document.getElementById('frenzy-bar-fill').style.width=frenzy+'%'; document.getElementById('frenzy-text').innerText=multi>1?`COMBO ${multi}x` : `CHARGE METER`; }, 100);
 
-if(!isOBS) load();
 document.getElementById('btn-attack').onpointerdown = attack;
 bossImg.onpointerdown = attack;
 
