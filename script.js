@@ -13,11 +13,11 @@ if (!firebase.apps.length) {
 }
 const db = firebase.database();
 
-// Unified database paths so your game and widget actually talk to each other!
+// Unified database paths
 const bossRef = db.ref('frank_corporate_data'); 
 const employeesRef = db.ref('active_employees');
 
-// Detect OBS ONLY via explicit URL tag so phones work correctly
+// Detect OBS ONLY via explicit URL tag
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
 if (isOBS) {
@@ -30,6 +30,11 @@ if (isOBS) {
 
 let myCoins = 0, myClickDmg = 2500, myAutoDmg = 0, clickCost = 10, autoCost = 50, myUser = "";
 let curHP = 1000000000, maxHP = 1000000000, lastHP = 1000000000, frenzy = 0, multi = 1;
+
+// --- NEW PHASE SYSTEM VARIABLES ---
+let currentPhase = 1;
+let baseFrankImg = "phase1frank.png";
+let defMulti = 1.0; 
 
 const bossImg = document.getElementById('boss-image');
 const hpFill = document.getElementById('health-bar-fill');
@@ -54,27 +59,59 @@ document.getElementById('btn-clock-in').onclick = () => {
     if(val) { myUser=val; document.getElementById('login-screen').style.display='none'; document.getElementById('game-container').style.display='block'; clockIn(myUser); save(); }
 };
 
-// --- SYNC ---
+// --- SYNC & PHASE LOGIC ---
 bossRef.on('value', (snap) => {
     let b = snap.val();
     if(!b) { b={health:1000000000, level:1}; bossRef.set(b); }
-    if(b.health < lastHP) triggerGlobalFX();
+    
     lastHP = b.health; curHP = b.health; maxHP = 1000000000 * b.level;
+    const hpPercent = curHP / maxHP;
+    
+    let newPhase = 1;
+    let newTitle = "FRANK LV." + b.level;
+
+    if (hpPercent <= 0.25) {
+        newPhase = 4;
+        newTitle = "CEO FRANK (ABSOLUTE MALICE)";
+        defMulti = 0.2; 
+        baseFrankImg = "phase4frank.png";
+    } else if (hpPercent <= 0.50) {
+        newPhase = 3;
+        newTitle = "VP FRANK (CRIMSON FURY)";
+        defMulti = 0.5; 
+        baseFrankImg = "phase3frank.png";
+    } else if (hpPercent <= 0.75) {
+        newPhase = 2;
+        newTitle = "MANAGER FRANK (BURSTING)";
+        defMulti = 0.8; 
+        baseFrankImg = "phase2frank.png";
+    } else {
+        newPhase = 1;
+        newTitle = "FRANK LV." + b.level;
+        defMulti = 1.0; 
+        baseFrankImg = "phase1frank.png";
+    }
+
+    if (currentPhase !== newPhase) {
+        currentPhase = newPhase;
+        if(bossImg) bossImg.src = baseFrankImg;
+    }
+
+    if(b.health < lastHP) triggerGlobalFX();
+    
     hpFill.style.width = (curHP/maxHP)*100 + '%';
     hpText.innerText = curHP.toLocaleString() + " / " + maxHP.toLocaleString();
-    document.getElementById('boss-name').innerText = "FRANK LV." + b.level;
+    document.getElementById('boss-name').innerText = newTitle;
 });
 
 function triggerGlobalFX() {
     if(!bossImg) return;
-    const r = Math.random();
-    // Random hit frame variations
-    if (r < 0.33) bossImg.src = 'boss-hit.png';
-    else if (r < 0.66) bossImg.src = 'boss-hit-var-2.png';
-    else bossImg.src = 'boss-hit-variation-3.png';
-    
     bossImg.classList.add('shake');
-    setTimeout(() => { bossImg.src = 'boss-standing.png'; bossImg.classList.remove('shake'); }, 150);
+    bossImg.style.filter = 'brightness(1.5) sepia(1) hue-rotate(-50deg) saturate(5)'; 
+    setTimeout(() => { 
+        bossImg.classList.remove('shake'); 
+        bossImg.style.filter = 'none'; 
+    }, 150);
     if(Math.random() < 0.15) spawnQuote();
 }
 
@@ -91,7 +128,7 @@ function spawnQuote() {
 
 function attack(e) {
     if(isOBS) return;
-    const dmg = myClickDmg * multi;
+    const dmg = Math.floor(myClickDmg * multi * defMulti);
     bossRef.transaction(b => { if(b) { b.health -= dmg; if(b.health<=0){ b.level++; b.health=1000000000*b.level; } } return b; });
     myCoins += (1 * multi); frenzy = Math.min(100, frenzy+8); updateUI(); save();
     const x = (e.clientX || (e.touches ? e.touches[0].clientX : 0));
@@ -114,22 +151,21 @@ function updateUI() {
 document.getElementById('buy-click').onclick = () => { if(myCoins>=clickCost){ myCoins-=clickCost; myClickDmg+=2500; clickCost=Math.floor(clickCost*1.5); updateUI(); save(); } };
 document.getElementById('buy-auto').onclick = () => { if(myCoins>=autoCost){ myCoins-=autoCost; myAutoDmg+=1000; autoCost=Math.floor(autoCost*1.5); updateUI(); save(); } };
 
-setInterval(() => { if(myAutoDmg>0) bossRef.transaction(b => { if(b) b.health -= myAutoDmg; return b; }); }, 1000);
+setInterval(() => { 
+    if(myAutoDmg>0) {
+        bossRef.transaction(b => { if(b) b.health -= Math.floor(myAutoDmg * defMulti); return b; }); 
+    }
+}, 1000);
 setInterval(() => { frenzy=Math.max(0, frenzy-2); multi=frenzy>=100?5:frenzy>=75?3:frenzy>=50?2:1; document.getElementById('frenzy-bar-fill').style.width=frenzy+'%'; document.getElementById('frenzy-text').innerText=multi>1?`COMBO ${multi}x` : `CHARGE METER`; }, 100);
 
 if(!isOBS) load();
 document.getElementById('btn-attack').onpointerdown = attack;
 bossImg.onpointerdown = attack;
-// Add functionality to the Tip Button
+
 const tipBtn = document.getElementById('btn-tip');
 if (tipBtn) {
     tipBtn.onpointerdown = (e) => {
-        e.preventDefault(); // Prevents zooming on mobile
-        // Replace this URL with your actual tipping link (Ko-fi, Streamlabs, etc.)
+        e.preventDefault(); 
         window.open("https://your-tip-link-here.com", "_blank"); 
     };
 }
-
-
-
-
