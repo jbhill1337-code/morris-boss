@@ -2,15 +2,14 @@ const BASE_HEALTH = 1000000000;
 let currentMaxHealth = BASE_HEALTH;
 let previousHealth = BASE_HEALTH;
 
-const bossTitles = ["Corp. Frank: The Suit", "Corp. Frank: Middle Manager", "Corp. Frank: Regional Director", "Corp. Frank: VP of Downsizing", "Corp. Frank: The CEO"];
+// --- NEW PHASE SYSTEM VARIABLES ---
+let currentPhase = 1;
+let baseFrankImg = "phase1frank.png";
 
 const bossImageEl = document.getElementById('boss-image');
 const healthFill = document.getElementById('health-bar-fill');
 const healthText = document.getElementById('health-text');
 const bossNameEl = document.getElementById('boss-name');
-
-const frankBaseImage = "https://cdn.discordapp.com/attachments/479148520935522315/1475923508126027859/Gemini_Generated_Image_ko01sxko01sxko01-removebg-preview.png?ex=699f4061&is=699deee1&hm=4b906dc663568cd151e4ad0552f8f1e570af1c61f04fb48d2b38972abd341b5d&";
-const frankDamagedImage = "https://cdn.discordapp.com/attachments/479148520935522315/1475947203385364631/unnamed__2_-removebg-preview.png?ex=699f5673&is=699e04f3&hm=b4bf446ecd920676bc8d776ad99251d2a70fbefa464ee3209e1b0d8945e55425&";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBvx5u1OGwS6YAvmVhBF9bstiUn-Vp6TVY",
@@ -26,8 +25,13 @@ if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig); 
 }
 const db = firebase.database();
+// I added these two lines below so the widget actually knows where to look!
+const bossRef = db.ref('frank_corporate_data');
+const activeEmployeesRef = db.ref('active_employees');
 
-// 1. UPDATE BOSS HEALTH
+let flashTimeout;
+
+// 1. UPDATE BOSS HEALTH & PHASES
 bossRef.on('value', (snapshot) => {
   let boss = snapshot.val();
   if (!boss) return;
@@ -35,11 +39,39 @@ bossRef.on('value', (snapshot) => {
   const currentLevel = boss.level;
   const currentHealth = boss.health;
   currentMaxHealth = BASE_HEALTH * currentLevel;
+  
+  const hpPercent = currentHealth / currentMaxHealth;
+  let newPhase = 1;
+  let newTitle = "FRANK LV." + currentLevel;
+
+  if (hpPercent <= 0.25) {
+      newPhase = 4;
+      newTitle = "CEO FRANK (ABSOLUTE MALICE)";
+      baseFrankImg = "phase4frank.png";
+  } else if (hpPercent <= 0.50) {
+      newPhase = 3;
+      newTitle = "VP FRANK (CRIMSON FURY)";
+      baseFrankImg = "phase3frank.png";
+  } else if (hpPercent <= 0.75) {
+      newPhase = 2;
+      newTitle = "MANAGER FRANK (BURSTING)";
+      baseFrankImg = "phase2frank.png";
+  } else {
+      newPhase = 1;
+      newTitle = "FRANK LV." + currentLevel;
+      baseFrankImg = "phase1frank.png";
+  }
+
+  // Trigger image update only if the phase actually changed
+  if (currentPhase !== newPhase) {
+      currentPhase = newPhase;
+      if (bossImageEl) bossImageEl.src = baseFrankImg;
+  }
 
   const percentage = Math.max(0, (currentHealth / currentMaxHealth) * 100);
   healthFill.style.width = percentage + '%';
   healthText.innerText = `${Math.floor(currentHealth).toLocaleString()} / ${currentMaxHealth.toLocaleString()}`;
-  bossNameEl.innerText = `[Lv. ${currentLevel}] ${bossTitles[(currentLevel - 1) % bossTitles.length]}`;
+  bossNameEl.innerText = newTitle;
 
   if (currentHealth < previousHealth && previousHealth <= currentMaxHealth) {
     triggerHitAnimation();
@@ -48,16 +80,13 @@ bossRef.on('value', (snapshot) => {
 });
 
 // 2. LISTEN FOR VIEWER CLICKS
-// child_changed fires EVERY time someone who is already logged in clicks. No time limits here.
 activeEmployeesRef.on('child_changed', (snapshot) => { 
   const data = snapshot.val();
   if (data) spawnEmojiPopUp(data.emoji, data.name, data.damage);
 });
 
-// child_added fires when a brand new user clicks for the very first time. 
 activeEmployeesRef.on('child_added', (snapshot) => { 
   const data = snapshot.val();
-  // We keep a loose 30-second limit here ONLY so OBS doesn't spit out attacks from yesterday when you boot up the stream
   if (data && (Date.now() - data.timestamp < 30000)) {
     spawnEmojiPopUp(data.emoji, data.name, data.damage);
   }
@@ -68,17 +97,17 @@ function triggerHitAnimation() {
   if (!bossImageEl) return;
   clearTimeout(flashTimeout);
   
-  bossImageEl.src = frankDamagedImage;
-  bossImageEl.classList.remove('boss-shake'); 
-  void bossImageEl.offsetWidth; 
-  bossImageEl.classList.add('boss-shake');
+  bossImageEl.classList.add('boss-shake'); 
+  // Flashes the boss red without changing the image source
+  bossImageEl.style.filter = 'brightness(1.5) sepia(1) hue-rotate(-50deg) saturate(5)'; 
   
   flashTimeout = setTimeout(() => {
-      bossImageEl.src = frankBaseImage;
+      bossImageEl.classList.remove('boss-shake');
+      bossImageEl.style.filter = 'none'; // Reverts to normal
   }, 150);
 }
 
 function spawnEmojiPopUp(emoji, name, damage) {
   const el = document.createElement('div');
-
-
+  // ---> Paste the rest of your original emoji popup logic right here! <---
+}
