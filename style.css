@@ -101,5 +101,36 @@ body {
         font-size: 16px;
     }
 }
+/* --- INTRO VIDEO STYLES --- */
+#intro-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #000;
+  z-index: 10000; /* Keeps it above everything */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 1s ease-in-out; /* Smooth fade transition */
+}
+
+#intro-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Ensures no black bars */
+  display: none;
+}
+
+#skip-intro-btn {
+  position: absolute;
+  bottom: 30px;
+  right: 30px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  z-index: 10001;
+  background-color: rgba(0, 0, 0, 0.6);
+}
 
 
