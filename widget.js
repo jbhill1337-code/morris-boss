@@ -22,12 +22,10 @@ const firebaseConfig = {
   appId: "1:184892788723:web:93959fe24c883a27088c86"
 };
 
-if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+if (!firebase.apps.length) { 
+    firebase.initializeApp(firebaseConfig); 
+}
 const db = firebase.database();
-const bossRef = db.ref('frank_corporate_data');
-const activeEmployeesRef = db.ref('active_employees');
-
-let flashTimeout;
 
 // 1. UPDATE BOSS HEALTH
 bossRef.on('value', (snapshot) => {
@@ -82,4 +80,5 @@ function triggerHitAnimation() {
 
 function spawnEmojiPopUp(emoji, name, damage) {
   const el = document.createElement('div');
+
 
