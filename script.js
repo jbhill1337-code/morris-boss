@@ -131,30 +131,36 @@ function triggerVictoryScreen(newLevel) {
     setTimeout(() => { vScreen.style.transition = 'opacity 1s'; vScreen.style.opacity = '0'; if(bossImg) bossImg.style.opacity = '1'; setTimeout(() => vScreen.remove(), 1000); }, 4000);
 }
 
-// --- SMOOTH 2.5 SECOND FADE ANIMATION (TOP LAYER) ---
+// --- BOSS REPLACEMENT ANIMATION SYSTEM ---
 function playHitAnimation() {
     if(!bossHitLayer || isAnimatingHit) return;
     isAnimatingHit = true;
     
+    // 1. Determine the color filter for the current phase
     let phaseFilter = "none";
     if (currentPhase === 4) phaseFilter = "hue-rotate(250deg) saturate(3) brightness(0.7)"; 
     else if (currentPhase === 3) phaseFilter = "sepia(1) hue-rotate(-30deg) saturate(5) brightness(0.8)"; 
     else if (currentPhase === 2) phaseFilter = "saturate(2) brightness(1.2)"; 
     
+    // 2. APPLY THE SWAP: Hide the base boss and show the animation layer
+    bossImg.style.opacity = '0'; // Hide idle boss
     bossHitLayer.style.filter = phaseFilter; 
     bossHitLayer.src = hitImages[0]; 
+    bossHitLayer.style.opacity = '1'; // Show hit animation
     
-    // Fade the face overlay IN
-    bossHitLayer.style.opacity = '1';
-    
-    // Swap frames over 2 seconds
+    // 3. Cycle through the animation frames
+    // We'll keep the 2.4-second total duration you liked
     setTimeout(() => { bossHitLayer.src = hitImages[1]; }, 800);
     setTimeout(() => { bossHitLayer.src = hitImages[0]; }, 1600);
     
-    // Fade the face overlay OUT
+    // 4. RESTORE: Fade out the animation and bring back the base boss
     setTimeout(() => { 
         bossHitLayer.style.opacity = '0'; 
-        setTimeout(() => { isAnimatingHit = false; }, 500); // Wait for fade out to finish
+        // Wait for the face to start fading before showing the body again
+        setTimeout(() => { 
+            bossImg.style.opacity = '1'; 
+            isAnimatingHit = false; 
+        }, 400); 
     }, 2400); 
     
     if(Math.random() < 0.15) spawnQuote();
@@ -246,3 +252,4 @@ setInterval(() => { frenzy=Math.max(0, frenzy-2); multi=frenzy>=100?5:frenzy>=75
 document.getElementById('btn-attack').onpointerdown = attack;
 // Make sure players can click the hit-layer without it blocking the body!
 if(bossImg) bossImg.onpointerdown = attack;
+
