@@ -1,250 +1,92 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Boss Clicker RPG</title>
-
-  <style>
-    body {
-      background: #111;
-      color: white;
-      font-family: Arial;
-      text-align: center;
-      margin: 0;
-    }
-
-    h1 { margin-top: 20px; }
-
-    #boss {
-      margin: 40px auto;
-      width: 200px;
-      height: 200px;
-      background: crimson;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      user-select: none;
-    }
-
-    #hp {
-      margin-top: 10px;
-      font-size: 18px;
-    }
-
-    /* ===== RPG UI ===== */
-
-    #rpg-ui {
-      position: fixed;
-      bottom: 10px;
-      right: 10px;
-      width: 360px;
-      background: #1a1a1a;
-      padding: 10px;
-      border: 2px solid #333;
-      font-size: 14px;
-    }
-
-    #inventory-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 64px);
-      gap: 6px;
-      margin-bottom: 10px;
-    }
-
-    .item {
-      width: 64px;
-      height: 64px;
-      background-size: cover;
-      image-rendering: pixelated;
-      cursor: grab;
-    }
-
-    .equip-slot {
-      width: 64px;
-      height: 64px;
-      border: 2px dashed #555;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: 8px;
-      font-size: 12px;
-      color: #aaa;
-    }
-
-    .rarity-common { border: 2px solid #777; }
-    .rarity-uncommon { border: 2px solid #2ecc71; }
-    .rarity-rare { border: 2px solid #3498db; }
-    .rarity-epic { border: 2px solid #9b59b6; }
-    .rarity-legendary { border: 2px solid #f39c12; }
-
-    #fx-canvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      pointer-events: none;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Defeat Frank! | Games We Miss</title>
+  <link rel="stylesheet" href="style.css?v=31">
 </head>
-
 <body>
-
-<h1>Boss Clicker RPG</h1>
-
-<div id="boss">CLICK</div>
-<div id="hp">Boss HP: 1000</div>
-
-<!-- RPG UI -->
-<div id="rpg-ui">
-  <h3>Inventory</h3>
-  <div id="inventory-grid"></div>
-
-  <h3>Equipment</h3>
-  <div>
-    <div class="equip-slot" data-type="click">Click</div>
-    <div class="equip-slot" data-type="auto">Auto</div>
-    <div class="equip-slot" data-type="global">Global</div>
+  <div class="scanlines"></div>
+  
+  <div id="intro-container">
+    <button id="start-intro-btn" class="vapor-btn" style="display: none;">INITIALIZE SYSTEM</button>
+    <div id="yt-player" style="display: none; width: 100%; height: 100%; pointer-events: none;"></div>
+    <button id="skip-intro-btn" class="vapor-btn" style="display: none;">SKIP</button>
   </div>
-</div>
+  
+  <div id="login-screen">
+    <div class="login-box">
+      <h2 class="title">COMPANY PORTAL</h2>
+      <p>Enter your Employee ID to clock in.</p>
+      <input type="text" id="username-input" placeholder="USERNAME..." maxlength="15">
+      <button id="btn-clock-in" class="vapor-btn attack-btn">CLOCK IN</button>
+    </div>
+  </div>
 
-<canvas id="fx-canvas"></canvas>
+  <div id="employee-container"></div>
+  
+  <div id="game-container" style="display: none;">
+    <h1 id="boss-name" class="title">CORPORATE FRANK</h1>
+    
+    <div id="game-wrapper">
+      <div class="side-col" id="left-col">
+        <div id="player-stats">
+          <p>VAPOR COINS: <span id="coin-count">0</span></p>
+          <p>CLICK DMG: <span id="click-power">2,500</span></p>
+          <p>AUTO DMG: <span id="auto-power">0</span>/sec</p>
+          <p style="color: #f1c40f;">LOOT BONUS: +<span id="loot-buff">0</span>%</p>
+        </div>
 
-<script>
-/* ===============================
-   BASIC BOSS SYSTEM
-=================================*/
+        <div id="shop">
+          <h2 class="shop-title">-- UPGRADES --</h2>
+          <button id="buy-click" class="shop-btn">Sharpen Blade (+2.5k) <br><span>Cost: 10</span></button>
+          <button id="buy-auto" class="shop-btn">Hire Merc (+1k/s) <br><span>Cost: 50</span></button>
+        </div>
+      </div>
 
-let bossHP = 1000;
-const bossEl = document.getElementById("boss");
-const hpEl = document.getElementById("hp");
+      <div id="center-col">
+        <div id="boss-area">
+          <img id="boss-image" class="center-phase-1" src="phases/phase1frank.png" alt="Boss Body">
+          <img id="boss-hit-layer" class="center-phase-1" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="">
+          <div id="flash-overlay"></div>
+        </div>
 
-function dealDamage(amount) {
-  bossHP -= amount;
-  if (bossHP < 0) bossHP = 0;
-  hpEl.textContent = "Boss HP: " + Math.floor(bossHP);
-}
+        <div id="health-bar-container">
+          <div id="health-bar-fill"></div>
+          <span id="health-text">Connecting...</span>
+        </div>
 
-bossEl.addEventListener("click", function() {
-  let baseDamage = 10;
-  let modified = baseDamage * rpgMultiplier;
-  modified = applyCrit(modified);
-  dealDamage(modified);
-  rollDrop();
-});
+        <div id="frenzy-container">
+          <div id="frenzy-bar-fill"></div>
+          <span id="frenzy-text">CHARGE METER</span>
+        </div>
 
-/* ===============================
-   RPG SYSTEM
-=================================*/
+        <div class="action-buttons">
+          <button id="btn-attack" class="vapor-btn attack-btn" style="width: 100%;">⚔️ ATTACK!</button>
+        </div>
+      </div>
 
-const inventory = [];
-const equipment = { click:null, auto:null, global:null };
-let rpgMultiplier = 1;
+      <div class="side-col" id="right-col">
+        <div id="inventory-panel">
+          <h2 class="shop-title">-- DESK DRAWER --</h2>
+          <p style="text-align:center; font-size: 10px; color:#aaa;">Items grant permanent DMG buffs!</p>
+          <div id="inventory-grid"></div>
+        </div>
+      </div>
+    </div> 
+  </div>
 
-/* Generate 200 items */
-function randomRarity() {
-  const roll = Math.random() * 100;
-  if (roll < 60) return "common";
-  if (roll < 85) return "uncommon";
-  if (roll < 95) return "rare";
-  if (roll < 99) return "epic";
-  return "legendary";
-}
+  <div id="richard-event-container">
+    <div id="richard-dialogue"></div>
+    <img id="richard-image" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="">
+  </div>
 
-function generateItems() {
-  const items = [];
-  for (let i = 0; i < 200; i++) {
-    items.push({
-      id: "item_"+i,
-      icon: "",
-      rarity: randomRarity(),
-      type: ["click","auto","global"][Math.floor(Math.random()*3)],
-      multiplier: 1 + (Math.random()*1.5)
-    });
-  }
-  return items;
-}
-
-const LOOT_POOL = generateItems();
-
-/* Inventory */
-function renderInventory() {
-  const grid = document.getElementById("inventory-grid");
-  grid.innerHTML = "";
-
-  inventory.forEach((item, index)=>{
-    const div = document.createElement("div");
-    div.className = "item rarity-"+item.rarity;
-    div.style.background = "#222";
-    div.draggable = true;
-
-    div.addEventListener("dragstart", e=>{
-      e.dataTransfer.setData("index", index);
-    });
-
-    grid.appendChild(div);
-  });
-}
-
-/* Equip */
-document.querySelectorAll(".equip-slot").forEach(slot=>{
-  slot.addEventListener("dragover", e=>e.preventDefault());
-
-  slot.addEventListener("drop", e=>{
-    const index = e.dataTransfer.getData("index");
-    const item = inventory[index];
-
-    if(item && item.type === slot.dataset.type){
-      equipment[item.type] = item;
-      inventory.splice(index,1);
-      slot.style.background = "#444";
-      calculateMultiplier();
-      renderInventory();
-    }
-  });
-});
-
-function calculateMultiplier(){
-  rpgMultiplier = 1;
-  Object.values(equipment).forEach(item=>{
-    if(item) rpgMultiplier *= item.multiplier;
-  });
-}
-
-/* Drop System */
-function rollDrop(){
-  if(Math.random() < 0.20){
-    const item = LOOT_POOL[Math.floor(Math.random()*LOOT_POOL.length)];
-    inventory.push(item);
-    renderInventory();
-  }
-}
-
-/* Crit System */
-function applyCrit(dmg){
-  if(Math.random() < 0.1){
-    playFX();
-    return dmg * 2;
-  }
-  return dmg;
-}
-
-/* FX System */
-const fxCanvas = document.getElementById("fx-canvas");
-const fxCtx = fxCanvas.getContext("2d");
-fxCanvas.width = window.innerWidth;
-fxCanvas.height = window.innerHeight;
-
-function playFX(){
-  fxCtx.fillStyle = "rgba(255,0,0,0.5)";
-  fxCtx.fillRect(window.innerWidth/2-50,window.innerHeight/2-50,100,100);
-  setTimeout(()=>fxCtx.clearRect(0,0,fxCanvas.width,fxCanvas.height),100);
-}
-
-renderInventory();
-
-</script>
-
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="script.js?v=31"></script>
 </body>
 </html>
+
+
