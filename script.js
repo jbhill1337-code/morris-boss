@@ -28,6 +28,16 @@ let ytPlayer;
 
 const endIntro = () => { if (introContainer) { introContainer.style.opacity = '0'; setTimeout(() => { introContainer.remove(); load(); }, 1000); } };
 
+// FIXED: Failsafe so the intro never gets stuck on a black screen!
+if(introContainer && !isOBS) {
+    setTimeout(() => {
+        if(skipIntroBtn && skipIntroBtn.style.display === 'none') {
+            skipIntroBtn.style.display = 'block';
+            skipIntroBtn.innerText = "SKIP (EMERGENCY OVERRIDE)";
+        }
+    }, 4000);
+}
+
 if (isOBS) {
     if (introContainer) introContainer.style.display = 'none';
     document.getElementById('login-screen').style.display = 'none';
@@ -98,7 +108,6 @@ bossRef.on('value', (snap) => {
     let b = snap.val();
     if(!b) { b={health:1000000000, level:1}; bossRef.set(b); }
     
-    // PRESTIGE & LEVEL LOGIC
     if (lastLevel === 0) { 
         lastLevel = b.level; 
     } else if (b.level > lastLevel) { 
@@ -116,7 +125,9 @@ bossRef.on('value', (snap) => {
     }
 
     lastHP = b.health; curHP = b.health; maxHP = 1000000000 * b.level;
-    const hpPercent = curHP / maxHP;
+    
+    // FIXED: Prevent negative health bar widths
+    const hpPercent = Math.max(0, curHP / maxHP);
     
     let newPhase = 1; let newTitle = "FRANK LV." + b.level;
 
@@ -136,21 +147,33 @@ bossRef.on('value', (snap) => {
         }
     }
     
-    hpFill.style.width = (curHP/maxHP)*100 + '%';
+    hpFill.style.width = (hpPercent*100) + '%';
     hpText.innerText = curHP.toLocaleString() + " / " + maxHP.toLocaleString();
     document.getElementById('boss-name').innerText = newTitle;
 });
 
+// FIXED: Destroys any old victory screens before making a new one to prevent the black screen crash!
 function triggerVictoryScreen(newLevel) {
+    let oldScreen = document.getElementById('victory-screen-overlay');
+    if(oldScreen) oldScreen.remove();
+
     const vScreen = document.createElement('div');
+    vScreen.id = 'victory-screen-overlay';
     vScreen.style.position = 'fixed'; vScreen.style.top = '0'; vScreen.style.left = '0'; vScreen.style.width = '100vw'; vScreen.style.height = '100vh';
     vScreen.style.backgroundColor = 'rgba(0, 0, 0, 0.85)'; vScreen.style.display = 'flex'; vScreen.style.flexDirection = 'column';
     vScreen.style.justifyContent = 'center'; vScreen.style.alignItems = 'center'; vScreen.style.zIndex = '9999'; vScreen.style.fontFamily = 'monospace';
     vScreen.style.textAlign = 'center'; vScreen.style.textShadow = '3px 3px 0px #00ffff';
     vScreen.innerHTML = `<h1 style="font-size: 5rem; color: #ff00ff; margin: 0; text-transform: uppercase;">PROMOTED!</h1><h2 style="font-size: 2rem; color: #fff; text-shadow: none;">FRANK RETREATED... FOR NOW.</h2><p style="font-size: 1.5rem; color: #00ffff; text-shadow: none; margin-top: 20px;">PREPARE FOR LEVEL ${newLevel}</p>`;
     document.body.appendChild(vScreen);
+    
     if(bossImg) bossImg.style.opacity = '0';
-    setTimeout(() => { vScreen.style.transition = 'opacity 1s'; vScreen.style.opacity = '0'; if(bossImg) bossImg.style.opacity = '1'; setTimeout(() => vScreen.remove(), 1000); }, 4000);
+    
+    setTimeout(() => { 
+        vScreen.style.transition = 'opacity 1s'; 
+        vScreen.style.opacity = '0'; 
+        if(bossImg) bossImg.style.opacity = '1'; 
+        setTimeout(() => vScreen.remove(), 1000); 
+    }, 4000);
 }
 
 function createDynamicPopup(text, className, x, y) {
