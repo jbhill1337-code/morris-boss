@@ -1,13 +1,31 @@
 @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
 body {
-  margin: 0; padding: 0; background-color: #050510; color: #fff;
-  font-family: 'VT323', monospace; overflow-x: hidden; user-select: none;
+  margin: 0;
+  padding: 0;
+  /* Keep the dark color as a fallback while the image loads */
+  background-color: #050510;
+  /* Add the new background image */
+  background-image: url('backround.png');
+  /* Ensure it covers the whole screen without distorting */
+  background-size: cover;
+  /* Center the image */
+  background-position: center center;
+  /* Keep the background still while scrolling */
+  background-attachment: fixed;
+  /* Ensure no tiling */
+  background-repeat: no-repeat;
+  
+  color: #fff;
+  font-family: 'VT323', monospace;
+  overflow-x: hidden;
+  user-select: none;
 }
 
 .scanlines {
   position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  /* Made scanlines slightly subtler to let the background show through */
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
   background-size: 100% 4px, 6px 100%; z-index: 1000; pointer-events: none;
 }
 
@@ -41,7 +59,6 @@ body {
 .quote-popup { position: absolute; color: #00ffff; font-size: 1.2rem; pointer-events: none; background: rgba(0,0,0,0.7); padding: 5px; border: 1px solid #ff00ff; animation: floatQuote 1s ease-out forwards; z-index: 9998; }
 @keyframes floatQuote { 0% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -30px); } }
 
-/* NEW: MERCENARY AUTO-DAMAGE ANIMATION */
 .merc-strike {
   position: absolute; font-size: 3rem; pointer-events: none;
   animation: slashAnim 0.5s ease-out forwards; z-index: 9998; text-shadow: 0 0 10px #ff00ff;
@@ -89,11 +106,10 @@ body {
 }
 
 #boss-image {
-  /* margin: 0 auto STRICTLY enforces centering even if transparent padding exists */
   margin: 0 auto !important; 
   display: block;
   object-fit: contain;
-  transition: transform 0.1s ease-out; /* Removed filter transition so phase-colors apply instantly */
+  transition: transform 0.1s ease-out;
 }
 
 .boss-impact {
