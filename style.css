@@ -198,11 +198,11 @@ body {
   padding: 15px;
   border: 1px solid #00ffff;
   border-radius: 5px;
-  box-sizing: border-box; /* Keeps padding inside the box */
+  box-sizing: border-box; 
 }
 #center-col {
   width: 100%;
-  max-width: 500px;
+  max-width: 700px; /* Made the middle column wider so he has room to grow */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -290,23 +290,25 @@ body {
   100% { opacity: 0; transform: translateY(-80px) scale(1.2); }
 }
 
-/* --- FRANK SIZE & IMPACT ANIMATIONS --- */
+/* --- BRUTE FORCE FRANK SIZE & IMPACT ANIMATIONS --- */
 #boss-area {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 400px; /* Big arena space */
+  min-height: 500px; /* Bigger arena space to hold him */
   width: 100%;
 }
 
 #boss-image {
-  width: 350px !important; /* FORCED MASSIVE SIZE */
+  width: 100% !important; /* Forces image to scale to container */
+  max-width: 550px !important; /* The absolute maximum size on desktop */
   height: auto !important;
-  image-rendering: pixelated !important; /* FORCED CRISPNESS */
+  image-rendering: pixelated !important;
+  image-rendering: crisp-edges !important;
   transition: transform 0.1s ease-out, filter 0.1s ease-out; 
 }
 
 .boss-impact {
-  transform: scale(1.15) rotate(-3deg) !important; /* Visibly jumps up */
-  filter: drop-shadow(0 0 25px rgba(255, 0, 0, 0.7)) brightness(0.6) sepia(0.8) hue-rotate(-30deg) !important;
+  transform: scale(1.1) rotate(-3deg) !important;
+  filter: drop-shadow(0 0 35px rgba(255, 0, 0, 0.8)) brightness(0.6) sepia(0.8) hue-rotate(-30deg) !important;
 }
