@@ -131,3 +131,79 @@ body {
   transform: scale(calc(var(--phase-scale) + 0.06)) translateX(var(--phase-x)) !important;
   filter: brightness(1.3) !important;
 }
+/* --- Keep all your previous CSS and paste this at the very bottom --- */
+
+/* --- THE RICHARD EVENT (INTIMIDATION SYSTEM) --- */
+#richard-event-container {
+  position: fixed;
+  bottom: 0;
+  width: 100vw;
+  height: 80vh; /* Fills a majority of the screen vertically */
+  z-index: 99999; /* ABOVE EVERYTHING except scanlines */
+  pointer-events: none; /* Crucial: clicks pass through him so game still works */
+  display: flex;
+  justify-content: center; /* Dialogue centered relative to him */
+  align-items: flex-start; /* Dialogue at top of his container */
+}
+
+#richard-image {
+  position: absolute;
+  bottom: 0;
+  height: 70vh; /* Massive Richard */
+  width: auto;
+  image-rendering: pixelated; /* Retro crispness */
+  opacity: 0.7; /* Slightly transparent */
+  object-fit: contain;
+  filter: drop-shadow(0 0 20px #ff00ff); /* Pink glitcy glow */
+  
+  /* Starting position is off-screen */
+  transform: translateX(100vw);
+  transition: transform 1.5s ease-in-out; /* Slow slide in */
+}
+
+/* Specific start positions for random side logic */
+.richard-from-right { transform: translateX(100vw); }
+.richard-from-left { transform: translateX(-100vw); }
+
+/* The "Active" class applied by JS to make him slide in */
+#richard-event-container.active #richard-image {
+  transform: translateX(0) !important;
+}
+
+/* Pixel Art Dialogue Bubble */
+#richard-dialogue {
+  position: relative;
+  margin-top: 5vh;
+  padding: 15px 25px;
+  background-color: #000;
+  color: #00ffff;
+  border: 4px solid #fff;
+  font-size: 1.5rem;
+  max-width: 400px;
+  text-align: center;
+  text-transform: uppercase;
+  font-weight: bold;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.5s 1.5s, transform 0.5s 1.5s; /* Waits for Richard to slide in before showing */
+  box-shadow: 8px 8px 0 #ff00ff;
+  image-rendering: pixelated;
+}
+
+/* Bubble tail trick */
+#richard-dialogue::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 10px;
+  border-style: solid;
+  border-color: #fff transparent transparent transparent;
+}
+
+/* Show dialogue when Richard is active */
+#richard-event-container.active #richard-dialogue {
+  opacity: 1;
+  transform: scale(1);
+}
