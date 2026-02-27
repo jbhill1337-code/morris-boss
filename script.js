@@ -52,6 +52,14 @@ let lastLevel = 0;
 let itemBuffMultiplier = 1.0; 
 let isAnimatingHit = false; 
 
+// Grab BOTH layers
+const bossImg = document.getElementById('boss-image');
+const bossHitLayer = document.getElementById('boss-hit-layer');
+
+const hpFill = document.getElementById('health-bar-fill');
+const hpText = document.getElementById('health-text');
+const corpQuotes = [ "SYNERGY!", "LET'S CIRCLE BACK!", "BANDWIDTH!", "RETURN TO OFFICE!", "PIVOT!", "ACTION ITEMS!" ];
+
 const lootTable = [
     { id: 'paperclip', name: 'Bent Paperclip', rarity: 'common', icon: '📎', buff: 0.005 },
     { id: 'sticky', name: 'Neon Sticky', rarity: 'common', icon: '📝', buff: 0.005 },
@@ -62,11 +70,6 @@ const lootTable = [
     { id: 'rolodex', name: 'CEO\'s Rolodex', rarity: 'legendary', icon: '📇', buff: 0.05 },
     { id: 'briefcase', name: 'Nuclear Briefcase', rarity: 'legendary', icon: '💼', buff: 0.05 }
 ];
-
-const bossImg = document.getElementById('boss-image');
-const hpFill = document.getElementById('health-bar-fill');
-const hpText = document.getElementById('health-text');
-const corpQuotes = [ "SYNERGY!", "LET'S CIRCLE BACK!", "BANDWIDTH!", "RETURN TO OFFICE!", "PIVOT!", "ACTION ITEMS!" ];
 
 function save() { if(!isOBS) localStorage.setItem('frank_v9', JSON.stringify({c:myCoins, cd:myClickDmg, ad:myAutoDmg, cc:clickCost, ac:autoCost, u:myUser, inv:myInventory})); }
 function load() {
@@ -102,10 +105,12 @@ bossRef.on('value', (snap) => {
     if (currentPhase !== newPhase) { 
         currentPhase = newPhase; 
         if(bossImg) {
-            if(!isAnimatingHit) bossImg.src = baseFrankImg;
-            // Remove all centering classes and add the correct one for the new phase
+            bossImg.src = baseFrankImg;
+            // Sync the centering class on BOTH layers
             bossImg.classList.remove('center-phase-1', 'center-phase-2', 'center-phase-3', 'center-phase-4');
             bossImg.classList.add(`center-phase-${newPhase}`);
+            bossHitLayer.classList.remove('center-phase-1', 'center-phase-2', 'center-phase-3', 'center-phase-4');
+            bossHitLayer.classList.add(`center-phase-${newPhase}`);
         }
     }
     
@@ -126,37 +131,31 @@ function triggerVictoryScreen(newLevel) {
     setTimeout(() => { vScreen.style.transition = 'opacity 1s'; vScreen.style.opacity = '0'; if(bossImg) bossImg.style.opacity = '1'; setTimeout(() => vScreen.remove(), 1000); }, 4000);
 }
 
-// --- LIGHTNING FAST HIT ANIMATION ---
+// --- SMOOTH 2.5 SECOND FADE ANIMATION (TOP LAYER) ---
 function playHitAnimation() {
-    if(!bossImg || isAnimatingHit) return;
+    if(!bossHitLayer || isAnimatingHit) return;
     isAnimatingHit = true;
     
-    // 1. Grab the correct color filter for the current phase
     let phaseFilter = "none";
     if (currentPhase === 4) phaseFilter = "hue-rotate(250deg) saturate(3) brightness(0.7)"; 
     else if (currentPhase === 3) phaseFilter = "sepia(1) hue-rotate(-30deg) saturate(5) brightness(0.8)"; 
     else if (currentPhase === 2) phaseFilter = "saturate(2) brightness(1.2)"; 
     
-    // 2. Apply impact, apply the shrinking class, and load Frame 1
-    bossImg.classList.add('boss-impact', 'is-hit-face');
-    bossImg.style.filter = phaseFilter; 
-    bossImg.src = hitImages[0]; 
+    bossHitLayer.style.filter = phaseFilter; 
+    bossHitLayer.src = hitImages[0]; 
     
-    // 3. Swap to Frame 2 almost instantly (100ms)
+    // Fade the face overlay IN
+    bossHitLayer.style.opacity = '1';
+    
+    // Swap frames over 2 seconds
+    setTimeout(() => { bossHitLayer.src = hitImages[1]; }, 800);
+    setTimeout(() => { bossHitLayer.src = hitImages[0]; }, 1600);
+    
+    // Fade the face overlay OUT
     setTimeout(() => { 
-        if (currentPhase !== 1) bossImg.style.filter = phaseFilter; 
-        bossImg.src = hitImages[1]; 
-    }, 100);
-
-    // 4. End animation and revert to body (200ms total)
-    setTimeout(() => { 
-        bossImg.classList.remove('boss-impact', 'is-hit-face'); 
-        bossImg.style.filter = "none"; 
-        bossImg.src = baseFrankImg; 
-        
-        // Tiny 50ms cooldown before he can be hit again to prevent seizing
-        setTimeout(() => { isAnimatingHit = false; }, 50); 
-    }, 200); 
+        bossHitLayer.style.opacity = '0'; 
+        setTimeout(() => { isAnimatingHit = false; }, 500); // Wait for fade out to finish
+    }, 2400); 
     
     if(Math.random() < 0.15) spawnQuote();
 }
@@ -194,7 +193,21 @@ function renderInventory() {
 
 function attack(e) {
     if(isOBS) return;
+    
+    // 1. Trigger the Long Fade Face Animation (Top Layer)
     playHitAnimation(); 
+    
+    // 2. Trigger the INSTANT Thump/Zoom Effect (BOTH Layers)
+    if(bossImg && bossHitLayer) {
+        bossImg.classList.add('quick-zoom');
+        bossHitLayer.classList.add('quick-zoom');
+        // Instantly remove it 50ms later for the snap back
+        setTimeout(() => {
+            bossImg.classList.remove('quick-zoom');
+            bossHitLayer.classList.remove('quick-zoom');
+        }, 50);
+    }
+
     const dmg = Math.floor(myClickDmg * multi * defMulti * itemBuffMultiplier);
     bossRef.transaction(b => { if(b) { b.health -= dmg; if(b.health<=0){ b.level++; b.health=1000000000*b.level; } } return b; });
     myCoins += (1 * multi); frenzy = Math.min(100, frenzy+8); updateUI(); save();
@@ -231,5 +244,5 @@ setInterval(() => {
 setInterval(() => { frenzy=Math.max(0, frenzy-2); multi=frenzy>=100?5:frenzy>=75?3:frenzy>=50?2:1; document.getElementById('frenzy-bar-fill').style.width=frenzy+'%'; document.getElementById('frenzy-text').innerText=multi>1?`COMBO ${multi}x` : `CHARGE METER`; }, 100);
 
 document.getElementById('btn-attack').onpointerdown = attack;
-bossImg.onpointerdown = attack;
-
+// Make sure players can click the hit-layer without it blocking the body!
+if(bossImg) bossImg.onpointerdown = attack;
