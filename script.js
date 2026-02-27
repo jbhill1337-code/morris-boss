@@ -17,7 +17,12 @@ const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 const preloadHit1 = new Image(); preloadHit1.src = 'boss-hit-var-2.png';
 const preloadHit2 = new Image(); preloadHit2.src = 'boss-hit-variation-3.png';
 const hitImages = ['boss-hit-var-2.png', 'boss-hit-variation-3.png'];
-const preloadRichard = new Image(); preloadRichard.src = 'yourbossvar/boss-pointing.png';
+
+// Updated Richard Preloaders
+const preloadRichard1 = new Image(); preloadRichard1.src = 'yourbossvar/boss-pointing.png';
+const preloadRichard2 = new Image(); preloadRichard2.src = 'yourbossvar/boss-crossing.png';
+const richardImages = ['yourbossvar/boss-pointing.png', 'yourbossvar/boss-crossing.png'];
+
 
 const introContainer = document.getElementById('intro-container');
 const startIntroBtn = document.getElementById('start-intro-btn');
@@ -134,36 +139,22 @@ function triggerVictoryScreen(newLevel) {
     setTimeout(() => { vScreen.style.transition = 'opacity 1s'; vScreen.style.opacity = '0'; if(bossImg) bossImg.style.opacity = '1'; setTimeout(() => vScreen.remove(), 1000); }, 4000);
 }
 
-// ==========================================
-// --- NEW BASEBALL THROW POPUP GENERATOR ---
-// ==========================================
 function createDynamicPopup(text, className, x, y) {
     const p = document.createElement('div');
     p.className = className;
     p.innerText = text;
-
-    // Random Math to calculate the explosive arc
-    // Spread X wildly left or right
     const tx = (Math.random() - 0.5) * 600; 
-    // Always explode upwards initially
     const ty = -Math.random() * 300 - 200; 
-    // Random chaotic spin
     const rot = (Math.random() - 0.5) * 60; 
-
-    // Inject the math into the CSS variables!
     p.style.setProperty('--tx', `${tx}px`);
     p.style.setProperty('--ty', `${ty}px`);
     p.style.setProperty('--rot', `${rot}deg`);
-
     p.style.left = x + 'px';
     p.style.top = y + 'px';
-
     document.body.appendChild(p);
-    // Remove element after the 1.2s animation finishes
     setTimeout(() => p.remove(), 1200); 
 }
 
-// Ensure playHitAnimation accepts X and Y from the cursor to pass to the quotes
 function playHitAnimation(x, y) {
     if(!bossHitLayer || isAnimatingHit) return;
     isAnimatingHit = true;
@@ -189,12 +180,10 @@ function playHitAnimation(x, y) {
         }, 400); 
     }, 2400); 
     
-    // Spawns quotes exploding from the cursor 15% of the time
     if(Math.random() < 0.15) spawnQuote(x, y);
 }
 
 function spawnQuote(x, y) {
-    // If auto-merc triggers this, there is no cursor X/Y, so we center it on the boss
     if(!x || !y) {
         if(bossImg) {
             const bRect = bossImg.getBoundingClientRect();
@@ -222,8 +211,6 @@ function rollForLoot(x, y) {
         const item = pool[Math.floor(Math.random() * pool.length)];
         myInventory[item.id] = (myInventory[item.id] || 0) + 1;
         calculateLootBuff(); save(); renderInventory();
-        
-        // Dynamic Explosion Loot
         createDynamicPopup(`Loot: ${item.name}!`, 'loot-popup', x, y);
     }
 }
@@ -236,8 +223,6 @@ function renderInventory() {
 
 function attack(e) {
     if(isOBS) return;
-    
-    // Grab the exact mouse coordinates
     const x = (e.clientX || (e.touches ? e.touches[0].clientX : window.innerWidth / 2)); 
     const y = (e.clientY || (e.touches ? e.touches[0].clientY : window.innerHeight / 2));
     
@@ -251,10 +236,7 @@ function attack(e) {
     const dmg = Math.floor(myClickDmg * multi * defMulti * itemBuffMultiplier);
     bossRef.transaction(b => { if(b) { b.health -= dmg; if(b.health<=0){ b.level++; b.health=1000000000*b.level; } } return b; });
     myCoins += (1 * multi); frenzy = Math.min(100, frenzy+8); updateUI(); save();
-    
-    // Dynamic Explosion Damage Number
     createDynamicPopup('+' + dmg.toLocaleString(), 'damage-popup', x, y);
-
     rollForLoot(x, y);
 }
 
@@ -303,9 +285,20 @@ function startRichardLoop() {
 
 function triggerRichardEvent() {
     if (!richardContainer || !richardImage || !richardDialogue) return;
+    
+    // Pick random image
+    const randomImg = richardImages[Math.floor(Math.random() * richardImages.length)];
+    richardImage.src = randomImg;
+    
     const quote = richardQuotes[Math.floor(Math.random() * richardQuotes.length)];
     richardDialogue.innerText = quote;
-    const fromLeft = Math.random() < 0.5;
+    
+    // Determine side: If desktop, force left. If mobile, random.
+    let fromLeft = true;
+    if (window.innerWidth < 950) {
+         fromLeft = Math.random() < 0.5;
+    }
+    
     richardImage.className = ''; 
     richardImage.classList.add(fromLeft ? 'richard-from-left' : 'richard-from-right');
     richardContainer.style.display = 'flex';
