@@ -42,17 +42,18 @@ body { margin: 0; padding: 0; background-color: #050510; background-image: url('
 .rarity-legendary { border: 1px solid #f1c40f; filter: drop-shadow(0 0 12px rgba(241, 196, 15, 1)); animation: legendary-pulse 2s infinite; }
 @keyframes legendary-pulse { 0% { filter: drop-shadow(0 0 10px rgba(241, 196, 15, 0.8)); } 50% { filter: drop-shadow(0 0 16px rgba(241, 196, 15, 1)); } 100% { filter: drop-shadow(0 0 10px rgba(241, 196, 15, 0.8)); } }
 
-/* --- DUAL-LAYER SYSTEM & GOLDILOCKS CENTERING --- */
+/* --- DUAL-LAYER SYSTEM & FINAL CENTERING TWEAKS --- */
 #boss-area { display: grid; place-items: center; height: 45vh; width: 100%; overflow: visible !important; margin-bottom: 20px; }
 #boss-image, #boss-hit-layer { grid-area: 1 / 1; margin: 0 auto; display: block; image-rendering: pixelated !important; image-rendering: crisp-edges !important; transform: scale(var(--phase-scale)) translateX(var(--phase-x)); transition: transform 0.05s ease-out, filter 0.05s ease-out; }
 #boss-image { height: 100%; width: auto; max-width: none !important; object-fit: contain; transition: transform 0.05s ease-out, filter 0.05s ease-out; }
 #boss-hit-layer { height: 70%; width: auto; max-width: none !important; object-fit: contain; opacity: 0; pointer-events: none; z-index: 10; transition: opacity 0.5s ease-in-out, transform 0.05s ease-out, filter 0.05s ease-out; }
 
-/* THE GOLDILOCKS SIZE - Not too big, not too small, perfectly centered! */
-.center-phase-1 { --phase-scale: 1.4;  --phase-x: 0%; }
-.center-phase-2 { --phase-scale: 1.55; --phase-x: -3%; }
-.center-phase-3 { --phase-scale: 1.7;  --phase-x: -10%; } /* Fixed Crimson Fury offset */
-.center-phase-4 { --phase-scale: 1.85; --phase-x: -2%; }
+/* THE FINAL "GOLDILOCKS" SIZE & CENTER SHIFT */
+/* Increased scales and added stronger negative X-shift to force them left */
+.center-phase-1 { --phase-scale: 1.8;  --phase-x: -6%; }
+.center-phase-2 { --phase-scale: 2.0;  --phase-x: -8%; }
+.center-phase-3 { --phase-scale: 2.2;  --phase-x: -14%; } /* Crimson Fury needs the most help */
+.center-phase-4 { --phase-scale: 2.4;  --phase-x: -6%; }
 
 .quick-zoom { transform: scale(calc(var(--phase-scale) + 0.10)) translateX(var(--phase-x)) !important; filter: brightness(1.3) !important; }
 
