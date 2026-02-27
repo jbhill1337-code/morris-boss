@@ -14,9 +14,13 @@ const bossRef = db.ref('frank_corporate_data');
 const employeesRef = db.ref('active_employees');
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
+// --- IMAGE PRELOADERS ---
 const preloadHit1 = new Image(); preloadHit1.src = 'boss-hit-var-2.png';
 const preloadHit2 = new Image(); preloadHit2.src = 'boss-hit-variation-3.png';
 const hitImages = ['boss-hit-var-2.png', 'boss-hit-variation-3.png'];
+
+// New Richard Preloader
+const preloadRichard = new Image(); preloadRichard.src = 'yourbossvar/boss-pointing.png';
 
 const introContainer = document.getElementById('intro-container');
 const startIntroBtn = document.getElementById('start-intro-btn');
@@ -32,10 +36,12 @@ if (isOBS) {
     document.getElementById('left-col').style.display = 'none';
     document.getElementById('right-col').style.display = 'none';
     document.querySelector('.action-buttons').style.display = 'none';
+    // Hide Richard on OBS stream
+    document.getElementById('richard-event-container').style.display = 'none'; 
 } else {
     window.onYouTubeIframeAPIReady = function() {
         if (!introContainer) return;
-        ytPlayer = new YT.Player('yt-player', { videoId: 'HeKNgnDyD7I', playerVars: { 'playsinline': 1, 'controls': 0, 'disablekb': 1, 'fs': 0, 'modestbranding': 1, 'rel': 0 }, events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange } });
+        ytPlayer = new YT.Player('yt-player', { videoId: 'HeKNgnDyD7I', playerVars: { 'playsinline': 1, 'controls': 0, 'disablekb': 1, 'fs': 0, 'modestbranding': 1, Rel: 0 }, events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange } });
     };
     function onPlayerReady(event) { startIntroBtn.style.display = 'block'; startIntroBtn.onclick = () => { startIntroBtn.style.display = 'none'; document.getElementById('yt-player').style.display = 'block'; skipIntroBtn.style.display = 'block'; event.target.playVideo(); }; }
     function onPlayerStateChange(event) { if (event.data === 0) endIntro(); }
@@ -52,9 +58,14 @@ let lastLevel = 0;
 let itemBuffMultiplier = 1.0; 
 let isAnimatingHit = false; 
 
-// Grab BOTH layers
+// Grab UI Layers
 const bossImg = document.getElementById('boss-image');
 const bossHitLayer = document.getElementById('boss-hit-layer');
+
+// Richard Event Layers
+const richardContainer = document.getElementById('richard-event-container');
+const richardImage = document.getElementById('richard-image');
+const richardDialogue = document.getElementById('richard-dialogue');
 
 const hpFill = document.getElementById('health-bar-fill');
 const hpText = document.getElementById('health-text');
@@ -72,6 +83,8 @@ const lootTable = [
 ];
 
 function save() { if(!isOBS) localStorage.setItem('frank_v9', JSON.stringify({c:myCoins, cd:myClickDmg, ad:myAutoDmg, cc:clickCost, ac:autoCost, u:myUser, inv:myInventory})); }
+
+// Updated LOAD function to start Richard Loop
 function load() {
     const s = localStorage.getItem('frank_v9');
     if(s) {
@@ -79,12 +92,15 @@ function load() {
         myCoins=d.c; myClickDmg=d.cd; myAutoDmg=d.ad; clickCost=d.cc; autoCost=d.ac; myUser=d.u; myInventory = d.inv || {}; 
         if (myUser && !isOBS) document.getElementById('username-input').value = myUser;
         calculateLootBuff(); updateUI(); renderInventory();
+        
+        // Start the background loop for Richard's random appearances
+        if(!isOBS) startRichardLoop(); 
     }
 }
 function clockIn(u) { const r = employeesRef.push(); r.set({name:u, e:'💼'}); r.onDisconnect().remove(); }
 document.getElementById('btn-clock-in').onclick = () => {
     const val = document.getElementById('username-input').value.trim().toUpperCase();
-    if(val) { myUser=val; document.getElementById('login-screen').style.display='none'; document.getElementById('game-container').style.display='block'; clockIn(myUser); save(); renderInventory(); }
+    if(val) { myUser=val; document.getElementById('login-screen').style.display='none'; document.getElementById('game-container').style.display='block'; clockIn(myUser); save(); renderInventory(); if(!isOBS) startRichardLoop(); }
 };
 
 bossRef.on('value', (snap) => {
@@ -106,7 +122,6 @@ bossRef.on('value', (snap) => {
         currentPhase = newPhase; 
         if(bossImg) {
             bossImg.src = baseFrankImg;
-            // Sync the centering class on BOTH layers
             bossImg.classList.remove('center-phase-1', 'center-phase-2', 'center-phase-3', 'center-phase-4');
             bossImg.classList.add(`center-phase-${newPhase}`);
             bossHitLayer.classList.remove('center-phase-1', 'center-phase-2', 'center-phase-3', 'center-phase-4');
@@ -131,32 +146,26 @@ function triggerVictoryScreen(newLevel) {
     setTimeout(() => { vScreen.style.transition = 'opacity 1s'; vScreen.style.opacity = '0'; if(bossImg) bossImg.style.opacity = '1'; setTimeout(() => vScreen.remove(), 1000); }, 4000);
 }
 
-// --- BOSS REPLACEMENT ANIMATION SYSTEM ---
+// --- DUAL-LAYER HIT ANIMATION ---
 function playHitAnimation() {
     if(!bossHitLayer || isAnimatingHit) return;
     isAnimatingHit = true;
     
-    // 1. Determine the color filter for the current phase
     let phaseFilter = "none";
     if (currentPhase === 4) phaseFilter = "hue-rotate(250deg) saturate(3) brightness(0.7)"; 
     else if (currentPhase === 3) phaseFilter = "sepia(1) hue-rotate(-30deg) saturate(5) brightness(0.8)"; 
     else if (currentPhase === 2) phaseFilter = "saturate(2) brightness(1.2)"; 
     
-    // 2. APPLY THE SWAP: Hide the base boss and show the animation layer
     bossImg.style.opacity = '0'; // Hide idle boss
     bossHitLayer.style.filter = phaseFilter; 
     bossHitLayer.src = hitImages[0]; 
     bossHitLayer.style.opacity = '1'; // Show hit animation
     
-    // 3. Cycle through the animation frames
-    // We'll keep the 2.4-second total duration you liked
     setTimeout(() => { bossHitLayer.src = hitImages[1]; }, 800);
     setTimeout(() => { bossHitLayer.src = hitImages[0]; }, 1600);
     
-    // 4. RESTORE: Fade out the animation and bring back the base boss
     setTimeout(() => { 
         bossHitLayer.style.opacity = '0'; 
-        // Wait for the face to start fading before showing the body again
         setTimeout(() => { 
             bossImg.style.opacity = '1'; 
             isAnimatingHit = false; 
@@ -199,19 +208,12 @@ function renderInventory() {
 
 function attack(e) {
     if(isOBS) return;
-    
-    // 1. Trigger the Long Fade Face Animation (Top Layer)
     playHitAnimation(); 
     
-    // 2. Trigger the INSTANT Thump/Zoom Effect (BOTH Layers)
+    // Quick Zoom Thump
     if(bossImg && bossHitLayer) {
-        bossImg.classList.add('quick-zoom');
-        bossHitLayer.classList.add('quick-zoom');
-        // Instantly remove it 50ms later for the snap back
-        setTimeout(() => {
-            bossImg.classList.remove('quick-zoom');
-            bossHitLayer.classList.remove('quick-zoom');
-        }, 50);
+        bossImg.classList.add('quick-zoom'); bossHitLayer.classList.add('quick-zoom');
+        setTimeout(() => { bossImg.classList.remove('quick-zoom'); bossHitLayer.classList.remove('quick-zoom'); }, 50);
     }
 
     const dmg = Math.floor(myClickDmg * multi * defMulti * itemBuffMultiplier);
@@ -236,13 +238,7 @@ setInterval(() => {
         bossRef.transaction(b => { if(b) b.health -= autoDmgCalculated; return b; }); 
         if (bossImg && !isOBS) {
             const rect = bossImg.getBoundingClientRect();
-            const slash = document.createElement('div');
-            slash.className = 'merc-strike';
-            slash.innerText = '💥'; 
-            slash.style.left = (rect.left + (Math.random() * (rect.width - 50))) + 'px';
-            slash.style.top = (rect.top + (Math.random() * (rect.height - 50))) + 'px';
-            document.body.appendChild(slash);
-            setTimeout(() => slash.remove(), 500);
+            const slash = document.createElement('div'); slash.className = 'merc-strike'; slash.innerText = '💥'; slash.style.left = (rect.left + (Math.random() * (rect.width - 50))) + 'px'; slash.style.top = (rect.top + (Math.random() * (rect.height - 50))) + 'px'; document.body.appendChild(slash); setTimeout(() => slash.remove(), 500);
         }
     }
 }, 1000);
@@ -250,6 +246,63 @@ setInterval(() => {
 setInterval(() => { frenzy=Math.max(0, frenzy-2); multi=frenzy>=100?5:frenzy>=75?3:frenzy>=50?2:1; document.getElementById('frenzy-bar-fill').style.width=frenzy+'%'; document.getElementById('frenzy-text').innerText=multi>1?`COMBO ${multi}x` : `CHARGE METER`; }, 100);
 
 document.getElementById('btn-attack').onpointerdown = attack;
-// Make sure players can click the hit-layer without it blocking the body!
 if(bossImg) bossImg.onpointerdown = attack;
 
+// --- NEW RICHARD INTIMIDATION SYSTEM ---
+
+// The scary termination quotes
+const richardQuotes = [
+    "I'm not seeing enough 'Synergy' in your clicks.",
+    "Pack your action items. You're being 'Rightsized'.",
+    "Your 'Bandwidth' is insufficient for this company.",
+    "Let's 'Circle Back' to your termination clause.",
+    "Rethink your loyalty, Employee.",
+    "Severance? We call it 'Asset Reclaim'.",
+    "PIP incoming. Start updating your resume.",
+    "Return to office... PERMANENTLY.",
+    "Your redundancy has been noted.",
+    "I have automated your 'Actionable Deliverables'."
+];
+
+// Starts the recursive loop that spawns Richard at random intervals
+function startRichardLoop() {
+    // Determine the next appearance time (between 45 and 90 seconds)
+    const nextSpawnTime = (Math.random() * (90000 - 45000) + 45000);
+    
+    setTimeout(() => {
+        triggerRichardEvent();
+        startRichardLoop(); // Call itself to schedule the NEXT one
+    }, nextSpawnTime);
+}
+
+function triggerRichardEvent() {
+    if (!richardContainer || !richardImage || !richardDialogue) return;
+
+    // 1. Choose a random quote
+    const quote = richardQuotes[Math.floor(Math.random() * richardQuotes.length)];
+    richardDialogue.innerText = quote;
+
+    // 2. Decide random entry side (Left or Right)
+    const fromLeft = Math.random() < 0.5;
+    
+    // Reset classes and set starting position
+    richardImage.className = ''; 
+    richardImage.classList.add(fromLeft ? 'richard-from-left' : 'richard-from-right');
+    
+    // 3. Make the main container visible (but Richard is still off-screen)
+    richardContainer.style.display = 'flex';
+    
+    // 4. Slight delay to let the display swap happen, then apply the "Active" class to trigger the CSS transition
+    setTimeout(() => {
+        richardContainer.classList.add('active');
+    }, 100);
+
+    // 5. Looms for 8 seconds, then slides back out
+    setTimeout(() => {
+        richardContainer.classList.remove('active');
+        // Wait for the slide-out transition to finish, then hide the container completely
+        setTimeout(() => {
+            richardContainer.style.display = 'none';
+        }, 1500);
+    }, 8000); // Loom duration
+}
