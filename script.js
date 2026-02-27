@@ -126,27 +126,37 @@ function triggerVictoryScreen(newLevel) {
     setTimeout(() => { vScreen.style.transition = 'opacity 1s'; vScreen.style.opacity = '0'; if(bossImg) bossImg.style.opacity = '1'; setTimeout(() => vScreen.remove(), 1000); }, 4000);
 }
 
+// --- LIGHTNING FAST HIT ANIMATION ---
 function playHitAnimation() {
     if(!bossImg || isAnimatingHit) return;
     isAnimatingHit = true;
     
+    // 1. Grab the correct color filter for the current phase
     let phaseFilter = "none";
     if (currentPhase === 4) phaseFilter = "hue-rotate(250deg) saturate(3) brightness(0.7)"; 
     else if (currentPhase === 3) phaseFilter = "sepia(1) hue-rotate(-30deg) saturate(5) brightness(0.8)"; 
     else if (currentPhase === 2) phaseFilter = "saturate(2) brightness(1.2)"; 
     
-    bossImg.classList.add('boss-impact');
+    // 2. Apply impact, apply the shrinking class, and load Frame 1
+    bossImg.classList.add('boss-impact', 'is-hit-face');
     bossImg.style.filter = phaseFilter; 
     bossImg.src = hitImages[0]; 
     
-    setTimeout(() => { if (currentPhase !== 1) bossImg.style.filter = phaseFilter; bossImg.src = hitImages[1]; }, 600);
-    setTimeout(() => { if (currentPhase !== 1) bossImg.style.filter = phaseFilter; bossImg.src = hitImages[0]; }, 1200);
+    // 3. Swap to Frame 2 almost instantly (100ms)
     setTimeout(() => { 
-        bossImg.classList.remove('boss-impact'); 
+        if (currentPhase !== 1) bossImg.style.filter = phaseFilter; 
+        bossImg.src = hitImages[1]; 
+    }, 100);
+
+    // 4. End animation and revert to body (200ms total)
+    setTimeout(() => { 
+        bossImg.classList.remove('boss-impact', 'is-hit-face'); 
         bossImg.style.filter = "none"; 
         bossImg.src = baseFrankImg; 
-        setTimeout(() => { isAnimatingHit = false; }, 200); 
-    }, 1800); 
+        
+        // Tiny 50ms cooldown before he can be hit again to prevent seizing
+        setTimeout(() => { isAnimatingHit = false; }, 50); 
+    }, 200); 
     
     if(Math.random() < 0.15) spawnQuote();
 }
@@ -222,3 +232,4 @@ setInterval(() => { frenzy=Math.max(0, frenzy-2); multi=frenzy>=100?5:frenzy>=75
 
 document.getElementById('btn-attack').onpointerdown = attack;
 bossImg.onpointerdown = attack;
+
