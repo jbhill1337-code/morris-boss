@@ -6,19 +6,10 @@ body {
   color: #fff; font-family: 'VT323', monospace; overflow-x: hidden; user-select: none;
 }
 
-.scanlines {
-  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-  background-size: 100% 4px, 6px 100%; z-index: 1000; pointer-events: none;
-}
-
+.scanlines { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03)); background-size: 100% 4px, 6px 100%; z-index: 1000; pointer-events: none; }
 .title { color: #ff00ff; text-shadow: 2px 2px 0px #00ffff; text-align: center; font-size: 2.5rem; margin-bottom: 10px; }
 
-.vapor-btn {
-  background: linear-gradient(90deg, #ff00ff, #00ffff); border: 2px solid #fff; color: #fff;
-  font-family: 'VT323', monospace; font-size: 1.5rem; padding: 10px 20px;
-  cursor: pointer; text-transform: uppercase; box-shadow: 4px 4px 0px #000; transition: transform 0.1s;
-}
+.vapor-btn { background: linear-gradient(90deg, #ff00ff, #00ffff); border: 2px solid #fff; color: #fff; font-family: 'VT323', monospace; font-size: 1.5rem; padding: 10px 20px; cursor: pointer; text-transform: uppercase; box-shadow: 4px 4px 0px #000; transition: transform 0.1s; }
 .vapor-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px #000; }
 
 #login-screen { display: flex; justify-content: center; align-items: center; height: 100vh; }
@@ -34,21 +25,8 @@ body {
 #frenzy-bar-fill { height: 100%; background: #f1c40f; width: 0%; transition: width 0.1s; }
 #health-text, #frenzy-text { position: absolute; top: 5px; width: 100%; text-align: center; font-weight: bold; color: #fff; text-shadow: 1px 1px 0 #000; }
 
-.damage-popup { position: absolute; color: #ff00ff; font-weight: bold; font-size: 1.5rem; pointer-events: none; animation: floatUp 0.8s ease-out forwards; text-shadow: 2px 2px 0 #000; z-index: 9999; }
-@keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-50px); } }
-
-.quote-popup { position: absolute; color: #00ffff; font-size: 1.2rem; pointer-events: none; background: rgba(0,0,0,0.7); padding: 5px; border: 1px solid #ff00ff; animation: floatQuote 1s ease-out forwards; z-index: 9998; }
-@keyframes floatQuote { 0% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -30px); } }
-
-.merc-strike {
-  position: absolute; font-size: 3rem; pointer-events: none;
-  animation: slashAnim 0.5s ease-out forwards; z-index: 9998; text-shadow: 0 0 10px #ff00ff;
-}
-@keyframes slashAnim {
-  0% { opacity: 0; transform: scale(0.5) rotate(-20deg); }
-  50% { opacity: 1; transform: scale(1.2) rotate(10deg); }
-  100% { opacity: 0; transform: scale(1.5) rotate(20deg); }
-}
+.merc-strike { position: absolute; font-size: 4rem; pointer-events: none; animation: slashAnim 0.5s ease-out forwards; z-index: 9998; text-shadow: 0 0 10px #ff00ff; }
+@keyframes slashAnim { 0% { opacity: 0; transform: scale(0.5) rotate(-20deg); } 50% { opacity: 1; transform: scale(1.2) rotate(10deg); } 100% { opacity: 0; transform: scale(1.5) rotate(20deg); } }
 
 .shop-title { text-align: center; color: #00ffff; margin-bottom: 10px; }
 .shop-btn { display: block; width: 100%; margin: 5px 0; padding: 10px; background: #111; color: #fff; border: 1px solid #00ffff; font-family: 'VT323', monospace; font-size: 1.2rem; cursor: pointer; }
@@ -72,138 +50,86 @@ body {
 .rarity-rare { border: 1px solid #3498db; filter: drop-shadow(0 0 8px rgba(52, 152, 219, 0.9)); }
 .rarity-legendary { border: 1px solid #f1c40f; filter: drop-shadow(0 0 12px rgba(241, 196, 15, 1)); animation: legendary-pulse 2s infinite; }
 @keyframes legendary-pulse { 0% { filter: drop-shadow(0 0 10px rgba(241, 196, 15, 0.8)); } 50% { filter: drop-shadow(0 0 16px rgba(241, 196, 15, 1)); } 100% { filter: drop-shadow(0 0 10px rgba(241, 196, 15, 0.8)); } }
-.loot-popup { position: absolute; color: #f1c40f; font-weight: bold; font-size: 1.2rem; pointer-events: none; animation: floatUpLoot 1.5s ease-out forwards; text-shadow: 2px 2px 0 #000; z-index: 9999; }
-@keyframes floatUpLoot { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-80px) scale(1.2); } }
 
 /* --- DUAL-LAYER SYSTEM & CENTERING --- */
-#boss-area {
-  display: grid; /* Grid allows us to stack the images perfectly */
-  place-items: center;
-  min-height: 550px; 
-  width: 100%;
-  overflow: hidden; 
-}
-
-/* Base rules for both layers */
-#boss-image, #boss-hit-layer {
-  grid-area: 1 / 1; /* Puts both images in the exact same spot */
-  margin: 0 auto;
-  display: block;
-  image-rendering: pixelated !important;
-  image-rendering: crisp-edges !important;
-  
-  --phase-scale: 1.2; 
-  --phase-x: 0%;
-  transform: scale(var(--phase-scale)) translateX(var(--phase-x));
-  
-  /* Super fast transition for the click-thump zoom */
-  transition: transform 0.05s ease-out, filter 0.05s ease-out;
-}
-
-/* Layer 1: The Body */
-#boss-image {
-  width: 100%;
-  max-width: 450px;
-  object-fit: contain;
-}
-
-/* Layer 2: The Hologram Face Overlay */
-#boss-hit-layer {
-  width: 100%;
-  max-width: 220px !important; /* Smaller size to match the body */
-  object-fit: contain;
-  opacity: 0; /* Invisible by default */
-  pointer-events: none;
-  z-index: 10;
-  /* Separate transition for the smooth fade in/out */
-  transition: opacity 0.5s ease-in-out, transform 0.05s ease-out, filter 0.05s ease-out; 
-}
-
-/* PROGRESSIVE SCALING & PRECISE CENTERING */
-.center-phase-1 { --phase-scale: 1.2;  --phase-x: 0%; }
+#boss-area { display: grid; place-items: center; min-height: 550px; width: 100%; overflow: hidden; }
+#boss-image, #boss-hit-layer { grid-area: 1 / 1; margin: 0 auto; display: block; image-rendering: pixelated !important; image-rendering: crisp-edges !important; --phase-scale: 1.2; --phase-x: 0%; transform: scale(var(--phase-scale)) translateX(var(--phase-x)); transition: transform 0.05s ease-out, filter 0.05s ease-out; }
+#boss-image { width: 100%; max-width: 450px; object-fit: contain; }
+#boss-hit-layer { width: 100%; max-width: 220px !important; object-fit: contain; opacity: 0; pointer-events: none; z-index: 10; transition: opacity 0.5s ease-in-out, transform 0.05s ease-out, filter 0.05s ease-out; }
+.center-phase-1 { --phase-scale: 1.2; --phase-x: 0%; }
 .center-phase-2 { --phase-scale: 1.35; --phase-x: -4%; }
-.center-phase-3 { --phase-scale: 1.5;  --phase-x: -12%; }
+.center-phase-3 { --phase-scale: 1.5; --phase-x: -12%; }
 .center-phase-4 { --phase-scale: 1.65; --phase-x: -2%; }
+.quick-zoom { transform: scale(calc(var(--phase-scale) + 0.06)) translateX(var(--phase-x)) !important; filter: brightness(1.3) !important; }
 
-/* INSTANT CLICK IMPACT (The "Thump" & Flash) */
-.quick-zoom {
-  /* Zooms in an extra 6% instantly */
-  transform: scale(calc(var(--phase-scale) + 0.06)) translateX(var(--phase-x)) !important;
-  filter: brightness(1.3) !important;
-}
-/* --- Keep all your previous CSS and paste this at the very bottom --- */
-
-/* --- THE RICHARD EVENT (INTIMIDATION SYSTEM) --- */
-#richard-event-container {
-  position: fixed;
-  bottom: 0;
-  width: 100vw;
-  height: 80vh; /* Fills a majority of the screen vertically */
-  z-index: 99999; /* ABOVE EVERYTHING except scanlines */
-  pointer-events: none; /* Crucial: clicks pass through him so game still works */
-  display: flex;
-  justify-content: center; /* Dialogue centered relative to him */
-  align-items: flex-start; /* Dialogue at top of his container */
-}
-
-#richard-image {
-  position: absolute;
-  bottom: 0;
-  height: 70vh; /* Massive Richard */
-  width: auto;
-  image-rendering: pixelated; /* Retro crispness */
-  opacity: 0.7; /* Slightly transparent */
-  object-fit: contain;
-  filter: drop-shadow(0 0 20px #ff00ff); /* Pink glitcy glow */
-  
-  /* Starting position is off-screen */
-  transform: translateX(100vw);
-  transition: transform 1.5s ease-in-out; /* Slow slide in */
-}
-
-/* Specific start positions for random side logic */
+/* --- THE RICHARD EVENT --- */
+#richard-event-container { position: fixed; bottom: 0; width: 100vw; height: 80vh; z-index: 99999; pointer-events: none; display: flex; justify-content: center; align-items: flex-start; }
+#richard-image { position: absolute; bottom: 0; height: 70vh; width: auto; image-rendering: pixelated; opacity: 0.7; object-fit: contain; filter: drop-shadow(0 0 20px #ff00ff); transform: translateX(100vw); transition: transform 1.5s ease-in-out; }
 .richard-from-right { transform: translateX(100vw); }
 .richard-from-left { transform: translateX(-100vw); }
+#richard-event-container.active #richard-image { transform: translateX(0) !important; }
+#richard-dialogue { position: relative; margin-top: 5vh; padding: 15px 25px; background-color: #000; color: #00ffff; border: 4px solid #fff; font-size: 1.5rem; max-width: 400px; text-align: center; text-transform: uppercase; font-weight: bold; opacity: 0; transform: scale(0.8); transition: opacity 0.5s 1.5s, transform 0.5s 1.5s; box-shadow: 8px 8px 0 #ff00ff; image-rendering: pixelated; }
+#richard-dialogue::after { content: ''; position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); border-width: 10px; border-style: solid; border-color: #fff transparent transparent transparent; }
+#richard-event-container.active #richard-dialogue { opacity: 1; transform: scale(1); }
 
-/* The "Active" class applied by JS to make him slide in */
-#richard-event-container.active #richard-image {
-  transform: translateX(0) !important;
-}
+/* ========================================= */
+/* --- NEW MASSIVE BASEBALL THROW POPUPS --- */
+/* ========================================= */
 
-/* Pixel Art Dialogue Bubble */
-#richard-dialogue {
-  position: relative;
-  margin-top: 5vh;
-  padding: 15px 25px;
-  background-color: #000;
-  color: #00ffff;
-  border: 4px solid #fff;
-  font-size: 1.5rem;
-  max-width: 400px;
-  text-align: center;
-  text-transform: uppercase;
-  font-weight: bold;
-  opacity: 0;
-  transform: scale(0.8);
-  transition: opacity 0.5s 1.5s, transform 0.5s 1.5s; /* Waits for Richard to slide in before showing */
-  box-shadow: 8px 8px 0 #ff00ff;
-  image-rendering: pixelated;
-}
-
-/* Bubble tail trick */
-#richard-dialogue::after {
-  content: '';
+.damage-popup, .loot-popup, .quote-popup {
   position: absolute;
-  bottom: -20px;
-  left: 50%;
-  transform: translateX(-50%);
-  border-width: 10px;
-  border-style: solid;
-  border-color: #fff transparent transparent transparent;
+  pointer-events: none;
+  z-index: 9999;
+  /* Centers the origin point perfectly on your mouse cursor */
+  transform: translate(-50%, -50%);
+  /* The cubic-bezier makes it explode out fast, hang in the air, then fall */
+  animation: popArc 1.2s cubic-bezier(0.15, 1, 0.3, 1) forwards;
 }
 
-/* Show dialogue when Richard is active */
-#richard-event-container.active #richard-dialogue {
-  opacity: 1;
-  transform: scale(1);
+.damage-popup {
+  color: #ff00ff;
+  font-size: 6rem; /* MASSIVE 6x SIZE */
+  font-weight: bold;
+  text-shadow: 5px 5px 0 #000, -3px -3px 0 #00ffff; /* Heavy outline so it's readable over the background */
+  -webkit-text-stroke: 2px #fff;
+}
+
+.loot-popup {
+  color: #f1c40f;
+  font-size: 4.5rem; /* MASSIVE LOOT SIZE */
+  font-weight: bold;
+  text-shadow: 5px 5px 0 #000, -3px -3px 0 #ff00ff;
+  -webkit-text-stroke: 2px #fff;
+}
+
+.quote-popup {
+  background: rgba(0,0,0,0.85);
+  color: #00ffff;
+  font-size: 2.5rem; /* HUGE QUOTES */
+  font-weight: bold;
+  padding: 10px 20px;
+  border: 3px solid #ff00ff;
+  box-shadow: 6px 6px 0 #000;
+  text-transform: uppercase;
+  border-radius: 10px;
+  max-width: 80vw;
+  text-align: center;
+}
+
+/* THE PHYSICS ENGINE FOR THE THROW */
+@keyframes popArc {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2) rotate(0deg);
+  }
+  15% {
+    opacity: 1;
+    /* Pops instantly outward to the trajectory variables we set in JS */
+    transform: translate(calc(-50% + var(--tx) * 0.5), calc(-50% + var(--ty))) scale(1.2) rotate(calc(var(--rot) * 0.5));
+  }
+  100% {
+    opacity: 0;
+    /* Drifts outward and gets pulled down by gravity (+150px on the Y axis) */
+    transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty) + 150px)) scale(1) rotate(var(--rot));
+  }
 }
