@@ -109,3 +109,31 @@ body { margin: 0; padding: 0; background-color: #050510; background-image: url('
 .loot-popup { color: #FFD700; font-size: 3.5rem; font-weight: bold; font-style: italic; text-shadow: 2px 2px 0 #000, 0 0 15px #FFD700; -webkit-text-stroke: 1px #fff; }
 .quote-popup { background: rgba(0,0,0,0.85); color: #00ffff; font-size: 2.5rem; font-weight: bold; padding: 10px 20px; border: 3px solid #ff00ff; box-shadow: 6px 6px 0 #000; text-transform: uppercase; border-radius: 10px; max-width: 80vw; text-align: center; }
 @keyframes popArc { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.2) rotate(0deg); } 15% { opacity: 1; transform: translate(calc(-50% + var(--tx) * 0.5), calc(-50% + var(--ty))) scale(1.2) rotate(calc(var(--rot) * 0.5)); } 100% { opacity: 0; transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty) + 150px)) scale(1) rotate(var(--rot)); } }
+
+/* --- NEW UPGRADES --- */
+.shop-btn.upgrade-new {
+    border-color: #ff00ff;
+    background: linear-gradient(135deg, #0a001a, #1a0030);
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+}
+.shop-btn.upgrade-new::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: linear-gradient(45deg, transparent 30%, rgba(255,0,255,0.05) 50%, transparent 70%);
+    animation: shimmer 3s infinite linear;
+}
+@keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+.shop-btn.upgrade-new:hover { background: linear-gradient(135deg, #1a003a, #2a0050); border-color: #00ffff; }
+.cost-tag { color: #00ffcc; }
+
+/* Crit popup — bigger, flashier than normal damage */
+.crit-popup {
+    font-size: 2rem !important;
+    color: #ff0 !important;
+    text-shadow: 0 0 12px #f00, 0 0 24px #ff0 !important;
+    font-weight: bold;
+}
