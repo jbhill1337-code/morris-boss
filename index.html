@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Defeat Frank! | Games We Miss</title>
-  <link rel="stylesheet" href="style.css?v=13">
+  <link rel="stylesheet" href="style.css?v=14">
 </head>
 <body>
   <div class="scanlines"></div>
@@ -29,45 +29,57 @@
   <div id="game-container" style="display: none;">
     <h1 id="boss-name" class="title">CORPORATE FRANK</h1>
     
-    <div id="boss-area">
-      <img id="boss-image" src="phases/phase1frank.png" alt="Boss">
-      <div id="flash-overlay"></div>
-    </div>
+    <div id="game-wrapper">
+      
+      <div class="side-col" id="left-col">
+        <div id="player-stats">
+          <p>VAPOR COINS: <span id="coin-count">0</span></p>
+          <p>CLICK DMG: <span id="click-power">2,500</span></p>
+          <p>AUTO DMG: <span id="auto-power">0</span>/sec</p>
+          <p style="color: #f1c40f;">LOOT BONUS: +<span id="loot-buff">0</span>%</p>
+        </div>
 
-    <div id="health-bar-container">
-      <div id="health-bar-fill"></div>
-      <span id="health-text">Connecting...</span>
-    </div>
+        <div id="shop">
+          <h2 class="shop-title">-- UPGRADES --</h2>
+          <button id="buy-click" class="shop-btn">Sharpen Blade (+2.5k) <br><span>Cost: 10</span></button>
+          <button id="buy-auto" class="shop-btn">Hire Merc (+1k/s) <br><span>Cost: 50</span></button>
+        </div>
+      </div>
 
-    <div id="frenzy-container">
-      <div id="frenzy-bar-fill"></div>
-      <span id="frenzy-text">CHARGE METER</span>
-    </div>
+      <div id="center-col">
+        <div id="boss-area">
+          <img id="boss-image" src="phases/phase1frank.png" alt="Boss">
+          <div id="flash-overlay"></div>
+        </div>
 
-    <div id="player-stats">
-      <p>VAPOR COINS: <span id="coin-count">0</span></p>
-      <p>CLICK DMG: <span id="click-power">2,500</span> | AUTO: <span id="auto-power">0</span>/sec</p>
-    </div>
+        <div id="health-bar-container">
+          <div id="health-bar-fill"></div>
+          <span id="health-text">Connecting...</span>
+        </div>
 
-    <div class="action-buttons">
-      <button id="btn-attack" class="vapor-btn attack-btn" style="width: 100%;">⚔️ ATTACK!</button>
-    </div>
+        <div id="frenzy-container">
+          <div id="frenzy-bar-fill"></div>
+          <span id="frenzy-text">CHARGE METER</span>
+        </div>
 
-    <div id="shop">
-      <h2 class="shop-title">-- UPGRADES --</h2>
-      <button id="buy-click" class="shop-btn">Sharpen Blade (+2.5k) <br><span>Cost: 10</span></button>
-      <button id="buy-auto" class="shop-btn">Hire Merc (+1k/s) <br><span>Cost: 50</span></button>
-    </div>
+        <div class="action-buttons">
+          <button id="btn-attack" class="vapor-btn attack-btn" style="width: 100%;">⚔️ ATTACK!</button>
+        </div>
+      </div>
 
-    <div id="inventory-panel">
-      <h2 class="shop-title">-- DESK DRAWER --</h2>
-      <div id="inventory-grid"></div>
-    </div>
-  </div>
+      <div class="side-col" id="right-col">
+        <div id="inventory-panel">
+          <h2 class="shop-title">-- DESK DRAWER --</h2>
+          <p style="text-align:center; font-size: 10px; color:#aaa;">Items grant permanent DMG buffs!</p>
+          <div id="inventory-grid"></div>
+        </div>
+      </div>
+
+    </div> </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script src="https://www.youtube.com/iframe_api"></script>
-  <script src="script.js?v=13"></script>
+  <script src="script.js?v=14"></script>
 </body>
 </html>
