@@ -49,8 +49,6 @@ if (isOBS) {
 let myCoins = 0, myClickDmg = 2500, myAutoDmg = 0, clickCost = 10, autoCost = 50, myUser = "";
 let myInventory = {}; 
 let curHP = 1000000000, maxHP = 1000000000, lastHP = 1000000000, frenzy = 0, multi = 1;
-
-// FIXED: Initialize at 0 so it strictly applies CSS sizes on page load!
 let currentPhase = 0; 
 let baseFrankImg = "phases/phase1frank.png";
 let defMulti = 1.0; 
@@ -67,7 +65,6 @@ const hpFill = document.getElementById('health-bar-fill');
 const hpText = document.getElementById('health-text');
 const corpQuotes = [ "SYNERGY!", "LET'S CIRCLE BACK!", "BANDWIDTH!", "RETURN TO OFFICE!", "PIVOT!", "ACTION ITEMS!" ];
 
-// ADDED GOLDEN PAPERCLIP (prestigeOnly ensures it never drops from normal clicking)
 const lootTable = [
     { id: 'paperclip', name: 'Bent Paperclip', rarity: 'common', icon: '📎', buff: 0.005 },
     { id: 'sticky', name: 'Neon Sticky', rarity: 'common', icon: '📝', buff: 0.005 },
@@ -105,15 +102,12 @@ bossRef.on('value', (snap) => {
     if (lastLevel === 0) { 
         lastLevel = b.level; 
     } else if (b.level > lastLevel) { 
-        
-        // CHECK FOR PRESTIGE (Every 10 Levels)
         if (lastLevel > 0 && lastLevel % 10 === 0) {
             if(!isOBS) {
                 myInventory['golden_paperclip'] = (myInventory['golden_paperclip'] || 0) + 1;
                 calculateLootBuff();
                 save();
                 renderInventory();
-                // Massive screen pop for players who were actively in the game!
                 createDynamicPopup('PRESTIGE REWARD: Golden Paperclip!', 'loot-popup', window.innerWidth/2, window.innerHeight/2);
             }
         }
@@ -227,7 +221,6 @@ function rollForLoot(x, y) {
     if(Math.random() > 0.15) return; 
     const rarityRoll = Math.random(); 
     
-    // EXCLUDE PRESTIGE ITEMS FROM NORMAL ROLLS
     let validLoot = lootTable.filter(i => !i.prestigeOnly);
     let pool = [];
     
@@ -293,18 +286,18 @@ setInterval(() => { frenzy=Math.max(0, frenzy-2); multi=frenzy>=100?5:frenzy>=75
 document.getElementById('btn-attack').onpointerdown = attack;
 if(bossImg) bossImg.onpointerdown = attack;
 
-// --- UPDATED RETAIL/SMALL TALK QUOTES ---
+// --- STRICTLY RETAIL / OFFICE SMALL TALK ---
 const richardQuotes = [
+    "Livin' the dream!",
+    "Another day, another dollar.",
     "Working hard or hardly working?",
-    "Did you get the memo about the TPS reports?",
-    "We're a family here, remember that.",
-    "If you have time to lean, you have time to clean.",
-    "Can I get a price check on register four?",
-    "Just living the dream!",
-    "Teamwork makes the dream work!",
-    "Corporate is coming today, look busy.",
-    "Make sure you ask about the rewards card.",
-    "TGIF, am I right?"
+    "Can someone check the back room?",
+    "Is it Friday yet?",
+    "Did you try restarting it?",
+    "We're basically a family here.",
+    "If there's no barcode, it must be free!",
+    "Who closed last night?",
+    "Corporate is visiting, look busy."
 ];
 
 function startRichardLoop() {
@@ -335,10 +328,6 @@ function triggerRichardEvent() {
         richardDialogue.classList.add('richard-right-text');
     }
     
-    // Display block is already handled by grid/flex, just add active class
     setTimeout(() => { richardContainer.classList.add('active'); }, 100);
-    
-    setTimeout(() => {
-        richardContainer.classList.remove('active');
-    }, 8000); 
+    setTimeout(() => { richardContainer.classList.remove('active'); }, 8000); 
 }
