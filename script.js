@@ -18,7 +18,7 @@ const employeesRef = db.ref('active_employees');
 
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
-// --- IMAGE PRELOADER (Fixes invisible animation bug) ---
+// --- IMAGE PRELOADER ---
 const preloadHit1 = new Image(); preloadHit1.src = 'boss-hit-var-2.png';
 const preloadHit2 = new Image(); preloadHit2.src = 'boss-hit-variation-3.png';
 const hitImages = ['boss-hit-var-2.png', 'boss-hit-variation-3.png'];
@@ -138,8 +138,6 @@ bossRef.on('value', (snap) => {
         currentPhase = newPhase; 
         if(bossImg && !isAnimatingHit) bossImg.src = baseFrankImg; 
     }
-
-    if(b.health < lastHP && b.health > 0) triggerGlobalFX(); 
     
     hpFill.style.width = (curHP/maxHP)*100 + '%';
     hpText.innerText = curHP.toLocaleString() + " / " + maxHP.toLocaleString();
@@ -167,23 +165,23 @@ function triggerVictoryScreen(newLevel) {
     }, 4000);
 }
 
-// --- UPDATED SMOOTH HIT ANIMATION ---
-function triggerGlobalFX() {
+// --- INSTANT HIT ANIMATION ---
+function playHitAnimation() {
     if(!bossImg || isAnimatingHit) return;
     
     isAnimatingHit = true;
     bossImg.classList.add('boss-impact');
     
+    // Instantly swap to the hit pose
     const randHit = hitImages[Math.floor(Math.random() * hitImages.length)];
     bossImg.src = randHit;
     
-    // Hold the animation for 300ms so you can actually see it
+    // Hold the animation for 300ms so you can actually see it!
     setTimeout(() => { 
         bossImg.classList.remove('boss-impact'); 
-        bossImg.src = baseFrankImg; 
+        bossImg.src = baseFrankImg; // Go back to normal phase
         
-        // Wait 100ms before allowing another animation to prevent seizure-flashing
-        setTimeout(() => { isAnimatingHit = false; }, 100); 
+        setTimeout(() => { isAnimatingHit = false; }, 50); 
     }, 300); 
     
     if(Math.random() < 0.15) spawnQuote();
@@ -264,6 +262,10 @@ function renderInventory() {
 
 function attack(e) {
     if(isOBS) return;
+    
+    // TRIGGER INSTANT ANIMATION!
+    playHitAnimation();
+
     const dmg = Math.floor(myClickDmg * multi * defMulti * itemBuffMultiplier);
     
     bossRef.transaction(b => { if(b) { b.health -= dmg; if(b.health<=0){ b.level++; b.health=1000000000*b.level; } } return b; });
