@@ -75,50 +75,59 @@ body {
 .loot-popup { position: absolute; color: #f1c40f; font-weight: bold; font-size: 1.2rem; pointer-events: none; animation: floatUpLoot 1.5s ease-out forwards; text-shadow: 2px 2px 0 #000; z-index: 9999; }
 @keyframes floatUpLoot { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-80px) scale(1.2); } }
 
-/* --- CENTERING FIX, PROGRESSIVE SCALING & FRANK ANIMATIONS --- */
+/* --- DUAL-LAYER SYSTEM & CENTERING --- */
 #boss-area {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 550px; /* Increased to give the bigger bosses room to grow */
+  display: grid; /* Grid allows us to stack the images perfectly */
+  place-items: center;
+  min-height: 550px; 
   width: 100%;
   overflow: hidden; 
 }
 
-#boss-image {
-  margin: 0 auto !important; 
+/* Base rules for both layers */
+#boss-image, #boss-hit-layer {
+  grid-area: 1 / 1; /* Puts both images in the exact same spot */
+  margin: 0 auto;
   display: block;
-  width: 100%;
-  max-width: 450px; /* Base width */
-  height: auto;
-  object-fit: contain;
-  
-  /* CRITICAL: Forces the image to stay sharp and pixelated no matter how big he gets */
   image-rendering: pixelated !important;
   image-rendering: crisp-edges !important;
   
-  /* MAGIC VARIABLES FOR SCALING & CENTERING */
   --phase-scale: 1.2; 
   --phase-x: 0%;
   transform: scale(var(--phase-scale)) translateX(var(--phase-x));
-  transition: transform 0.1s ease-out;
+  
+  /* Super fast transition for the click-thump zoom */
+  transition: transform 0.05s ease-out, filter 0.05s ease-out;
+}
+
+/* Layer 1: The Body */
+#boss-image {
+  width: 100%;
+  max-width: 450px;
+  object-fit: contain;
+}
+
+/* Layer 2: The Hologram Face Overlay */
+#boss-hit-layer {
+  width: 100%;
+  max-width: 220px !important; /* Smaller size to match the body */
+  object-fit: contain;
+  opacity: 0; /* Invisible by default */
+  pointer-events: none;
+  z-index: 10;
+  /* Separate transition for the smooth fade in/out */
+  transition: opacity 0.5s ease-in-out, transform 0.05s ease-out, filter 0.05s ease-out; 
 }
 
 /* PROGRESSIVE SCALING & PRECISE CENTERING */
-/* Each phase gets visually larger. Tweak the --phase-x percentage if one is still slightly off! */
 .center-phase-1 { --phase-scale: 1.2;  --phase-x: 0%; }
 .center-phase-2 { --phase-scale: 1.35; --phase-x: -4%; }
-.center-phase-3 { --phase-scale: 1.5;  --phase-x: -12%; } /* Crimson Fury shifted heavily left to center his body */
+.center-phase-3 { --phase-scale: 1.5;  --phase-x: -12%; }
 .center-phase-4 { --phase-scale: 1.65; --phase-x: -2%; }
 
-/* IMPACT ANIMATION (Uses CSS Math to keep him centered while taking damage!) */
-.boss-impact {
-  transform: scale(calc(var(--phase-scale) + 0.1)) translateX(var(--phase-x)) rotate(-3deg) !important;
-  filter: drop-shadow(0 0 25px rgba(255, 0, 0, 0.7)) brightness(0.6) sepia(0.8) hue-rotate(-30deg) !important;
-}
-
-/* SHRINK THE FACE DURING HIT SO IT MATCHES THE BODY */
-.is-hit-face {
-  max-width: 220px !important; 
-  /* Because we are using --phase-scale above, this face will automatically grow larger in phases 2, 3, and 4 to match the bigger bodies! */
+/* INSTANT CLICK IMPACT (The "Thump" & Flash) */
+.quick-zoom {
+  /* Zooms in an extra 6% instantly */
+  transform: scale(calc(var(--phase-scale) + 0.06)) translateX(var(--phase-x)) !important;
+  filter: brightness(1.3) !important;
 }
