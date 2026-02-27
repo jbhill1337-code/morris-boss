@@ -280,16 +280,26 @@ body {
 }
 
 /* --- FRANK SIZE & IMPACT ANIMATIONS --- */
-#boss-image {
+#boss-area {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 350px; /* Gives him a proper arena space */
   width: 100%;
-  max-width: 400px; /* Made Frank significantly bigger */
-  transition: transform 0.05s ease-out, filter 0.05s ease-out;
+}
+
+#boss-image {
+  width: 250px; /* Forces the small sprite to be massive */
+  height: auto;
+  image-rendering: pixelated; /* CRITICAL: Keeps pixel art crispy instead of blurry */
+  transition: transform 0.2s ease-out, filter 0.2s ease-out; /* Smoother, slower transitions */
 }
 
 .boss-impact {
-  /* Scales up slightly and adds a muted, deep red glow instead of a bright flash */
-  transform: scale(1.04) rotate(-1deg) !important;
-  filter: drop-shadow(0 0 25px rgba(220, 20, 60, 0.6)) brightness(0.85) !important;
+  transform: scale(1.08) rotate(-2deg) !important;
+  /* A deeper, darker red flash that isn't blinding */
+  filter: drop-shadow(0 0 20px rgba(180, 10, 30, 0.5)) brightness(0.7) sepia(0.6) hue-rotate(-30deg) !important;
 }
+
 
 
