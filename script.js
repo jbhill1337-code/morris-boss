@@ -71,15 +71,19 @@ let currentPhase = 1;
 let baseFrankImg = "phases/phase1frank.png";
 let defMulti = 1.0; 
 let lastLevel = 0; 
-let itemBuffMultiplier = 1.0; // The new dynamic multiplier
+let itemBuffMultiplier = 1.0; 
+let isAnimatingHit = false; // Prevents animation overlap
+
+// Your root-level hit images
+const hitImages = ['boss-hit-var-2.png', 'boss-hit-variation-3.png'];
 
 const lootTable = [
-    { id: 'paperclip', name: 'Bent Paperclip', rarity: 'common', icon: '📎', buff: 0.005 }, // +0.5%
+    { id: 'paperclip', name: 'Bent Paperclip', rarity: 'common', icon: '📎', buff: 0.005 },
     { id: 'sticky', name: 'Neon Sticky', rarity: 'common', icon: '📝', buff: 0.005 },
-    { id: 'mug', name: 'World\'s Okayest Boss Mug', rarity: 'uncommon', icon: '☕', buff: 0.01 }, // +1.0%
-    { id: 'stapler', name: 'Red Stapler', rarity: 'rare', icon: '🖍️', buff: 0.025 }, // +2.5%
+    { id: 'mug', name: 'World\'s Okayest Boss Mug', rarity: 'uncommon', icon: '☕', buff: 0.01 },
+    { id: 'stapler', name: 'Red Stapler', rarity: 'rare', icon: '🖍️', buff: 0.025 },
     { id: 'keyboard', name: 'Clacky Keyboard', rarity: 'rare', icon: '⌨️', buff: 0.025 },
-    { id: 'golden_pen', name: 'The Golden Pen', rarity: 'legendary', icon: '🖋️', buff: 0.05 }, // +5.0%
+    { id: 'golden_pen', name: 'The Golden Pen', rarity: 'legendary', icon: '🖋️', buff: 0.05 },
     { id: 'rolodex', name: 'CEO\'s Rolodex', rarity: 'legendary', icon: '📇', buff: 0.05 },
     { id: 'briefcase', name: 'Nuclear Briefcase', rarity: 'legendary', icon: '💼', buff: 0.05 }
 ];
@@ -131,7 +135,11 @@ bossRef.on('value', (snap) => {
     else if (hpPercent <= 0.75) { newPhase = 2; newTitle = "MANAGER FRANK (BURSTING)"; defMulti = 0.8; baseFrankImg = "phases/phase2frank.png"; } 
     else { newPhase = 1; newTitle = "FRANK LV." + b.level; defMulti = 1.0; baseFrankImg = "phases/phase1frank.png"; }
 
-    if (currentPhase !== newPhase) { currentPhase = newPhase; if(bossImg) bossImg.src = baseFrankImg; }
+    if (currentPhase !== newPhase) { 
+        currentPhase = newPhase; 
+        if(bossImg && !isAnimatingHit) bossImg.src = baseFrankImg; 
+    }
+
     if(b.health < lastHP && b.health > 0) triggerGlobalFX(); 
     
     hpFill.style.width = (curHP/maxHP)*100 + '%';
@@ -161,11 +169,23 @@ function triggerVictoryScreen(newLevel) {
     }, 4000);
 }
 
-// --- NEW HEAVY HIT ANIMATION ---
+// --- UPDATED SMOOTH HIT ANIMATION ---
 function triggerGlobalFX() {
-    if(!bossImg) return;
+    if(!bossImg || isAnimatingHit) return;
+    
+    isAnimatingHit = true;
     bossImg.classList.add('boss-impact');
-    setTimeout(() => { bossImg.classList.remove('boss-impact'); }, 100);
+    
+    // Swap to a random hit pose
+    const randHit = hitImages[Math.floor(Math.random() * hitImages.length)];
+    bossImg.src = randHit;
+    
+    setTimeout(() => { 
+        bossImg.classList.remove('boss-impact'); 
+        bossImg.src = baseFrankImg; // Return to the current phase
+        isAnimatingHit = false; // Open the cooldown window again
+    }, 350); // Holds the animation for 350ms so it stays smooth
+    
     if(Math.random() < 0.15) spawnQuote();
 }
 
@@ -207,7 +227,7 @@ function rollForLoot(x, y) {
         const item = pool[Math.floor(Math.random() * pool.length)];
         myInventory[item.id] = (myInventory[item.id] || 0) + 1;
         
-        calculateLootBuff(); // Recalculate multiplier immediately
+        calculateLootBuff();
         save();
         renderInventory();
         
@@ -245,7 +265,6 @@ function renderInventory() {
 
 function attack(e) {
     if(isOBS) return;
-    // Apply Frenzy Combo, Phase Defense, AND Inventory Loot Buffs!
     const dmg = Math.floor(myClickDmg * multi * defMulti * itemBuffMultiplier);
     
     bossRef.transaction(b => { if(b) { b.health -= dmg; if(b.health<=0){ b.level++; b.health=1000000000*b.level; } } return b; });
@@ -276,7 +295,6 @@ document.getElementById('buy-auto').onclick = () => { if(myCoins>=autoCost){ myC
 
 setInterval(() => { 
     if(myAutoDmg>0) { 
-        // Auto damage also benefits from the loot buff!
         const autoDmgCalculated = Math.floor(myAutoDmg * defMulti * itemBuffMultiplier);
         bossRef.transaction(b => { if(b) b.health -= autoDmgCalculated; return b; }); 
     }
