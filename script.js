@@ -92,16 +92,16 @@ const lootTable = [
     { id: 'paperclip', name: 'Bent Paperclip', rarity: 'common', icon: '📎', buff: 0.005 },
     { id: 'sticky', name: 'Neon Sticky', rarity: 'common', icon: '📝', buff: 0.005 },
     { id: 'mug', name: 'World\'s Okayest Boss Mug', rarity: 'uncommon', icon: '☕', buff: 0.01 },
-    { id: 'energy_drink', name: 'Suspicious Energy Drink', rarity: 'uncommon', icon: '<img src="icons/icon_potion_gold.png" class="inv-sprite">', buff: 0.015 },
+    { id: 'energy_drink', name: 'Suspicious Energy Drink', rarity: 'uncommon', icon: '🧪', buff: 0.015 },
     { id: 'stapler', name: 'Red Stapler', rarity: 'rare', icon: '🖍️', buff: 0.025 },
     { id: 'keyboard', name: 'Clacky Keyboard', rarity: 'rare', icon: '⌨️', buff: 0.025 },
-    { id: 'power_gem', name: 'Power Gem', rarity: 'rare', icon: '<img src="icons/icon_gem_orange.png" class="inv-sprite">', buff: 0.03 },
-    { id: 'crimson_shard', name: 'Crimson Shard', rarity: 'rare', icon: '<img src="icons/icon_gem_red.png" class="inv-sprite">', buff: 0.03 },
+    { id: 'power_gem', name: 'Power Gem', rarity: 'rare', icon: '🟠', buff: 0.03 },
+    { id: 'crimson_shard', name: 'Crimson Shard', rarity: 'rare', icon: '🔴', buff: 0.03 },
     { id: 'golden_pen', name: 'The Golden Pen', rarity: 'legendary', icon: '🖋️', buff: 0.05 },
     { id: 'rolodex', name: 'CEO\'s Rolodex', rarity: 'legendary', icon: '📇', buff: 0.05 },
     { id: 'briefcase', name: 'Nuclear Briefcase', rarity: 'legendary', icon: '💼', buff: 0.05 },
-    { id: 'exec_trophy', name: 'Executive Trophy', rarity: 'legendary', icon: '<img src="icons/icon_trophy.png" class="inv-sprite">', buff: 0.07 },
-    { id: 'gold_blade', name: 'The Gold Blade', rarity: 'legendary', icon: '<img src="icons/icon_sword_gold.png" class="inv-sprite">', buff: 0.08 },
+    { id: 'exec_trophy', name: 'Executive Trophy', rarity: 'legendary', icon: '🏆', buff: 0.07 },
+    { id: 'gold_blade', name: 'The Gold Blade', rarity: 'legendary', icon: '🗡️', buff: 0.08 },
     { id: 'golden_paperclip', name: 'Golden Paperclip', rarity: 'legendary', icon: '✨', buff: 0.25, prestigeOnly: true }
 ];
 
@@ -228,17 +228,21 @@ function playHitAnimation(x, y) {
     bossImg.style.opacity = '0'; 
     bossHitLayer.style.filter = phaseFilter; 
     bossHitLayer.src = hitImages[0]; 
-    bossHitLayer.style.opacity = '1'; 
+    bossHitLayer.style.opacity = '1'; // Snaps on instantly (no CSS opacity transition)
     
     setTimeout(() => { bossHitLayer.src = hitImages[1]; }, 800);
     setTimeout(() => { bossHitLayer.src = hitImages[0]; }, 1600);
     
-    setTimeout(() => { 
-        bossHitLayer.style.opacity = '0'; 
-        setTimeout(() => { 
-            bossImg.style.opacity = '1'; 
-            isAnimatingHit = false; 
-        }, 400); 
+    // Fade the hit layer out with a brief inline transition, then snap base image back
+    setTimeout(() => {
+        bossHitLayer.style.transition = 'opacity 0.3s ease-out, transform 0.05s ease-out, filter 0.05s ease-out';
+        bossHitLayer.style.opacity = '0';
+        setTimeout(() => {
+            bossImg.style.opacity = '1';
+            isAnimatingHit = false;
+            // Reset hit layer transition back to no-opacity for next attack
+            bossHitLayer.style.transition = 'transform 0.05s ease-out, filter 0.05s ease-out';
+        }, 300);
     }, 2400); 
     
     if(Math.random() < 0.15) spawnQuote(x, y);
@@ -320,12 +324,12 @@ function attack(e) {
 
 function updateUI() {
     document.getElementById('coin-count').innerText = myCoins.toLocaleString(); document.getElementById('click-power').innerText = myClickDmg.toLocaleString(); document.getElementById('auto-power').innerText = myAutoDmg.toLocaleString();
-    document.getElementById('buy-click').innerHTML = `<img src="icons/icon_sword.png" class="btn-sprite"> Sharpen Blade (+2.5k) <br><span>Cost: ${clickCost}</span>`; 
+    document.getElementById('buy-click').innerHTML = `⚔️ Sharpen Blade (+2.5k) <br><span>Cost: ${clickCost}</span>`; 
     document.getElementById('buy-auto').innerHTML = `Hire Merc (+1k/s) <br><span>Cost: ${autoCost}</span>`;
-    document.getElementById('buy-crit').innerHTML = `<img src="icons/icon_star.png" class="btn-sprite"> Lucky Shot (+5% crit) <br><span class="cost-tag">Cost: ${critCost}</span>`;
+    document.getElementById('buy-crit').innerHTML = `🎯 Lucky Shot (+5% crit) <br><span class="cost-tag">Cost: ${critCost}</span>`;
     document.getElementById('buy-overtime').innerHTML = `⏱️ Overtime (faster auto) <br><span class="cost-tag">Cost: ${overtimeCost}</span>`;
     document.getElementById('buy-synergy').innerHTML = `⚡ Synergy Boost (+10% dmg) <br><span class="cost-tag">Cost: ${synergyCost}</span>`;
-    document.getElementById('buy-rage').innerHTML = `<img src="icons/icon_potion_red.png" class="btn-sprite"> Rage Fuel (+frenzy/click) <br><span class="cost-tag">Cost: ${rageCost}</span>`;
+    document.getElementById('buy-rage').innerHTML = `🔥 Rage Fuel (+frenzy/click) <br><span class="cost-tag">Cost: ${rageCost}</span>`;
     document.getElementById('buy-hustle').innerHTML = `💰 Side Hustle (+2 coins) <br><span class="cost-tag">Cost: ${hustleCost}</span>`;
     document.getElementById('crit-chance-display').innerText = critChance;
     document.getElementById('shop-multi-display').innerText = shopMultiplier.toFixed(2);
