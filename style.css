@@ -66,6 +66,10 @@ body { margin: 0; padding: 0; background-color: #050510; background-image: url('
   transform: translate(calc(-50% + var(--phase-nudge, 0%)), -50%) scale(var(--phase-scale));
   transform-origin: 50% 50%;
   transition: transform 0.05s ease-out, filter 0.05s ease-out;
+  /* IMPORTANT: at scale 2.0 the images overflow far outside #center-col.
+     pointer-events: none prevents them intercepting clicks on shop buttons.
+     Attack input is handled by #boss-area instead (see script.js). */
+  pointer-events: none;
 }
 
 #boss-hit-layer {

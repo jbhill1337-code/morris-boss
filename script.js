@@ -397,7 +397,9 @@ function startAutoTimer() {
 setInterval(() => { frenzy=Math.max(0, frenzy-2); multi=frenzy>=100?5:frenzy>=75?3:frenzy>=50?2:1; document.getElementById('frenzy-bar-fill').style.width=frenzy+'%'; document.getElementById('frenzy-text').innerText=multi>1?`COMBO ${multi}x` : `CHARGE METER`; }, 100);
 
 document.getElementById('btn-attack').onpointerdown = attack;
-if(bossImg) bossImg.onpointerdown = attack;
+// Attack on click anywhere in the boss area (not bossImg directly — at scale 2.0
+// the image overflows into the side columns and would intercept shop button clicks)
+document.getElementById('boss-area').onpointerdown = attack;
 
 // --- STRICTLY RETAIL / OFFICE SMALL TALK ---
 const richardQuotes = [
