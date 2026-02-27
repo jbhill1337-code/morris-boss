@@ -108,3 +108,8 @@ body {
   /* We use scale() here, the translateX is handled by the phase class */
   transform: scale(1.05) rotate(-2deg) !important;
 }
+/* Forces the close-up face sprites to shrink to match the body scale */
+.is-hit-face {
+  max-width: 250px !important; 
+  /* Adjust this 250px up or down until the face matches his body width! */
+}
