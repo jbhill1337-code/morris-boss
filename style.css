@@ -1,30 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
 body {
-  margin: 0;
-  padding: 0;
-  /* Keep the dark color as a fallback while the image loads */
-  background-color: #050510;
-  /* Add the new background image */
-  background-image: url('backround.png');
-  /* Ensure it covers the whole screen without distorting */
-  background-size: cover;
-  /* Center the image */
-  background-position: center center;
-  /* Keep the background still while scrolling */
-  background-attachment: fixed;
-  /* Ensure no tiling */
-  background-repeat: no-repeat;
-  
-  color: #fff;
-  font-family: 'VT323', monospace;
-  overflow-x: hidden;
-  user-select: none;
+  margin: 0; padding: 0; background-color: #050510;
+  background-image: url('backround.png'); background-size: cover; background-position: center center; background-attachment: fixed; background-repeat: no-repeat;
+  color: #fff; font-family: 'VT323', monospace; overflow-x: hidden; user-select: none;
 }
 
 .scanlines {
   position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-  /* Made scanlines slightly subtler to let the background show through */
   background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
   background-size: 100% 4px, 6px 100%; z-index: 1000; pointer-events: none;
 }
@@ -42,11 +25,9 @@ body {
 .login-box { background: rgba(0, 0, 0, 0.8); border: 2px solid #00ffff; padding: 30px; text-align: center; box-shadow: 0 0 15px #ff00ff; }
 #username-input { font-family: 'VT323', monospace; font-size: 1.2rem; padding: 5px; margin: 15px 0; width: 80%; text-align: center; background: #222; color: #00ffff; border: 1px solid #ff00ff; }
 
-/* --- INTRO VIDEO STYLES --- */
 #intro-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #000; z-index: 10000; display: flex; justify-content: center; align-items: center; transition: opacity 1s ease-in-out; }
 #skip-intro-btn { position: absolute; bottom: 30px; right: 30px; font-size: 1rem; z-index: 10001; background-color: rgba(0, 0, 0, 0.6); }
 
-/* --- GAME UI STYLES --- */
 #game-container { padding: 20px; max-width: 1200px; margin: 0 auto; }
 #health-bar-container, #frenzy-container { width: 100%; max-width: 400px; height: 30px; border: 2px solid #fff; margin: 10px auto; position: relative; background: #222; }
 #health-bar-fill { height: 100%; background: linear-gradient(90deg, #ff00ff, #00ffff); width: 100%; transition: width 0.1s; }
@@ -74,13 +55,11 @@ body {
 .shop-btn:hover { background: #222; border-color: #ff00ff; }
 .shop-btn span { color: #ff00ff; }
 
-/* --- RESPONSIVE LAYOUT --- */
 #game-wrapper { display: flex; flex-direction: column; gap: 20px; align-items: center; width: 100%; }
 .side-col { width: 100%; max-width: 400px; background: rgba(0, 0, 0, 0.4); padding: 15px; border: 1px solid #00ffff; border-radius: 5px; box-sizing: border-box; }
 #center-col { width: 100%; max-width: 700px; display: flex; flex-direction: column; align-items: center; }
 @media (min-width: 950px) { #game-wrapper { flex-direction: row; justify-content: space-between; align-items: flex-start; max-width: 1200px; margin: 0 auto; } .side-col { width: 25%; position: sticky; top: 20px; } #center-col { width: 45%; } }
 
-/* --- INVENTORY & RARITY SYSTEM --- */
 #inventory-panel { margin-top: 10px; }
 #inventory-grid { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 10px; }
 .inv-item { width: 50px; height: 50px; background: #111; display: flex; justify-content: center; align-items: center; position: relative; font-size: 24px; cursor: pointer; transition: transform 0.1s ease, filter 0.3s ease; }
@@ -103,15 +82,29 @@ body {
   align-items: center;
   min-height: 500px; 
   width: 100%;
+  overflow: hidden; /* Ensures the shifted image doesn't spill out */
 }
 
 #boss-image {
-  margin: 0 auto !important; 
+  /* Cleaned up main styles */
+  width: 100%;
+  max-width: 550px;
+  height: auto;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
   display: block;
   object-fit: contain;
   transition: transform 0.1s ease-out;
 }
 
+/* INDIVIDUAL PHASE CENTERING ADJUSTMENTS */
+/* Tweak these % values if a phase is still off-center! */
+.center-phase-1 { transform: translateX(0%); }   /* Looks centered already */
+.center-phase-2 { transform: translateX(-5%); }  /* Shift left */
+.center-phase-3 { transform: translateX(5%); }   /* Shift right (VP Frank) */
+.center-phase-4 { transform: translateX(-3%); }  /* Shift left */
+
 .boss-impact {
+  /* We use scale() here, the translateX is handled by the phase class */
   transform: scale(1.05) rotate(-2deg) !important;
 }
