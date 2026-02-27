@@ -24,26 +24,10 @@ body { margin: 0; padding: 0; background-color: #050510; background-image: url('
 .shop-btn:hover { background: #222; border-color: #ff00ff; }
 .shop-btn span { color: #ff00ff; }
 
-/* --- RESPONSIVE LAYOUT --- */
 #game-wrapper { display: flex; flex-direction: column; gap: 20px; align-items: stretch; width: 100%; flex: 1; }
 .side-col { width: 100%; max-width: 400px; background: rgba(0, 0, 0, 0.4); padding: 15px; border: 1px solid #00ffff; border-radius: 5px; box-sizing: border-box; align-self: flex-start; }
-
-/* THE CENTER COLUMN REWRITE */
-#center-col { 
-  width: 100%; 
-  max-width: 800px; 
-  display: flex; 
-  flex-direction: column; 
-  align-items: center; 
-  justify-content: center; /* Pushes the boss perfectly into the middle */
-  flex: 1; /* Takes up all vertical space */
-}
-
-@media (min-width: 950px) { 
-  #game-wrapper { flex-direction: row; justify-content: space-between; align-items: stretch; max-width: 1200px; margin: 0 auto; } 
-  .side-col { width: 25%; position: sticky; top: 20px; } 
-  #center-col { width: 50%; } 
-}
+#center-col { width: 100%; max-width: 800px; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; }
+@media (min-width: 950px) { #game-wrapper { flex-direction: row; justify-content: space-between; align-items: stretch; max-width: 1200px; margin: 0 auto; } .side-col { width: 25%; position: sticky; top: 20px; } #center-col { width: 50%; } }
 
 #inventory-panel { margin-top: 10px; }
 #inventory-grid { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 10px; }
@@ -58,97 +42,25 @@ body { margin: 0; padding: 0; background-color: #050510; background-image: url('
 .rarity-legendary { border: 1px solid #f1c40f; filter: drop-shadow(0 0 12px rgba(241, 196, 15, 1)); animation: legendary-pulse 2s infinite; }
 @keyframes legendary-pulse { 0% { filter: drop-shadow(0 0 10px rgba(241, 196, 15, 0.8)); } 50% { filter: drop-shadow(0 0 16px rgba(241, 196, 15, 1)); } 100% { filter: drop-shadow(0 0 10px rgba(241, 196, 15, 0.8)); } }
 
-/* ======================================================== */
-/* --- MASSIVE CLICKBOSS PHYSICS & CENTERING --- */
-/* ======================================================== */
-#boss-area { 
-  display: grid; 
-  place-items: center; 
-  height: 45vh; /* He is fundamentally tied to viewport height! */
-  width: 100%; 
-  overflow: visible !important; /* CRITICAL: Never clip him if he scales up */
-  margin-bottom: 20px;
-}
+/* --- DUAL-LAYER SYSTEM & GOLDILOCKS CENTERING --- */
+#boss-area { display: grid; place-items: center; height: 45vh; width: 100%; overflow: visible !important; margin-bottom: 20px; }
+#boss-image, #boss-hit-layer { grid-area: 1 / 1; margin: 0 auto; display: block; image-rendering: pixelated !important; image-rendering: crisp-edges !important; transform: scale(var(--phase-scale)) translateX(var(--phase-x)); transition: transform 0.05s ease-out, filter 0.05s ease-out; }
+#boss-image { height: 100%; width: auto; max-width: none !important; object-fit: contain; transition: transform 0.05s ease-out, filter 0.05s ease-out; }
+#boss-hit-layer { height: 70%; width: auto; max-width: none !important; object-fit: contain; opacity: 0; pointer-events: none; z-index: 10; transition: opacity 0.5s ease-in-out, transform 0.05s ease-out, filter 0.05s ease-out; }
 
-#boss-image, #boss-hit-layer { 
-  grid-area: 1 / 1; 
-  margin: 0 auto; 
-  display: block; 
-  image-rendering: pixelated !important; 
-  image-rendering: crisp-edges !important; 
-  transform: scale(var(--phase-scale)) translateX(var(--phase-x)); 
-}
+/* THE GOLDILOCKS SIZE - Not too big, not too small, perfectly centered! */
+.center-phase-1 { --phase-scale: 1.4;  --phase-x: 0%; }
+.center-phase-2 { --phase-scale: 1.55; --phase-x: -3%; }
+.center-phase-3 { --phase-scale: 1.7;  --phase-x: -10%; } /* Fixed Crimson Fury offset */
+.center-phase-4 { --phase-scale: 1.85; --phase-x: -2%; }
 
-#boss-image { 
-  height: 100%; /* Fill the 45vh */
-  width: auto; 
-  max-width: none !important; /* Destroy any width limits */
-  object-fit: contain; 
-  transition: transform 0.05s ease-out, filter 0.05s ease-out;
-}
+.quick-zoom { transform: scale(calc(var(--phase-scale) + 0.10)) translateX(var(--phase-x)) !important; filter: brightness(1.3) !important; }
 
-#boss-hit-layer { 
-  height: 70%; /* Face overlay naturally smaller than body */
-  width: auto; 
-  max-width: none !important; 
-  object-fit: contain; 
-  opacity: 0; 
-  pointer-events: none; 
-  z-index: 10; 
-  transition: opacity 0.5s ease-in-out, transform 0.05s ease-out, filter 0.05s ease-out; 
-}
+/* --- RICHARD EVENT --- */
+#richard-event-container { position: fixed; bottom: 0; left: 0; width: 100vw; height: 100vh; z-index: 99999; pointer-events: none; }
+#richard-image { position: absolute; bottom: -5px; height: 28vh; width: auto; image-rendering: pixelated; opacity: 0.85; object-fit: contain; filter: drop-shadow(0 0 15px #00ffff); transition: transform 1.5s ease-in-out; }
+#richard-dialogue { position: absolute; bottom: 30vh; padding: 10px 15px; background-color: rgba(0, 0, 0, 0.9); color: #fff; border: 2px solid #00ffff; font-size: 1rem; max-width: 250px; text-align: center; text-transform: uppercase; opacity: 0; transform: scale(0.8); transition: opacity 0.5s 1.5s, transform 0.5s 1.5s; box-shadow: 4px 4px 0 #ff00ff; image-rendering: pixelated; }
 
-/* BASE SCALE GREATLY INCREASED TO DEFEAT TRANSPARENT PADDING */
-.center-phase-1 { --phase-scale: 2.2;  --phase-x: 0%; }
-.center-phase-2 { --phase-scale: 2.4;  --phase-x: -4%; }
-.center-phase-3 { --phase-scale: 2.6;  --phase-x: -12%; } /* VP Frank Centered */
-.center-phase-4 { --phase-scale: 2.8;  --phase-x: -2%; }
-
-.quick-zoom { 
-  transform: scale(calc(var(--phase-scale) + 0.15)) translateX(var(--phase-x)) !important; 
-  filter: brightness(1.3) !important; 
-}
-
-
-/* ======================================================== */
-/* --- REVISED RICHARD EVENT (SMALLER, OFF TO THE SIDE) --- */
-/* ======================================================== */
-#richard-event-container { 
-  position: fixed; 
-  bottom: 0; left: 0; 
-  width: 100vw; height: 100vh; 
-  z-index: 99999; 
-  pointer-events: none; /* Let clicks hit the game behind him */
-}
-
-#richard-image { 
-  position: absolute; 
-  bottom: -5px; 
-  height: 28vh; /* Shrunk substantially */ 
-  width: auto; 
-  image-rendering: pixelated; 
-  opacity: 0.85; 
-  object-fit: contain; 
-  filter: drop-shadow(0 0 15px #00ffff); 
-  transition: transform 1.5s ease-in-out; 
-}
-
-#richard-dialogue { 
-  position: absolute; 
-  bottom: 30vh; 
-  padding: 10px 15px; 
-  background-color: rgba(0, 0, 0, 0.9); 
-  color: #fff; border: 2px solid #00ffff; 
-  font-size: 1rem; 
-  max-width: 250px; 
-  text-align: center; text-transform: uppercase; 
-  opacity: 0; transform: scale(0.8); 
-  transition: opacity 0.5s 1.5s, transform 0.5s 1.5s; 
-  box-shadow: 4px 4px 0 #ff00ff; 
-  image-rendering: pixelated; 
-}
-
-/* Pinned hard to the edges */
 .richard-left { left: 0; transform: translateX(-100%); }
 .richard-left-text { left: 2vw; }
 .richard-right { right: 0; transform: translateX(100%); }
