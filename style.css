@@ -187,3 +187,56 @@ body { margin: 0; padding: 0; background-color: #050510; background-image: url('
   left: 0;
   pointer-events: none;
 }
+#rpg-ui {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  width: 360px;
+  background: #111;
+  padding: 10px;
+  border: 2px solid #333;
+  color: white;
+  font-family: Arial;
+  z-index: 9999;
+}
+
+#inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 64px);
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.item {
+  width: 64px;
+  height: 64px;
+  background-size: cover;
+  image-rendering: pixelated;
+  cursor: grab;
+}
+
+.equip-slot {
+  width: 64px;
+  height: 64px;
+  border: 2px dashed #555;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+  font-size: 12px;
+  color: #aaa;
+}
+
+.rarity-common { border: 2px solid #777; }
+.rarity-uncommon { border: 2px solid #2ecc71; }
+.rarity-rare { border: 2px solid #3498db; }
+.rarity-epic { border: 2px solid #9b59b6; }
+.rarity-legendary { border: 2px solid #f39c12; }
+
+#fx-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9998;
+}
