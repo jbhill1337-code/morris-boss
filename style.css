@@ -75,41 +75,50 @@ body {
 .loot-popup { position: absolute; color: #f1c40f; font-weight: bold; font-size: 1.2rem; pointer-events: none; animation: floatUpLoot 1.5s ease-out forwards; text-shadow: 2px 2px 0 #000; z-index: 9999; }
 @keyframes floatUpLoot { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-80px) scale(1.2); } }
 
-/* --- CENTERING FIX & FRANK ANIMATIONS --- */
+/* --- CENTERING FIX, PROGRESSIVE SCALING & FRANK ANIMATIONS --- */
 #boss-area {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 500px; 
+  min-height: 550px; /* Increased to give the bigger bosses room to grow */
   width: 100%;
-  overflow: hidden; /* Ensures the shifted image doesn't spill out */
+  overflow: hidden; 
 }
 
 #boss-image {
-  /* Cleaned up main styles */
-  width: 100%;
-  max-width: 550px;
-  height: auto;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
+  margin: 0 auto !important; 
   display: block;
+  width: 100%;
+  max-width: 450px; /* Base width */
+  height: auto;
   object-fit: contain;
+  
+  /* CRITICAL: Forces the image to stay sharp and pixelated no matter how big he gets */
+  image-rendering: pixelated !important;
+  image-rendering: crisp-edges !important;
+  
+  /* MAGIC VARIABLES FOR SCALING & CENTERING */
+  --phase-scale: 1.2; 
+  --phase-x: 0%;
+  transform: scale(var(--phase-scale)) translateX(var(--phase-x));
   transition: transform 0.1s ease-out;
 }
 
-/* INDIVIDUAL PHASE CENTERING ADJUSTMENTS */
-/* Tweak these % values if a phase is still off-center! */
-.center-phase-1 { transform: translateX(0%); }   /* Looks centered already */
-.center-phase-2 { transform: translateX(-5%); }  /* Shift left */
-.center-phase-3 { transform: translateX(5%); }   /* Shift right (VP Frank) */
-.center-phase-4 { transform: translateX(-3%); }  /* Shift left */
+/* PROGRESSIVE SCALING & PRECISE CENTERING */
+/* Each phase gets visually larger. Tweak the --phase-x percentage if one is still slightly off! */
+.center-phase-1 { --phase-scale: 1.2;  --phase-x: 0%; }
+.center-phase-2 { --phase-scale: 1.35; --phase-x: -4%; }
+.center-phase-3 { --phase-scale: 1.5;  --phase-x: -12%; } /* Crimson Fury shifted heavily left to center his body */
+.center-phase-4 { --phase-scale: 1.65; --phase-x: -2%; }
 
+/* IMPACT ANIMATION (Uses CSS Math to keep him centered while taking damage!) */
 .boss-impact {
-  /* We use scale() here, the translateX is handled by the phase class */
-  transform: scale(1.05) rotate(-2deg) !important;
+  transform: scale(calc(var(--phase-scale) + 0.1)) translateX(var(--phase-x)) rotate(-3deg) !important;
+  filter: drop-shadow(0 0 25px rgba(255, 0, 0, 0.7)) brightness(0.6) sepia(0.8) hue-rotate(-30deg) !important;
 }
-/* Forces the close-up face sprites to shrink to match the body scale */
+
+/* SHRINK THE FACE DURING HIT SO IT MATCHES THE BODY */
 .is-hit-face {
-  max-width: 250px !important; 
-  /* Adjust this 250px up or down until the face matches his body width! */
+  max-width: 220px !important; 
+  /* Because we are using --phase-scale above, this face will automatically grow larger in phases 2, 3, and 4 to match the bigger bodies! */
 }
