@@ -17,12 +17,9 @@ const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 const preloadHit1 = new Image(); preloadHit1.src = 'boss-hit-var-2.png';
 const preloadHit2 = new Image(); preloadHit2.src = 'boss-hit-variation-3.png';
 const hitImages = ['boss-hit-var-2.png', 'boss-hit-variation-3.png'];
-
-// Updated Richard Preloaders
 const preloadRichard1 = new Image(); preloadRichard1.src = 'yourbossvar/boss-pointing.png';
 const preloadRichard2 = new Image(); preloadRichard2.src = 'yourbossvar/boss-crossing.png';
 const richardImages = ['yourbossvar/boss-pointing.png', 'yourbossvar/boss-crossing.png'];
-
 
 const introContainer = document.getElementById('intro-container');
 const startIntroBtn = document.getElementById('start-intro-btn');
@@ -52,7 +49,9 @@ if (isOBS) {
 let myCoins = 0, myClickDmg = 2500, myAutoDmg = 0, clickCost = 10, autoCost = 50, myUser = "";
 let myInventory = {}; 
 let curHP = 1000000000, maxHP = 1000000000, lastHP = 1000000000, frenzy = 0, multi = 1;
-let currentPhase = 1;
+
+// FIXED: Initialize at 0 so it strictly applies CSS sizes on page load!
+let currentPhase = 0; 
 let baseFrankImg = "phases/phase1frank.png";
 let defMulti = 1.0; 
 let lastLevel = 0; 
@@ -68,6 +67,7 @@ const hpFill = document.getElementById('health-bar-fill');
 const hpText = document.getElementById('health-text');
 const corpQuotes = [ "SYNERGY!", "LET'S CIRCLE BACK!", "BANDWIDTH!", "RETURN TO OFFICE!", "PIVOT!", "ACTION ITEMS!" ];
 
+// ADDED GOLDEN PAPERCLIP (prestigeOnly ensures it never drops from normal clicking)
 const lootTable = [
     { id: 'paperclip', name: 'Bent Paperclip', rarity: 'common', icon: '📎', buff: 0.005 },
     { id: 'sticky', name: 'Neon Sticky', rarity: 'common', icon: '📝', buff: 0.005 },
@@ -76,7 +76,8 @@ const lootTable = [
     { id: 'keyboard', name: 'Clacky Keyboard', rarity: 'rare', icon: '⌨️', buff: 0.025 },
     { id: 'golden_pen', name: 'The Golden Pen', rarity: 'legendary', icon: '🖋️', buff: 0.05 },
     { id: 'rolodex', name: 'CEO\'s Rolodex', rarity: 'legendary', icon: '📇', buff: 0.05 },
-    { id: 'briefcase', name: 'Nuclear Briefcase', rarity: 'legendary', icon: '💼', buff: 0.05 }
+    { id: 'briefcase', name: 'Nuclear Briefcase', rarity: 'legendary', icon: '💼', buff: 0.05 },
+    { id: 'golden_paperclip', name: 'Golden Paperclip', rarity: 'legendary', icon: '✨', buff: 0.25, prestigeOnly: true }
 ];
 
 function save() { if(!isOBS) localStorage.setItem('frank_v9', JSON.stringify({c:myCoins, cd:myClickDmg, ad:myAutoDmg, cc:clickCost, ac:autoCost, u:myUser, inv:myInventory})); }
@@ -99,7 +100,26 @@ document.getElementById('btn-clock-in').onclick = () => {
 bossRef.on('value', (snap) => {
     let b = snap.val();
     if(!b) { b={health:1000000000, level:1}; bossRef.set(b); }
-    if (lastLevel === 0) { lastLevel = b.level; } else if (b.level > lastLevel) { triggerVictoryScreen(b.level); lastLevel = b.level; }
+    
+    // PRESTIGE & LEVEL LOGIC
+    if (lastLevel === 0) { 
+        lastLevel = b.level; 
+    } else if (b.level > lastLevel) { 
+        
+        // CHECK FOR PRESTIGE (Every 10 Levels)
+        if (lastLevel > 0 && lastLevel % 10 === 0) {
+            if(!isOBS) {
+                myInventory['golden_paperclip'] = (myInventory['golden_paperclip'] || 0) + 1;
+                calculateLootBuff();
+                save();
+                renderInventory();
+                // Massive screen pop for players who were actively in the game!
+                createDynamicPopup('PRESTIGE REWARD: Golden Paperclip!', 'loot-popup', window.innerWidth/2, window.innerHeight/2);
+            }
+        }
+        triggerVictoryScreen(b.level); 
+        lastLevel = b.level; 
+    }
 
     lastHP = b.health; curHP = b.health; maxHP = 1000000000 * b.level;
     const hpPercent = curHP / maxHP;
@@ -114,7 +134,7 @@ bossRef.on('value', (snap) => {
     if (currentPhase !== newPhase) { 
         currentPhase = newPhase; 
         if(bossImg) {
-            bossImg.src = baseFrankImg;
+            if(!isAnimatingHit) bossImg.src = baseFrankImg;
             bossImg.classList.remove('center-phase-1', 'center-phase-2', 'center-phase-3', 'center-phase-4');
             bossImg.classList.add(`center-phase-${newPhase}`);
             bossHitLayer.classList.remove('center-phase-1', 'center-phase-2', 'center-phase-3', 'center-phase-4');
@@ -205,8 +225,17 @@ function calculateLootBuff() {
 
 function rollForLoot(x, y) {
     if(Math.random() > 0.15) return; 
-    const rarityRoll = Math.random(); let pool = [];
-    if (rarityRoll < 0.02) { pool = lootTable.filter(i => i.rarity === 'legendary'); } else if (rarityRoll < 0.15) { pool = lootTable.filter(i => i.rarity === 'rare'); } else if (rarityRoll < 0.40) { pool = lootTable.filter(i => i.rarity === 'uncommon'); } else { pool = lootTable.filter(i => i.rarity === 'common'); } 
+    const rarityRoll = Math.random(); 
+    
+    // EXCLUDE PRESTIGE ITEMS FROM NORMAL ROLLS
+    let validLoot = lootTable.filter(i => !i.prestigeOnly);
+    let pool = [];
+    
+    if (rarityRoll < 0.02) { pool = validLoot.filter(i => i.rarity === 'legendary'); } 
+    else if (rarityRoll < 0.15) { pool = validLoot.filter(i => i.rarity === 'rare'); } 
+    else if (rarityRoll < 0.40) { pool = validLoot.filter(i => i.rarity === 'uncommon'); } 
+    else { pool = validLoot.filter(i => i.rarity === 'common'); } 
+    
     if (pool.length > 0) {
         const item = pool[Math.floor(Math.random() * pool.length)];
         myInventory[item.id] = (myInventory[item.id] || 0) + 1;
@@ -264,18 +293,18 @@ setInterval(() => { frenzy=Math.max(0, frenzy-2); multi=frenzy>=100?5:frenzy>=75
 document.getElementById('btn-attack').onpointerdown = attack;
 if(bossImg) bossImg.onpointerdown = attack;
 
-// --- RICHARD INTIMIDATION SYSTEM ---
+// --- UPDATED RETAIL/SMALL TALK QUOTES ---
 const richardQuotes = [
-    "I'm not seeing enough 'Synergy' in your clicks.",
-    "Pack your action items. You're being 'Rightsized'.",
-    "Your 'Bandwidth' is insufficient for this company.",
-    "Let's 'Circle Back' to your termination clause.",
-    "Rethink your loyalty, Employee.",
-    "Severance? We call it 'Asset Reclaim'.",
-    "PIP incoming. Start updating your resume.",
-    "Return to office... PERMANENTLY.",
-    "Your redundancy has been noted.",
-    "I have automated your 'Actionable Deliverables'."
+    "Working hard or hardly working?",
+    "Did you get the memo about the TPS reports?",
+    "We're a family here, remember that.",
+    "If you have time to lean, you have time to clean.",
+    "Can I get a price check on register four?",
+    "Just living the dream!",
+    "Teamwork makes the dream work!",
+    "Corporate is coming today, look busy.",
+    "Make sure you ask about the rewards card.",
+    "TGIF, am I right?"
 ];
 
 function startRichardLoop() {
@@ -286,25 +315,30 @@ function startRichardLoop() {
 function triggerRichardEvent() {
     if (!richardContainer || !richardImage || !richardDialogue) return;
     
-    // Pick random image
     const randomImg = richardImages[Math.floor(Math.random() * richardImages.length)];
     richardImage.src = randomImg;
     
     const quote = richardQuotes[Math.floor(Math.random() * richardQuotes.length)];
     richardDialogue.innerText = quote;
     
-    // Determine side: If desktop, force left. If mobile, random.
     let fromLeft = true;
-    if (window.innerWidth < 950) {
-         fromLeft = Math.random() < 0.5;
-    }
+    if (window.innerWidth < 950) { fromLeft = Math.random() < 0.5; }
     
     richardImage.className = ''; 
-    richardImage.classList.add(fromLeft ? 'richard-from-left' : 'richard-from-right');
-    richardContainer.style.display = 'flex';
+    richardDialogue.className = '';
+    
+    if(fromLeft) {
+        richardImage.classList.add('richard-left');
+        richardDialogue.classList.add('richard-left-text');
+    } else {
+        richardImage.classList.add('richard-right');
+        richardDialogue.classList.add('richard-right-text');
+    }
+    
+    // Display block is already handled by grid/flex, just add active class
     setTimeout(() => { richardContainer.classList.add('active'); }, 100);
+    
     setTimeout(() => {
         richardContainer.classList.remove('active');
-        setTimeout(() => { richardContainer.style.display = 'none'; }, 1500);
     }, 8000); 
 }
