@@ -66,19 +66,6 @@ let lastLevel = 0;
 let itemBuffMultiplier = 1.0; 
 let isAnimatingHit = false; 
 
-// --- NEW UPGRADE VARIABLES ---
-let critChance = 0;        // % chance per click (0-100)
-let critCost = 100;        // Lucky Shot cost
-let autoInterval = 1000;   // ms between auto-dps ticks (overtime upgrade)
-let overtimeCost = 200;    // Overtime cost
-let shopMultiplier = 1.0;  // Global dmg multiplier from Synergy Boost
-let synergyCost = 150;     // Synergy Boost cost
-let frenzyGainBonus = 0;   // Extra frenzy per click (Rage Fuel)
-let rageCost = 75;         // Rage Fuel cost
-let coinsPerClick = 1;     // Coins earned per click (Side Hustle)
-let hustleCost = 30;       // Side Hustle cost
-let autoTimer = null;      // Reference to auto-dps interval
-
 const bossImg = document.getElementById('boss-image');
 const bossHitLayer = document.getElementById('boss-hit-layer');
 const richardContainer = document.getElementById('richard-event-container');
@@ -100,26 +87,21 @@ const lootTable = [
     { id: 'golden_paperclip', name: 'Golden Paperclip', rarity: 'legendary', icon: '✨', buff: 0.25, prestigeOnly: true }
 ];
 
-function save() { if(!isOBS) localStorage.setItem('frank_v9', JSON.stringify({c:myCoins, cd:myClickDmg, ad:myAutoDmg, cc:clickCost, ac:autoCost, u:myUser, inv:myInventory, critChance, critCost, autoInterval, overtimeCost, shopMultiplier, synergyCost, frenzyGainBonus, rageCost, coinsPerClick, hustleCost})); }
+function save() { if(!isOBS) localStorage.setItem('frank_v9', JSON.stringify({c:myCoins, cd:myClickDmg, ad:myAutoDmg, cc:clickCost, ac:autoCost, u:myUser, inv:myInventory})); }
 function load() {
     const s = localStorage.getItem('frank_v9');
     if(s) {
         const d = JSON.parse(s);
         myCoins=d.c; myClickDmg=d.cd; myAutoDmg=d.ad; clickCost=d.cc; autoCost=d.ac; myUser=d.u; myInventory = d.inv || {}; 
-        if(d.critChance !== undefined) { critChance=d.critChance; critCost=d.critCost; }
-        if(d.autoInterval !== undefined) { autoInterval=d.autoInterval; overtimeCost=d.overtimeCost; }
-        if(d.shopMultiplier !== undefined) { shopMultiplier=d.shopMultiplier; synergyCost=d.synergyCost; }
-        if(d.frenzyGainBonus !== undefined) { frenzyGainBonus=d.frenzyGainBonus; rageCost=d.rageCost; }
-        if(d.coinsPerClick !== undefined) { coinsPerClick=d.coinsPerClick; hustleCost=d.hustleCost; }
         if (myUser && !isOBS) document.getElementById('username-input').value = myUser;
         calculateLootBuff(); updateUI(); renderInventory();
-        if(!isOBS) { startRichardLoop(); startAutoTimer(); }
+        if(!isOBS) startRichardLoop(); 
     }
 }
 function clockIn(u) { const r = employeesRef.push(); r.set({name:u, e:'💼'}); r.onDisconnect().remove(); }
 document.getElementById('btn-clock-in').onclick = () => {
     const val = document.getElementById('username-input').value.trim().toUpperCase();
-    if(val) { myUser=val; document.getElementById('login-screen').style.display='none'; document.getElementById('game-container').style.display='block'; clockIn(myUser); save(); renderInventory(); if(!isOBS) { startRichardLoop(); startAutoTimer(); } }
+    if(val) { myUser=val; document.getElementById('login-screen').style.display='none'; document.getElementById('game-container').style.display='block'; clockIn(myUser); save(); renderInventory(); if(!isOBS) startRichardLoop(); }
 };
 
 bossRef.on('value', (snap) => {
@@ -297,92 +279,31 @@ function attack(e) {
         setTimeout(() => { bossImg.classList.remove('quick-zoom'); bossHitLayer.classList.remove('quick-zoom'); }, 50);
     }
 
-    // Critical hit check
-    const isCrit = (Math.random() * 100) < critChance;
-    const critMult = isCrit ? 10 : 1;
-
-    const dmg = Math.floor(myClickDmg * multi * defMulti * itemBuffMultiplier * shopMultiplier * critMult);
+    const dmg = Math.floor(myClickDmg * multi * defMulti * itemBuffMultiplier);
     bossRef.transaction(b => { if(b) { b.health -= dmg; if(b.health<=0){ b.level++; b.health=1000000000*b.level; } } return b; });
-    myCoins += (coinsPerClick * multi); frenzy = Math.min(100, frenzy + 8 + frenzyGainBonus); updateUI(); save();
-
-    if (isCrit) {
-        createDynamicPopup('💥 CRIT! +' + dmg.toLocaleString(), 'damage-popup crit-popup', x, y);
-    } else {
-        createDynamicPopup('+' + dmg.toLocaleString(), 'damage-popup', x, y);
-    }
+    myCoins += (1 * multi); frenzy = Math.min(100, frenzy+8); updateUI(); save();
+    createDynamicPopup('+' + dmg.toLocaleString(), 'damage-popup', x, y);
     rollForLoot(x, y);
 }
 
 function updateUI() {
     document.getElementById('coin-count').innerText = myCoins.toLocaleString(); document.getElementById('click-power').innerText = myClickDmg.toLocaleString(); document.getElementById('auto-power').innerText = myAutoDmg.toLocaleString();
     document.getElementById('buy-click').innerHTML = `Sharpen Blade (+2.5k) <br><span>Cost: ${clickCost}</span>`; document.getElementById('buy-auto').innerHTML = `Hire Merc (+1k/s) <br><span>Cost: ${autoCost}</span>`;
-    document.getElementById('buy-crit').innerHTML = `🎯 Lucky Shot (+5% crit) <br><span class="cost-tag">Cost: ${critCost}</span>`;
-    document.getElementById('buy-overtime').innerHTML = `⏱️ Overtime (faster auto) <br><span class="cost-tag">Cost: ${overtimeCost}</span>`;
-    document.getElementById('buy-synergy').innerHTML = `⚡ Synergy Boost (+10% dmg) <br><span class="cost-tag">Cost: ${synergyCost}</span>`;
-    document.getElementById('buy-rage').innerHTML = `🔥 Rage Fuel (+frenzy/click) <br><span class="cost-tag">Cost: ${rageCost}</span>`;
-    document.getElementById('buy-hustle').innerHTML = `💰 Side Hustle (+2 coins) <br><span class="cost-tag">Cost: ${hustleCost}</span>`;
-    document.getElementById('crit-chance-display').innerText = critChance;
-    document.getElementById('shop-multi-display').innerText = shopMultiplier.toFixed(2);
 }
 
 document.getElementById('buy-click').onclick = () => { if(myCoins>=clickCost){ myCoins-=clickCost; myClickDmg+=2500; clickCost=Math.floor(clickCost*1.5); updateUI(); save(); } };
 document.getElementById('buy-auto').onclick = () => { if(myCoins>=autoCost){ myCoins-=autoCost; myAutoDmg+=1000; autoCost=Math.floor(autoCost*1.5); updateUI(); save(); } };
 
-// --- NEW UPGRADE HANDLERS ---
-document.getElementById('buy-crit').onclick = () => {
-    if(myCoins >= critCost) {
-        myCoins -= critCost; critChance = Math.min(95, critChance + 5); critCost = Math.floor(critCost * 1.8);
-        updateUI(); save();
-        createDynamicPopup('🎯 CRIT CHANCE UP!', 'loot-popup', window.innerWidth/2, window.innerHeight/2);
-    }
-};
-
-document.getElementById('buy-overtime').onclick = () => {
-    if(myCoins >= overtimeCost && autoInterval > 200) {
-        myCoins -= overtimeCost; autoInterval = Math.max(200, autoInterval - 100); overtimeCost = Math.floor(overtimeCost * 2);
-        startAutoTimer(); updateUI(); save();
-        createDynamicPopup('⏱️ AUTO SPEED UP!', 'loot-popup', window.innerWidth/2, window.innerHeight/2);
-    }
-};
-
-document.getElementById('buy-synergy').onclick = () => {
-    if(myCoins >= synergyCost) {
-        myCoins -= synergyCost; shopMultiplier = parseFloat((shopMultiplier + 0.10).toFixed(2)); synergyCost = Math.floor(synergyCost * 2);
-        updateUI(); save();
-        createDynamicPopup('⚡ SYNERGY!', 'loot-popup', window.innerWidth/2, window.innerHeight/2);
-    }
-};
-
-document.getElementById('buy-rage').onclick = () => {
-    if(myCoins >= rageCost) {
-        myCoins -= rageCost; frenzyGainBonus += 4; rageCost = Math.floor(rageCost * 1.6);
-        updateUI(); save();
-        createDynamicPopup('🔥 RAGE FUEL!', 'loot-popup', window.innerWidth/2, window.innerHeight/2);
-    }
-};
-
-document.getElementById('buy-hustle').onclick = () => {
-    if(myCoins >= hustleCost) {
-        myCoins -= hustleCost; coinsPerClick += 2; hustleCost = Math.floor(hustleCost * 1.5);
-        updateUI(); save();
-        createDynamicPopup('💰 COIN HUSTLE!', 'loot-popup', window.innerWidth/2, window.innerHeight/2);
-    }
-};
-
-// --- AUTO DPS TIMER (restartable for Overtime upgrade) ---
-function startAutoTimer() {
-    if (autoTimer) clearInterval(autoTimer);
-    autoTimer = setInterval(() => { 
-        if(myAutoDmg>0) { 
-            const autoDmgCalculated = Math.floor(myAutoDmg * defMulti * itemBuffMultiplier * shopMultiplier);
-            bossRef.transaction(b => { if(b) b.health -= autoDmgCalculated; return b; }); 
-            if (bossImg && !isOBS) {
-                const rect = bossImg.getBoundingClientRect();
-                const slash = document.createElement('div'); slash.className = 'merc-strike'; slash.innerText = '💥'; slash.style.left = (rect.left + (Math.random() * (rect.width - 50))) + 'px'; slash.style.top = (rect.top + (Math.random() * (rect.height - 50))) + 'px'; document.body.appendChild(slash); setTimeout(() => slash.remove(), 500);
-            }
+setInterval(() => { 
+    if(myAutoDmg>0) { 
+        const autoDmgCalculated = Math.floor(myAutoDmg * defMulti * itemBuffMultiplier);
+        bossRef.transaction(b => { if(b) b.health -= autoDmgCalculated; return b; }); 
+        if (bossImg && !isOBS) {
+            const rect = bossImg.getBoundingClientRect();
+            const slash = document.createElement('div'); slash.className = 'merc-strike'; slash.innerText = '💥'; slash.style.left = (rect.left + (Math.random() * (rect.width - 50))) + 'px'; slash.style.top = (rect.top + (Math.random() * (rect.height - 50))) + 'px'; document.body.appendChild(slash); setTimeout(() => slash.remove(), 500);
         }
-    }, autoInterval);
-}
+    }
+}, 1000);
 
 setInterval(() => { frenzy=Math.max(0, frenzy-2); multi=frenzy>=100?5:frenzy>=75?3:frenzy>=50?2:1; document.getElementById('frenzy-bar-fill').style.width=frenzy+'%'; document.getElementById('frenzy-text').innerText=multi>1?`COMBO ${multi}x` : `CHARGE METER`; }, 100);
 
