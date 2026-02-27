@@ -40,28 +40,17 @@ if (isOBS) {
     document.getElementById('game-container').style.display = 'block';
     document.getElementById('player-stats').style.display = 'none';
     document.getElementById('shop').style.display = 'none';
+    document.getElementById('inventory-panel').style.display = 'none'; // Hide inventory on stream
     document.querySelector('.action-buttons').style.display = 'none';
 } else {
     window.onYouTubeIframeAPIReady = function() {
         if (!introContainer) return;
-        
         ytPlayer = new YT.Player('yt-player', {
             videoId: 'HeKNgnDyD7I',
-            playerVars: {
-                'playsinline': 1,
-                'controls': 0,      
-                'disablekb': 1,     
-                'fs': 0,            
-                'modestbranding': 1,
-                'rel': 0            
-            },
-            events: {
-                'onReady': onPlayerReady,
-                'onStateChange': onPlayerStateChange
-            }
+            playerVars: { 'playsinline': 1, 'controls': 0, 'disablekb': 1, 'fs': 0, 'modestbranding': 1, 'rel': 0 },
+            events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange }
         });
     };
-
     function onPlayerReady(event) {
         startIntroBtn.style.display = 'block';
         startIntroBtn.onclick = () => {
@@ -71,43 +60,49 @@ if (isOBS) {
             event.target.playVideo();
         };
     }
-
-    function onPlayerStateChange(event) {
-        if (event.data === 0) {
-            endIntro();
-        }
-    }
-
+    function onPlayerStateChange(event) { if (event.data === 0) endIntro(); }
     if (skipIntroBtn) skipIntroBtn.onclick = endIntro;
 }
 
 // --- GAME VARIABLES ---
 let myCoins = 0, myClickDmg = 2500, myAutoDmg = 0, clickCost = 10, autoCost = 50, myUser = "";
+let myInventory = {}; // Stores collected items
 let curHP = 1000000000, maxHP = 1000000000, lastHP = 1000000000, frenzy = 0, multi = 1;
-
 let currentPhase = 1;
-// Fixed folder paths for phases!
 let baseFrankImg = "phases/phase1frank.png";
 let defMulti = 1.0; 
 let lastLevel = 0; 
+
+// --- LOOT TABLE ---
+const lootTable = [
+    { id: 'paperclip', name: 'Bent Paperclip', rarity: 'common', icon: '📎' },
+    { id: 'sticky', name: 'Neon Sticky', rarity: 'common', icon: '📝' },
+    { id: 'mug', name: 'World\'s Okayest Boss Mug', rarity: 'uncommon', icon: '☕' },
+    { id: 'stapler', name: 'Red Stapler', rarity: 'rare', icon: '🖍️' },
+    { id: 'keyboard', name: 'Clacky Keyboard', rarity: 'rare', icon: '⌨️' },
+    { id: 'golden_pen', name: 'The Golden Pen', rarity: 'legendary', icon: '🖋️' },
+    { id: 'rolodex', name: 'CEO\'s Rolodex', rarity: 'legendary', icon: '📇' },
+    { id: 'briefcase', name: 'Nuclear Briefcase', rarity: 'legendary', icon: '💼' }
+];
 
 const bossImg = document.getElementById('boss-image');
 const hpFill = document.getElementById('health-bar-fill');
 const hpText = document.getElementById('health-text');
 const corpQuotes = [ "SYNERGY!", "LET'S CIRCLE BACK!", "BANDWIDTH!", "RETURN TO OFFICE!", "PIVOT!", "ACTION ITEMS!" ];
 
-function save() { if(!isOBS) localStorage.setItem('frank_v9', JSON.stringify({c:myCoins, cd:myClickDmg, ad:myAutoDmg, cc:clickCost, ac:autoCost, u:myUser})); }
+function save() { 
+    if(!isOBS) localStorage.setItem('frank_v9', JSON.stringify({c:myCoins, cd:myClickDmg, ad:myAutoDmg, cc:clickCost, ac:autoCost, u:myUser, inv:myInventory})); 
+}
+
 function load() {
     const s = localStorage.getItem('frank_v9');
     if(s) {
         const d = JSON.parse(s);
-        myCoins=d.c; myClickDmg=d.cd; myAutoDmg=d.ad; clickCost=d.cc; autoCost=d.ac; myUser=d.u;
-        
-        // Auto-skip REMOVED! Now it just pre-fills the username field to look like remembered credentials.
-        if (myUser && !isOBS) {
-            document.getElementById('username-input').value = myUser;
-        }
+        myCoins=d.c; myClickDmg=d.cd; myAutoDmg=d.ad; clickCost=d.cc; autoCost=d.ac; myUser=d.u; 
+        myInventory = d.inv || {}; // Load inventory or start fresh
+        if (myUser && !isOBS) document.getElementById('username-input').value = myUser;
         updateUI();
+        renderInventory();
     }
 }
 
@@ -115,7 +110,7 @@ function clockIn(u) { const r = employeesRef.push(); r.set({name:u, e:'💼'}); 
 
 document.getElementById('btn-clock-in').onclick = () => {
     const val = document.getElementById('username-input').value.trim().toUpperCase();
-    if(val) { myUser=val; document.getElementById('login-screen').style.display='none'; document.getElementById('game-container').style.display='block'; clockIn(myUser); save(); }
+    if(val) { myUser=val; document.getElementById('login-screen').style.display='none'; document.getElementById('game-container').style.display='block'; clockIn(myUser); save(); renderInventory(); }
 };
 
 // --- SYNC, PHASE & VICTORY LOGIC ---
@@ -123,47 +118,20 @@ bossRef.on('value', (snap) => {
     let b = snap.val();
     if(!b) { b={health:1000000000, level:1}; bossRef.set(b); }
     
-    if (lastLevel === 0) {
-        lastLevel = b.level; 
-    } else if (b.level > lastLevel) {
-        triggerVictoryScreen(b.level);
-        lastLevel = b.level;
-    }
+    if (lastLevel === 0) { lastLevel = b.level; } 
+    else if (b.level > lastLevel) { triggerVictoryScreen(b.level); lastLevel = b.level; }
 
     lastHP = b.health; curHP = b.health; maxHP = 1000000000 * b.level;
     const hpPercent = curHP / maxHP;
     
-    let newPhase = 1;
-    let newTitle = "FRANK LV." + b.level;
+    let newPhase = 1; let newTitle = "FRANK LV." + b.level;
 
-    // Fixed folder paths for phases!
-    if (hpPercent <= 0.25) {
-        newPhase = 4;
-        newTitle = "CEO FRANK (ABSOLUTE MALICE)";
-        defMulti = 0.2; 
-        baseFrankImg = "phases/phase4frank.png";
-    } else if (hpPercent <= 0.50) {
-        newPhase = 3;
-        newTitle = "VP FRANK (CRIMSON FURY)";
-        defMulti = 0.5; 
-        baseFrankImg = "phases/phase3frank.png";
-    } else if (hpPercent <= 0.75) {
-        newPhase = 2;
-        newTitle = "MANAGER FRANK (BURSTING)";
-        defMulti = 0.8; 
-        baseFrankImg = "phases/phase2frank.png";
-    } else {
-        newPhase = 1;
-        newTitle = "FRANK LV." + b.level;
-        defMulti = 1.0; 
-        baseFrankImg = "phases/phase1frank.png";
-    }
+    if (hpPercent <= 0.25) { newPhase = 4; newTitle = "CEO FRANK (ABSOLUTE MALICE)"; defMulti = 0.2; baseFrankImg = "phases/phase4frank.png"; } 
+    else if (hpPercent <= 0.50) { newPhase = 3; newTitle = "VP FRANK (CRIMSON FURY)"; defMulti = 0.5; baseFrankImg = "phases/phase3frank.png"; } 
+    else if (hpPercent <= 0.75) { newPhase = 2; newTitle = "MANAGER FRANK (BURSTING)"; defMulti = 0.8; baseFrankImg = "phases/phase2frank.png"; } 
+    else { newPhase = 1; newTitle = "FRANK LV." + b.level; defMulti = 1.0; baseFrankImg = "phases/phase1frank.png"; }
 
-    if (currentPhase !== newPhase) {
-        currentPhase = newPhase;
-        if(bossImg) bossImg.src = baseFrankImg;
-    }
-
+    if (currentPhase !== newPhase) { currentPhase = newPhase; if(bossImg) bossImg.src = baseFrankImg; }
     if(b.health < lastHP && b.health > 0) triggerGlobalFX(); 
     
     hpFill.style.width = (curHP/maxHP)*100 + '%';
@@ -173,13 +141,9 @@ bossRef.on('value', (snap) => {
 
 function triggerVictoryScreen(newLevel) {
     const vScreen = document.createElement('div');
-    vScreen.style.position = 'fixed';
-    vScreen.style.top = '0'; vScreen.style.left = '0';
-    vScreen.style.width = '100vw'; vScreen.style.height = '100vh';
-    vScreen.style.backgroundColor = 'rgba(0, 0, 0, 0.85)';
-    vScreen.style.display = 'flex'; vScreen.style.flexDirection = 'column';
-    vScreen.style.justifyContent = 'center'; vScreen.style.alignItems = 'center';
-    vScreen.style.zIndex = '9999'; vScreen.style.fontFamily = 'monospace';
+    vScreen.style.position = 'fixed'; vScreen.style.top = '0'; vScreen.style.left = '0'; vScreen.style.width = '100vw'; vScreen.style.height = '100vh';
+    vScreen.style.backgroundColor = 'rgba(0, 0, 0, 0.85)'; vScreen.style.display = 'flex'; vScreen.style.flexDirection = 'column';
+    vScreen.style.justifyContent = 'center'; vScreen.style.alignItems = 'center'; vScreen.style.zIndex = '9999'; vScreen.style.fontFamily = 'monospace';
     vScreen.style.textAlign = 'center'; vScreen.style.textShadow = '3px 3px 0px #00ffff';
 
     vScreen.innerHTML = `
@@ -188,12 +152,10 @@ function triggerVictoryScreen(newLevel) {
         <p style="font-size: 1.5rem; color: #00ffff; text-shadow: none; margin-top: 20px;">PREPARE FOR LEVEL ${newLevel}</p>
     `;
     document.body.appendChild(vScreen);
-
     if(bossImg) bossImg.style.opacity = '0';
 
     setTimeout(() => {
-        vScreen.style.transition = 'opacity 1s';
-        vScreen.style.opacity = '0';
+        vScreen.style.transition = 'opacity 1s'; vScreen.style.opacity = '0';
         if(bossImg) bossImg.style.opacity = '1'; 
         setTimeout(() => vScreen.remove(), 1000);
     }, 4000);
@@ -203,22 +165,70 @@ function triggerGlobalFX() {
     if(!bossImg) return;
     bossImg.classList.add('shake');
     bossImg.style.filter = 'brightness(1.5) sepia(1) hue-rotate(-50deg) saturate(5)'; 
-    setTimeout(() => { 
-        bossImg.classList.remove('shake'); 
-        bossImg.style.filter = 'none'; 
-    }, 150);
+    setTimeout(() => { bossImg.classList.remove('shake'); bossImg.style.filter = 'none'; }, 150);
     if(Math.random() < 0.15) spawnQuote();
 }
 
 function spawnQuote() {
     const bRect = bossImg.getBoundingClientRect();
     const q = document.createElement('div');
-    q.className = 'quote-popup';
-    q.innerText = corpQuotes[Math.floor(Math.random()*corpQuotes.length)];
+    q.className = 'quote-popup'; q.innerText = corpQuotes[Math.floor(Math.random()*corpQuotes.length)];
     document.body.appendChild(q);
-    q.style.left = (bRect.left + bRect.width/2) + 'px';
-    q.style.top = bRect.top + 'px';
+    q.style.left = (bRect.left + bRect.width/2) + 'px'; q.style.top = bRect.top + 'px';
     setTimeout(()=>q.remove(), 1000);
+}
+
+// --- LOOT MECHANICS ---
+function rollForLoot(x, y) {
+    if(Math.random() > 0.15) return; // 15% chance to drop *something* per click
+
+    const rarityRoll = Math.random();
+    let pool = [];
+
+    if (rarityRoll < 0.02) { pool = lootTable.filter(i => i.rarity === 'legendary'); } // 2% of drops
+    else if (rarityRoll < 0.15) { pool = lootTable.filter(i => i.rarity === 'rare'); } // 13% of drops
+    else if (rarityRoll < 0.40) { pool = lootTable.filter(i => i.rarity === 'uncommon'); } // 25% of drops
+    else { pool = lootTable.filter(i => i.rarity === 'common'); } // 60% of drops
+
+    if (pool.length > 0) {
+        const item = pool[Math.floor(Math.random() * pool.length)];
+        myInventory[item.id] = (myInventory[item.id] || 0) + 1;
+        save();
+        renderInventory();
+        
+        // Spawn Loot Popup
+        const p = document.createElement('div');
+        p.className = 'loot-popup'; 
+        p.innerText = `Loot: ${item.name}!`;
+        p.style.left = x + 'px'; p.style.top = (y - 30) + 'px';
+        document.body.appendChild(p);
+        setTimeout(() => p.remove(), 1500);
+    }
+}
+
+function renderInventory() {
+    const grid = document.getElementById('inventory-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    
+    let hasItems = false;
+    lootTable.forEach(item => {
+        if (myInventory[item.id] && myInventory[item.id] > 0) {
+            hasItems = true;
+            const slot = document.createElement('div');
+            slot.className = `inv-item rarity-${item.rarity}`;
+            slot.innerHTML = `
+                ${item.icon}
+                <span class="inv-count">${myInventory[item.id]}</span>
+                <span class="inv-tooltip">${item.name} (${item.rarity})</span>
+            `;
+            grid.appendChild(slot);
+        }
+    });
+
+    if(!hasItems) {
+        grid.innerHTML = '<p style="color:#777; font-size:12px; width:100%; text-align:center;">Drawer is empty. Attack Frank!</p>';
+    }
 }
 
 function attack(e) {
@@ -226,13 +236,19 @@ function attack(e) {
     const dmg = Math.floor(myClickDmg * multi * defMulti);
     bossRef.transaction(b => { if(b) { b.health -= dmg; if(b.health<=0){ b.level++; b.health=1000000000*b.level; } } return b; });
     myCoins += (1 * multi); frenzy = Math.min(100, frenzy+8); updateUI(); save();
+    
     const x = (e.clientX || (e.touches ? e.touches[0].clientX : 0));
     const y = (e.clientY || (e.touches ? e.touches[0].clientY : 0));
+    
+    // Spawn damage number
     const p = document.createElement('div');
     p.className='damage-popup'; p.innerText='+'+dmg.toLocaleString();
     p.style.left=x+'px'; p.style.top=y+'px';
     document.body.appendChild(p);
     setTimeout(()=>p.remove(),800);
+
+    // Roll for an item drop
+    rollForLoot(x, y);
 }
 
 function updateUI() {
@@ -247,19 +263,9 @@ document.getElementById('buy-click').onclick = () => { if(myCoins>=clickCost){ m
 document.getElementById('buy-auto').onclick = () => { if(myCoins>=autoCost){ myCoins-=autoCost; myAutoDmg+=1000; autoCost=Math.floor(autoCost*1.5); updateUI(); save(); } };
 
 setInterval(() => { 
-    if(myAutoDmg>0) {
-        bossRef.transaction(b => { if(b) b.health -= Math.floor(myAutoDmg * defMulti); return b; }); 
-    }
+    if(myAutoDmg>0) { bossRef.transaction(b => { if(b) b.health -= Math.floor(myAutoDmg * defMulti); return b; }); }
 }, 1000);
 setInterval(() => { frenzy=Math.max(0, frenzy-2); multi=frenzy>=100?5:frenzy>=75?3:frenzy>=50?2:1; document.getElementById('frenzy-bar-fill').style.width=frenzy+'%'; document.getElementById('frenzy-text').innerText=multi>1?`COMBO ${multi}x` : `CHARGE METER`; }, 100);
 
 document.getElementById('btn-attack').onpointerdown = attack;
 bossImg.onpointerdown = attack;
-
-const tipBtn = document.getElementById('btn-tip');
-if (tipBtn) {
-    tipBtn.onpointerdown = (e) => {
-        e.preventDefault(); 
-        window.open("https://your-tip-link-here.com", "_blank"); 
-    };
-}
