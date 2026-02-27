@@ -14,12 +14,9 @@ const bossRef = db.ref('frank_corporate_data');
 const employeesRef = db.ref('active_employees');
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
-// --- IMAGE PRELOADERS ---
 const preloadHit1 = new Image(); preloadHit1.src = 'boss-hit-var-2.png';
 const preloadHit2 = new Image(); preloadHit2.src = 'boss-hit-variation-3.png';
 const hitImages = ['boss-hit-var-2.png', 'boss-hit-variation-3.png'];
-
-// New Richard Preloader
 const preloadRichard = new Image(); preloadRichard.src = 'yourbossvar/boss-pointing.png';
 
 const introContainer = document.getElementById('intro-container');
@@ -36,12 +33,11 @@ if (isOBS) {
     document.getElementById('left-col').style.display = 'none';
     document.getElementById('right-col').style.display = 'none';
     document.querySelector('.action-buttons').style.display = 'none';
-    // Hide Richard on OBS stream
     document.getElementById('richard-event-container').style.display = 'none'; 
 } else {
     window.onYouTubeIframeAPIReady = function() {
         if (!introContainer) return;
-        ytPlayer = new YT.Player('yt-player', { videoId: 'HeKNgnDyD7I', playerVars: { 'playsinline': 1, 'controls': 0, 'disablekb': 1, 'fs': 0, 'modestbranding': 1, Rel: 0 }, events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange } });
+        ytPlayer = new YT.Player('yt-player', { videoId: 'HeKNgnDyD7I', playerVars: { 'playsinline': 1, 'controls': 0, 'disablekb': 1, 'fs': 0, 'modestbranding': 1, 'rel': 0 }, events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange } });
     };
     function onPlayerReady(event) { startIntroBtn.style.display = 'block'; startIntroBtn.onclick = () => { startIntroBtn.style.display = 'none'; document.getElementById('yt-player').style.display = 'block'; skipIntroBtn.style.display = 'block'; event.target.playVideo(); }; }
     function onPlayerStateChange(event) { if (event.data === 0) endIntro(); }
@@ -58,15 +54,11 @@ let lastLevel = 0;
 let itemBuffMultiplier = 1.0; 
 let isAnimatingHit = false; 
 
-// Grab UI Layers
 const bossImg = document.getElementById('boss-image');
 const bossHitLayer = document.getElementById('boss-hit-layer');
-
-// Richard Event Layers
 const richardContainer = document.getElementById('richard-event-container');
 const richardImage = document.getElementById('richard-image');
 const richardDialogue = document.getElementById('richard-dialogue');
-
 const hpFill = document.getElementById('health-bar-fill');
 const hpText = document.getElementById('health-text');
 const corpQuotes = [ "SYNERGY!", "LET'S CIRCLE BACK!", "BANDWIDTH!", "RETURN TO OFFICE!", "PIVOT!", "ACTION ITEMS!" ];
@@ -83,8 +75,6 @@ const lootTable = [
 ];
 
 function save() { if(!isOBS) localStorage.setItem('frank_v9', JSON.stringify({c:myCoins, cd:myClickDmg, ad:myAutoDmg, cc:clickCost, ac:autoCost, u:myUser, inv:myInventory})); }
-
-// Updated LOAD function to start Richard Loop
 function load() {
     const s = localStorage.getItem('frank_v9');
     if(s) {
@@ -92,8 +82,6 @@ function load() {
         myCoins=d.c; myClickDmg=d.cd; myAutoDmg=d.ad; clickCost=d.cc; autoCost=d.ac; myUser=d.u; myInventory = d.inv || {}; 
         if (myUser && !isOBS) document.getElementById('username-input').value = myUser;
         calculateLootBuff(); updateUI(); renderInventory();
-        
-        // Start the background loop for Richard's random appearances
         if(!isOBS) startRichardLoop(); 
     }
 }
@@ -146,8 +134,37 @@ function triggerVictoryScreen(newLevel) {
     setTimeout(() => { vScreen.style.transition = 'opacity 1s'; vScreen.style.opacity = '0'; if(bossImg) bossImg.style.opacity = '1'; setTimeout(() => vScreen.remove(), 1000); }, 4000);
 }
 
-// --- DUAL-LAYER HIT ANIMATION ---
-function playHitAnimation() {
+// ==========================================
+// --- NEW BASEBALL THROW POPUP GENERATOR ---
+// ==========================================
+function createDynamicPopup(text, className, x, y) {
+    const p = document.createElement('div');
+    p.className = className;
+    p.innerText = text;
+
+    // Random Math to calculate the explosive arc
+    // Spread X wildly left or right
+    const tx = (Math.random() - 0.5) * 600; 
+    // Always explode upwards initially
+    const ty = -Math.random() * 300 - 200; 
+    // Random chaotic spin
+    const rot = (Math.random() - 0.5) * 60; 
+
+    // Inject the math into the CSS variables!
+    p.style.setProperty('--tx', `${tx}px`);
+    p.style.setProperty('--ty', `${ty}px`);
+    p.style.setProperty('--rot', `${rot}deg`);
+
+    p.style.left = x + 'px';
+    p.style.top = y + 'px';
+
+    document.body.appendChild(p);
+    // Remove element after the 1.2s animation finishes
+    setTimeout(() => p.remove(), 1200); 
+}
+
+// Ensure playHitAnimation accepts X and Y from the cursor to pass to the quotes
+function playHitAnimation(x, y) {
     if(!bossHitLayer || isAnimatingHit) return;
     isAnimatingHit = true;
     
@@ -156,10 +173,10 @@ function playHitAnimation() {
     else if (currentPhase === 3) phaseFilter = "sepia(1) hue-rotate(-30deg) saturate(5) brightness(0.8)"; 
     else if (currentPhase === 2) phaseFilter = "saturate(2) brightness(1.2)"; 
     
-    bossImg.style.opacity = '0'; // Hide idle boss
+    bossImg.style.opacity = '0'; 
     bossHitLayer.style.filter = phaseFilter; 
     bossHitLayer.src = hitImages[0]; 
-    bossHitLayer.style.opacity = '1'; // Show hit animation
+    bossHitLayer.style.opacity = '1'; 
     
     setTimeout(() => { bossHitLayer.src = hitImages[1]; }, 800);
     setTimeout(() => { bossHitLayer.src = hitImages[0]; }, 1600);
@@ -172,14 +189,23 @@ function playHitAnimation() {
         }, 400); 
     }, 2400); 
     
-    if(Math.random() < 0.15) spawnQuote();
+    // Spawns quotes exploding from the cursor 15% of the time
+    if(Math.random() < 0.15) spawnQuote(x, y);
 }
 
-function spawnQuote() {
-    const bRect = bossImg.getBoundingClientRect();
-    const q = document.createElement('div'); q.className = 'quote-popup'; q.innerText = corpQuotes[Math.floor(Math.random()*corpQuotes.length)];
-    document.body.appendChild(q);
-    q.style.left = (bRect.left + bRect.width/2) + 'px'; q.style.top = bRect.top + 'px'; setTimeout(()=>q.remove(), 1000);
+function spawnQuote(x, y) {
+    // If auto-merc triggers this, there is no cursor X/Y, so we center it on the boss
+    if(!x || !y) {
+        if(bossImg) {
+            const bRect = bossImg.getBoundingClientRect();
+            x = bRect.left + bRect.width / 2;
+            y = bRect.top + bRect.height / 2;
+        } else {
+            x = window.innerWidth / 2; y = window.innerHeight / 2;
+        }
+    }
+    const quote = corpQuotes[Math.floor(Math.random() * corpQuotes.length)];
+    createDynamicPopup(quote, 'quote-popup', x, y);
 }
 
 function calculateLootBuff() {
@@ -196,7 +222,9 @@ function rollForLoot(x, y) {
         const item = pool[Math.floor(Math.random() * pool.length)];
         myInventory[item.id] = (myInventory[item.id] || 0) + 1;
         calculateLootBuff(); save(); renderInventory();
-        const p = document.createElement('div'); p.className = 'loot-popup'; p.innerText = `Loot: ${item.name}!`; p.style.left = x + 'px'; p.style.top = (y - 30) + 'px'; document.body.appendChild(p); setTimeout(() => p.remove(), 1500);
+        
+        // Dynamic Explosion Loot
+        createDynamicPopup(`Loot: ${item.name}!`, 'loot-popup', x, y);
     }
 }
 
@@ -208,9 +236,13 @@ function renderInventory() {
 
 function attack(e) {
     if(isOBS) return;
-    playHitAnimation(); 
     
-    // Quick Zoom Thump
+    // Grab the exact mouse coordinates
+    const x = (e.clientX || (e.touches ? e.touches[0].clientX : window.innerWidth / 2)); 
+    const y = (e.clientY || (e.touches ? e.touches[0].clientY : window.innerHeight / 2));
+    
+    playHitAnimation(x, y); 
+    
     if(bossImg && bossHitLayer) {
         bossImg.classList.add('quick-zoom'); bossHitLayer.classList.add('quick-zoom');
         setTimeout(() => { bossImg.classList.remove('quick-zoom'); bossHitLayer.classList.remove('quick-zoom'); }, 50);
@@ -219,8 +251,10 @@ function attack(e) {
     const dmg = Math.floor(myClickDmg * multi * defMulti * itemBuffMultiplier);
     bossRef.transaction(b => { if(b) { b.health -= dmg; if(b.health<=0){ b.level++; b.health=1000000000*b.level; } } return b; });
     myCoins += (1 * multi); frenzy = Math.min(100, frenzy+8); updateUI(); save();
-    const x = (e.clientX || (e.touches ? e.touches[0].clientX : 0)); const y = (e.clientY || (e.touches ? e.touches[0].clientY : 0));
-    const p = document.createElement('div'); p.className='damage-popup'; p.innerText='+'+dmg.toLocaleString(); p.style.left=x+'px'; p.style.top=y+'px'; document.body.appendChild(p); setTimeout(()=>p.remove(),800);
+    
+    // Dynamic Explosion Damage Number
+    createDynamicPopup('+' + dmg.toLocaleString(), 'damage-popup', x, y);
+
     rollForLoot(x, y);
 }
 
@@ -248,9 +282,7 @@ setInterval(() => { frenzy=Math.max(0, frenzy-2); multi=frenzy>=100?5:frenzy>=75
 document.getElementById('btn-attack').onpointerdown = attack;
 if(bossImg) bossImg.onpointerdown = attack;
 
-// --- NEW RICHARD INTIMIDATION SYSTEM ---
-
-// The scary termination quotes
+// --- RICHARD INTIMIDATION SYSTEM ---
 const richardQuotes = [
     "I'm not seeing enough 'Synergy' in your clicks.",
     "Pack your action items. You're being 'Rightsized'.",
@@ -264,45 +296,22 @@ const richardQuotes = [
     "I have automated your 'Actionable Deliverables'."
 ];
 
-// Starts the recursive loop that spawns Richard at random intervals
 function startRichardLoop() {
-    // Determine the next appearance time (between 45 and 90 seconds)
     const nextSpawnTime = (Math.random() * (90000 - 45000) + 45000);
-    
-    setTimeout(() => {
-        triggerRichardEvent();
-        startRichardLoop(); // Call itself to schedule the NEXT one
-    }, nextSpawnTime);
+    setTimeout(() => { triggerRichardEvent(); startRichardLoop(); }, nextSpawnTime);
 }
 
 function triggerRichardEvent() {
     if (!richardContainer || !richardImage || !richardDialogue) return;
-
-    // 1. Choose a random quote
     const quote = richardQuotes[Math.floor(Math.random() * richardQuotes.length)];
     richardDialogue.innerText = quote;
-
-    // 2. Decide random entry side (Left or Right)
     const fromLeft = Math.random() < 0.5;
-    
-    // Reset classes and set starting position
     richardImage.className = ''; 
     richardImage.classList.add(fromLeft ? 'richard-from-left' : 'richard-from-right');
-    
-    // 3. Make the main container visible (but Richard is still off-screen)
     richardContainer.style.display = 'flex';
-    
-    // 4. Slight delay to let the display swap happen, then apply the "Active" class to trigger the CSS transition
-    setTimeout(() => {
-        richardContainer.classList.add('active');
-    }, 100);
-
-    // 5. Looms for 8 seconds, then slides back out
+    setTimeout(() => { richardContainer.classList.add('active'); }, 100);
     setTimeout(() => {
         richardContainer.classList.remove('active');
-        // Wait for the slide-out transition to finish, then hide the container completely
-        setTimeout(() => {
-            richardContainer.style.display = 'none';
-        }, 1500);
-    }, 8000); // Loom duration
+        setTimeout(() => { richardContainer.style.display = 'none'; }, 1500);
+    }, 8000); 
 }
