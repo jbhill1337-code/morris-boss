@@ -12,7 +12,7 @@ body { margin: 0; padding: 0; background-color: #050510; background-image: url('
 #intro-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #000; z-index: 10000; display: flex; justify-content: center; align-items: center; transition: opacity 1s ease-in-out; }
 #skip-intro-btn { position: absolute; bottom: 30px; right: 30px; font-size: 1rem; z-index: 10001; background-color: rgba(0, 0, 0, 0.6); }
 
-#game-container { padding: 20px; max-width: 1200px; margin: 0 auto; }
+#game-container { padding: 20px; max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; min-height: 90vh; }
 #health-bar-container, #frenzy-container { width: 100%; max-width: 400px; height: 30px; border: 2px solid #fff; margin: 10px auto; position: relative; background: #222; }
 #health-bar-fill { height: 100%; background: linear-gradient(90deg, #ff00ff, #00ffff); width: 100%; transition: width 0.1s; }
 #frenzy-bar-fill { height: 100%; background: #f1c40f; width: 0%; transition: width 0.1s; }
@@ -24,10 +24,27 @@ body { margin: 0; padding: 0; background-color: #050510; background-image: url('
 .shop-btn:hover { background: #222; border-color: #ff00ff; }
 .shop-btn span { color: #ff00ff; }
 
-#game-wrapper { display: flex; flex-direction: column; gap: 20px; align-items: center; width: 100%; }
-.side-col { width: 100%; max-width: 400px; background: rgba(0, 0, 0, 0.4); padding: 15px; border: 1px solid #00ffff; border-radius: 5px; box-sizing: border-box; }
-#center-col { width: 100%; max-width: 700px; display: flex; flex-direction: column; align-items: center; }
-@media (min-width: 950px) { #game-wrapper { flex-direction: row; justify-content: space-between; align-items: flex-start; max-width: 1200px; margin: 0 auto; } .side-col { width: 25%; position: sticky; top: 20px; } #center-col { width: 45%; } }
+/* --- RESPONSIVE LAYOUT --- */
+#game-wrapper { display: flex; flex-direction: column; gap: 20px; align-items: stretch; width: 100%; flex: 1; }
+.side-col { width: 100%; max-width: 400px; background: rgba(0, 0, 0, 0.4); padding: 15px; border: 1px solid #00ffff; border-radius: 5px; box-sizing: border-box; align-self: flex-start; }
+
+/* THE CENTER COLUMN REWRITE */
+#center-col { 
+  width: 100%; 
+  max-width: 800px; 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center; /* Pushes the boss perfectly into the middle */
+  flex: 1; /* Takes up all vertical space */
+}
+
+@media (min-width: 950px) { 
+  #game-wrapper { flex-direction: row; justify-content: space-between; align-items: stretch; max-width: 1200px; margin: 0 auto; } 
+  .side-col { width: 25%; position: sticky; top: 20px; } 
+  #center-col { width: 50%; } 
+}
+
 #inventory-panel { margin-top: 10px; }
 #inventory-grid { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 10px; }
 .inv-item { width: 50px; height: 50px; background: #111; display: flex; justify-content: center; align-items: center; position: relative; font-size: 24px; cursor: pointer; transition: transform 0.1s ease, filter 0.3s ease; }
@@ -41,29 +58,101 @@ body { margin: 0; padding: 0; background-color: #050510; background-image: url('
 .rarity-legendary { border: 1px solid #f1c40f; filter: drop-shadow(0 0 12px rgba(241, 196, 15, 1)); animation: legendary-pulse 2s infinite; }
 @keyframes legendary-pulse { 0% { filter: drop-shadow(0 0 10px rgba(241, 196, 15, 0.8)); } 50% { filter: drop-shadow(0 0 16px rgba(241, 196, 15, 1)); } 100% { filter: drop-shadow(0 0 10px rgba(241, 196, 15, 0.8)); } }
 
-/* --- DUAL-LAYER SYSTEM & MASSIVE CENTERING --- */
-#boss-area { display: grid; place-items: center; min-height: 600px; width: 100%; overflow: hidden; }
-#boss-image, #boss-hit-layer { grid-area: 1 / 1; margin: 0 auto; display: block; image-rendering: pixelated !important; image-rendering: crisp-edges !important; transform: scale(var(--phase-scale)) translateX(var(--phase-x)); transition: transform 0.05s ease-out, filter 0.05s ease-out; }
-#boss-image { width: 100%; max-width: 500px; object-fit: contain; }
-#boss-hit-layer { width: 100%; max-width: 250px !important; object-fit: contain; opacity: 0; pointer-events: none; z-index: 10; transition: opacity 0.5s ease-in-out, transform 0.05s ease-out, filter 0.05s ease-out; }
+/* ======================================================== */
+/* --- MASSIVE CLICKBOSS PHYSICS & CENTERING --- */
+/* ======================================================== */
+#boss-area { 
+  display: grid; 
+  place-items: center; 
+  height: 45vh; /* He is fundamentally tied to viewport height! */
+  width: 100%; 
+  overflow: visible !important; /* CRITICAL: Never clip him if he scales up */
+  margin-bottom: 20px;
+}
 
-/* MUCH BIGGER BASE SIZES SO HE DOESN'T SHRINK AFTER LEVEL UP */
-.center-phase-1 { --phase-scale: 1.5;  --phase-x: 0%; }
-.center-phase-2 { --phase-scale: 1.65; --phase-x: -4%; }
-.center-phase-3 { --phase-scale: 1.8;  --phase-x: -12%; }
-.center-phase-4 { --phase-scale: 2.0;  --phase-x: -2%; }
-.quick-zoom { transform: scale(calc(var(--phase-scale) + 0.06)) translateX(var(--phase-x)) !important; filter: brightness(1.3) !important; }
+#boss-image, #boss-hit-layer { 
+  grid-area: 1 / 1; 
+  margin: 0 auto; 
+  display: block; 
+  image-rendering: pixelated !important; 
+  image-rendering: crisp-edges !important; 
+  transform: scale(var(--phase-scale)) translateX(var(--phase-x)); 
+}
 
+#boss-image { 
+  height: 100%; /* Fill the 45vh */
+  width: auto; 
+  max-width: none !important; /* Destroy any width limits */
+  object-fit: contain; 
+  transition: transform 0.05s ease-out, filter 0.05s ease-out;
+}
+
+#boss-hit-layer { 
+  height: 70%; /* Face overlay naturally smaller than body */
+  width: auto; 
+  max-width: none !important; 
+  object-fit: contain; 
+  opacity: 0; 
+  pointer-events: none; 
+  z-index: 10; 
+  transition: opacity 0.5s ease-in-out, transform 0.05s ease-out, filter 0.05s ease-out; 
+}
+
+/* BASE SCALE GREATLY INCREASED TO DEFEAT TRANSPARENT PADDING */
+.center-phase-1 { --phase-scale: 2.2;  --phase-x: 0%; }
+.center-phase-2 { --phase-scale: 2.4;  --phase-x: -4%; }
+.center-phase-3 { --phase-scale: 2.6;  --phase-x: -12%; } /* VP Frank Centered */
+.center-phase-4 { --phase-scale: 2.8;  --phase-x: -2%; }
+
+.quick-zoom { 
+  transform: scale(calc(var(--phase-scale) + 0.15)) translateX(var(--phase-x)) !important; 
+  filter: brightness(1.3) !important; 
+}
+
+
+/* ======================================================== */
 /* --- REVISED RICHARD EVENT (SMALLER, OFF TO THE SIDE) --- */
-#richard-event-container { position: fixed; bottom: 0; left: 0; width: 100vw; height: 100vh; z-index: 99999; pointer-events: none; }
-#richard-image { position: absolute; bottom: 0; height: 40vh; /* Shrunk down */ width: auto; image-rendering: pixelated; opacity: 0.8; object-fit: contain; filter: drop-shadow(0 0 20px #ff00ff); transition: transform 1.5s ease-in-out; }
-#richard-dialogue { position: absolute; bottom: 45vh; padding: 10px 20px; background-color: #000; color: #00ffff; border: 4px solid #fff; font-size: 1.2rem; max-width: 300px; text-align: center; text-transform: uppercase; font-weight: bold; opacity: 0; transform: scale(0.8); transition: opacity 0.5s 1.5s, transform 0.5s 1.5s; box-shadow: 6px 6px 0 #ff00ff; image-rendering: pixelated; }
+/* ======================================================== */
+#richard-event-container { 
+  position: fixed; 
+  bottom: 0; left: 0; 
+  width: 100vw; height: 100vh; 
+  z-index: 99999; 
+  pointer-events: none; /* Let clicks hit the game behind him */
+}
 
-/* PINNED CORNER POSITIONS */
+#richard-image { 
+  position: absolute; 
+  bottom: -5px; 
+  height: 28vh; /* Shrunk substantially */ 
+  width: auto; 
+  image-rendering: pixelated; 
+  opacity: 0.85; 
+  object-fit: contain; 
+  filter: drop-shadow(0 0 15px #00ffff); 
+  transition: transform 1.5s ease-in-out; 
+}
+
+#richard-dialogue { 
+  position: absolute; 
+  bottom: 30vh; 
+  padding: 10px 15px; 
+  background-color: rgba(0, 0, 0, 0.9); 
+  color: #fff; border: 2px solid #00ffff; 
+  font-size: 1rem; 
+  max-width: 250px; 
+  text-align: center; text-transform: uppercase; 
+  opacity: 0; transform: scale(0.8); 
+  transition: opacity 0.5s 1.5s, transform 0.5s 1.5s; 
+  box-shadow: 4px 4px 0 #ff00ff; 
+  image-rendering: pixelated; 
+}
+
+/* Pinned hard to the edges */
 .richard-left { left: 0; transform: translateX(-100%); }
-.richard-left-text { left: 5vw; }
+.richard-left-text { left: 2vw; }
 .richard-right { right: 0; transform: translateX(100%); }
-.richard-right-text { right: 5vw; }
+.richard-right-text { right: 2vw; }
 
 #richard-event-container.active .richard-left { transform: translateX(0); }
 #richard-event-container.active .richard-right { transform: translateX(0); }
@@ -74,155 +163,4 @@ body { margin: 0; padding: 0; background-color: #050510; background-image: url('
 .damage-popup { color: #ff00ff; font-size: 6rem; font-weight: bold; text-shadow: 5px 5px 0 #000, -3px -3px 0 #00ffff; -webkit-text-stroke: 2px #fff; }
 .loot-popup { color: #FFD700; font-size: 3.5rem; font-weight: bold; font-style: italic; text-shadow: 2px 2px 0 #000, 0 0 15px #FFD700; -webkit-text-stroke: 1px #fff; }
 .quote-popup { background: rgba(0,0,0,0.85); color: #00ffff; font-size: 2.5rem; font-weight: bold; padding: 10px 20px; border: 3px solid #ff00ff; box-shadow: 6px 6px 0 #000; text-transform: uppercase; border-radius: 10px; max-width: 80vw; text-align: center; }
-@keyframes popArc { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.2) rotate(0deg); } 15% { opacity: 1; transform: translate(calc(-50% + var(--tx) * 0.5), calc(-50% + var(--ty))) scale(1.2) rotate(calc(var(--rot) * 0.5)); } 100% { opacity: 0; transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty) + 150px)) scale(1) rotate(var(--rot)); } }.side-col { width: 100%; max-width: 400px; background: rgba(0, 0, 0, 0.4); padding: 15px; border: 1px solid #00ffff; border-radius: 5px; box-sizing: border-box; }
-#center-col { width: 100%; max-width: 700px; display: flex; flex-direction: column; align-items: center; }
-@media (min-width: 950px) { #game-wrapper { flex-direction: row; justify-content: space-between; align-items: flex-start; max-width: 1200px; margin: 0 auto; } .side-col { width: 25%; position: sticky; top: 20px; } #center-col { width: 45%; } }
-
-#inventory-panel { margin-top: 10px; }
-#inventory-grid { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 10px; }
-.inv-item { width: 50px; height: 50px; background: #111; display: flex; justify-content: center; align-items: center; position: relative; font-size: 24px; cursor: pointer; transition: transform 0.1s ease, filter 0.3s ease; }
-.inv-item:hover { transform: scale(1.1); }
-.inv-count { position: absolute; bottom: -5px; right: -5px; font-size: 12px; color: white; background: #ff00ff; padding: 2px 6px; border-radius: 10px; font-weight: bold; }
-.inv-tooltip { display: none; position: absolute; bottom: 120%; background: #000; color: #fff; padding: 5px 10px; border: 1px solid #00ffff; font-size: 12px; white-space: nowrap; z-index: 100; pointer-events: none; text-transform: uppercase; }
-.inv-item:hover .inv-tooltip { display: block; }
-.rarity-common { border: 1px solid #aaa; filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5)); }
-.rarity-uncommon { border: 1px solid #2ecc71; filter: drop-shadow(0 0 6px rgba(46, 204, 113, 0.8)); }
-.rarity-rare { border: 1px solid #3498db; filter: drop-shadow(0 0 8px rgba(52, 152, 219, 0.9)); }
-.rarity-legendary { border: 1px solid #f1c40f; filter: drop-shadow(0 0 12px rgba(241, 196, 15, 1)); animation: legendary-pulse 2s infinite; }
-@keyframes legendary-pulse { 0% { filter: drop-shadow(0 0 10px rgba(241, 196, 15, 0.8)); } 50% { filter: drop-shadow(0 0 16px rgba(241, 196, 15, 1)); } 100% { filter: drop-shadow(0 0 10px rgba(241, 196, 15, 0.8)); } }
-
-#boss-area { display: grid; place-items: center; min-height: 550px; width: 100%; overflow: hidden; }
-#boss-image, #boss-hit-layer { grid-area: 1 / 1; margin: 0 auto; display: block; image-rendering: pixelated !important; image-rendering: crisp-edges !important; --phase-scale: 1.2; --phase-x: 0%; transform: scale(var(--phase-scale)) translateX(var(--phase-x)); transition: transform 0.05s ease-out, filter 0.05s ease-out; }
-#boss-image { width: 100%; max-width: 450px; object-fit: contain; }
-#boss-hit-layer { width: 100%; max-width: 220px !important; object-fit: contain; opacity: 0; pointer-events: none; z-index: 10; transition: opacity 0.5s ease-in-out, transform 0.05s ease-out, filter 0.05s ease-out; }
-.center-phase-1 { --phase-scale: 1.2; --phase-x: 0%; }
-.center-phase-2 { --phase-scale: 1.35; --phase-x: -4%; }
-.center-phase-3 { --phase-scale: 1.5; --phase-x: -12%; }
-.center-phase-4 { --phase-scale: 1.65; --phase-x: -2%; }
-.quick-zoom { transform: scale(calc(var(--phase-scale) + 0.06)) translateX(var(--phase-x)) !important; filter: brightness(1.3) !important; }
-
-/* --- RICHARD EVENT --- */
-#richard-event-container { position: fixed; bottom: 0; width: 100vw; height: 80vh; z-index: 99999; pointer-events: none; display: flex; justify-content: center; align-items: flex-start; }
-#richard-image { position: absolute; bottom: 0; height: 70vh; width: auto; image-rendering: pixelated; opacity: 0.7; object-fit: contain; filter: drop-shadow(0 0 20px #ff00ff); transform: translateX(100vw); transition: transform 1.5s ease-in-out; }
-.richard-from-right { transform: translateX(100vw); }
-.richard-from-left { transform: translateX(-100vw); }
-#richard-event-container.active #richard-image { transform: translateX(0) !important; }
-#richard-dialogue { position: relative; margin-top: 5vh; padding: 15px 25px; background-color: #000; color: #00ffff; border: 4px solid #fff; font-size: 1.5rem; max-width: 400px; text-align: center; text-transform: uppercase; font-weight: bold; opacity: 0; transform: scale(0.8); transition: opacity 0.5s 1.5s, transform 0.5s 1.5s; box-shadow: 8px 8px 0 #ff00ff; image-rendering: pixelated; }
-#richard-dialogue::after { content: ''; position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); border-width: 10px; border-style: solid; border-color: #fff transparent transparent transparent; }
-#richard-event-container.active #richard-dialogue { opacity: 1; transform: scale(1); }
-
-/* On desktop, force Richard's container to align left so he doesn't cover the center */
-@media (min-width: 950px) {
-  #richard-event-container { justify-content: flex-start; padding-left: 50px; }
-}
-
-/* --- POPUP STYLING & PHYSICS --- */
-.damage-popup, .loot-popup, .quote-popup { position: absolute; pointer-events: none; z-index: 9999; transform: translate(-50%, -50%); animation: popArc 1.2s cubic-bezier(0.15, 1, 0.3, 1) forwards; }
-
-.damage-popup { color: #ff00ff; font-size: 6rem; font-weight: bold; text-shadow: 5px 5px 0 #000, -3px -3px 0 #00ffff; -webkit-text-stroke: 2px #fff; }
-
-/* UPDATED DISTINCT LOOT STYLE */
-.loot-popup { 
-  color: #FFD700; /* Unique Gold Color */
-  font-size: 3.5rem; /* Smaller than damage */
-  font-weight: bold;
-  font-style: italic; /* Adds flair */
-  text-shadow: 2px 2px 0 #000, 0 0 15px #FFD700; /* Distinct golden glow */
-  -webkit-text-stroke: 1px #fff;
-}
-
-.quote-popup { background: rgba(0,0,0,0.85); color: #00ffff; font-size: 2.5rem; font-weight: bold; padding: 10px 20px; border: 3px solid #ff00ff; box-shadow: 6px 6px 0 #000; text-transform: uppercase; border-radius: 10px; max-width: 80vw; text-align: center; }
-
-@keyframes popArc { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.2) rotate(0deg); } 15% { opacity: 1; transform: translate(calc(-50% + var(--tx) * 0.5), calc(-50% + var(--ty))) scale(1.2) rotate(calc(var(--rot) * 0.5)); } 100% { opacity: 0; transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty) + 150px)) scale(1) rotate(var(--rot)); } }.inv-count { position: absolute; bottom: -5px; right: -5px; font-size: 12px; color: white; background: #ff00ff; padding: 2px 6px; border-radius: 10px; font-weight: bold; }
-.inv-tooltip { display: none; position: absolute; bottom: 120%; background: #000; color: #fff; padding: 5px 10px; border: 1px solid #00ffff; font-size: 12px; white-space: nowrap; z-index: 100; pointer-events: none; text-transform: uppercase; }
-.inv-item:hover .inv-tooltip { display: block; }
-.rarity-common { border: 1px solid #aaa; filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5)); }
-.rarity-uncommon { border: 1px solid #2ecc71; filter: drop-shadow(0 0 6px rgba(46, 204, 113, 0.8)); }
-.rarity-rare { border: 1px solid #3498db; filter: drop-shadow(0 0 8px rgba(52, 152, 219, 0.9)); }
-.rarity-legendary { border: 1px solid #f1c40f; filter: drop-shadow(0 0 12px rgba(241, 196, 15, 1)); animation: legendary-pulse 2s infinite; }
-@keyframes legendary-pulse { 0% { filter: drop-shadow(0 0 10px rgba(241, 196, 15, 0.8)); } 50% { filter: drop-shadow(0 0 16px rgba(241, 196, 15, 1)); } 100% { filter: drop-shadow(0 0 10px rgba(241, 196, 15, 0.8)); } }
-
-/* --- DUAL-LAYER SYSTEM & CENTERING --- */
-#boss-area { display: grid; place-items: center; min-height: 550px; width: 100%; overflow: hidden; }
-#boss-image, #boss-hit-layer { grid-area: 1 / 1; margin: 0 auto; display: block; image-rendering: pixelated !important; image-rendering: crisp-edges !important; --phase-scale: 1.2; --phase-x: 0%; transform: scale(var(--phase-scale)) translateX(var(--phase-x)); transition: transform 0.05s ease-out, filter 0.05s ease-out; }
-#boss-image { width: 100%; max-width: 450px; object-fit: contain; }
-#boss-hit-layer { width: 100%; max-width: 220px !important; object-fit: contain; opacity: 0; pointer-events: none; z-index: 10; transition: opacity 0.5s ease-in-out, transform 0.05s ease-out, filter 0.05s ease-out; }
-.center-phase-1 { --phase-scale: 1.2; --phase-x: 0%; }
-.center-phase-2 { --phase-scale: 1.35; --phase-x: -4%; }
-.center-phase-3 { --phase-scale: 1.5; --phase-x: -12%; }
-.center-phase-4 { --phase-scale: 1.65; --phase-x: -2%; }
-.quick-zoom { transform: scale(calc(var(--phase-scale) + 0.06)) translateX(var(--phase-x)) !important; filter: brightness(1.3) !important; }
-
-/* --- THE RICHARD EVENT --- */
-#richard-event-container { position: fixed; bottom: 0; width: 100vw; height: 80vh; z-index: 99999; pointer-events: none; display: flex; justify-content: center; align-items: flex-start; }
-#richard-image { position: absolute; bottom: 0; height: 70vh; width: auto; image-rendering: pixelated; opacity: 0.7; object-fit: contain; filter: drop-shadow(0 0 20px #ff00ff); transform: translateX(100vw); transition: transform 1.5s ease-in-out; }
-.richard-from-right { transform: translateX(100vw); }
-.richard-from-left { transform: translateX(-100vw); }
-#richard-event-container.active #richard-image { transform: translateX(0) !important; }
-#richard-dialogue { position: relative; margin-top: 5vh; padding: 15px 25px; background-color: #000; color: #00ffff; border: 4px solid #fff; font-size: 1.5rem; max-width: 400px; text-align: center; text-transform: uppercase; font-weight: bold; opacity: 0; transform: scale(0.8); transition: opacity 0.5s 1.5s, transform 0.5s 1.5s; box-shadow: 8px 8px 0 #ff00ff; image-rendering: pixelated; }
-#richard-dialogue::after { content: ''; position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); border-width: 10px; border-style: solid; border-color: #fff transparent transparent transparent; }
-#richard-event-container.active #richard-dialogue { opacity: 1; transform: scale(1); }
-
-/* ========================================= */
-/* --- NEW MASSIVE BASEBALL THROW POPUPS --- */
-/* ========================================= */
-
-.damage-popup, .loot-popup, .quote-popup {
-  position: absolute;
-  pointer-events: none;
-  z-index: 9999;
-  /* Centers the origin point perfectly on your mouse cursor */
-  transform: translate(-50%, -50%);
-  /* The cubic-bezier makes it explode out fast, hang in the air, then fall */
-  animation: popArc 1.2s cubic-bezier(0.15, 1, 0.3, 1) forwards;
-}
-
-.damage-popup {
-  color: #ff00ff;
-  font-size: 6rem; /* MASSIVE 6x SIZE */
-  font-weight: bold;
-  text-shadow: 5px 5px 0 #000, -3px -3px 0 #00ffff; /* Heavy outline so it's readable over the background */
-  -webkit-text-stroke: 2px #fff;
-}
-
-.loot-popup {
-  color: #f1c40f;
-  font-size: 4.5rem; /* MASSIVE LOOT SIZE */
-  font-weight: bold;
-  text-shadow: 5px 5px 0 #000, -3px -3px 0 #ff00ff;
-  -webkit-text-stroke: 2px #fff;
-}
-
-.quote-popup {
-  background: rgba(0,0,0,0.85);
-  color: #00ffff;
-  font-size: 2.5rem; /* HUGE QUOTES */
-  font-weight: bold;
-  padding: 10px 20px;
-  border: 3px solid #ff00ff;
-  box-shadow: 6px 6px 0 #000;
-  text-transform: uppercase;
-  border-radius: 10px;
-  max-width: 80vw;
-  text-align: center;
-}
-
-/* THE PHYSICS ENGINE FOR THE THROW */
-@keyframes popArc {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.2) rotate(0deg);
-  }
-  15% {
-    opacity: 1;
-    /* Pops instantly outward to the trajectory variables we set in JS */
-    transform: translate(calc(-50% + var(--tx) * 0.5), calc(-50% + var(--ty))) scale(1.2) rotate(calc(var(--rot) * 0.5));
-  }
-  100% {
-    opacity: 0;
-    /* Drifts outward and gets pulled down by gravity (+150px on the Y axis) */
-    transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty) + 150px)) scale(1) rotate(var(--rot));
-  }
-}
-
-
+@keyframes popArc { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.2) rotate(0deg); } 15% { opacity: 1; transform: translate(calc(-50% + var(--tx) * 0.5), calc(-50% + var(--ty))) scale(1.2) rotate(calc(var(--rot) * 0.5)); } 100% { opacity: 0; transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty) + 150px)) scale(1) rotate(var(--rot)); } }
