@@ -20,6 +20,11 @@ const hitImages = ['boss-hit-var-2.png', 'boss-hit-variation-3.png'];
 const preloadRichard1 = new Image(); preloadRichard1.src = 'yourbossvar/boss-pointing.png';
 const preloadRichard2 = new Image(); preloadRichard2.src = 'yourbossvar/boss-crossing.png';
 const richardImages = ['yourbossvar/boss-pointing.png', 'yourbossvar/boss-crossing.png'];
+// Rich boss sprite preloads
+['rich_phase1','rich_phase2','rich_phase3','rich_phase4','rich_hit_a','rich_hit_b']
+    .forEach(n => { const i = new Image(); i.src = `phases/rich/${n}.png`; });
+const richPhaseImgs = ['phases/rich/rich_phase1.png','phases/rich/rich_phase2.png','phases/rich/rich_phase3.png','phases/rich/rich_phase4.png'];
+const richHitImgs   = ['phases/rich/rich_hit_a.png', 'phases/rich/rich_hit_b.png'];
 
 const introContainer = document.getElementById('intro-container');
 const startIntroBtn = document.getElementById('start-intro-btn');
@@ -45,7 +50,8 @@ if (isOBS) {
     document.getElementById('left-col').style.display = 'none';
     document.getElementById('right-col').style.display = 'none';
     document.querySelector('.action-buttons').style.display = 'none';
-    document.getElementById('richard-event-container').style.display = 'none'; 
+    document.getElementById('richard-event-container').style.display = 'none';
+    if(document.getElementById('rich-wrapper')) document.getElementById('rich-wrapper').style.display = 'none'; 
 } else {
     window.onYouTubeIframeAPIReady = function() {
         if (!introContainer) return;
@@ -79,8 +85,10 @@ let coinsPerClick = 1;     // Coins earned per click (Side Hustle)
 let hustleCost = 30;       // Side Hustle cost
 let autoTimer = null;      // Reference to auto-dps interval
 
-const bossImg = document.getElementById('boss-image');
+const bossImg      = document.getElementById('boss-image');
 const bossHitLayer = document.getElementById('boss-hit-layer');
+const richImg      = document.getElementById('rich-image');
+const richHitLayer = document.getElementById('rich-hit-layer');
 const richardContainer = document.getElementById('richard-event-container');
 const richardImage = document.getElementById('richard-image');
 const richardDialogue = document.getElementById('richard-dialogue');
@@ -154,20 +162,15 @@ bossRef.on('value', (snap) => {
     
     let newPhase = 1; let newTitle = "FRANK LV." + b.level;
 
-    if (hpPercent <= 0.25) { newPhase = 4; newTitle = "CEO FRANK (ABSOLUTE MALICE)"; defMulti = 0.2; baseFrankImg = "phases/phase4frank.png"; } 
-    else if (hpPercent <= 0.50) { newPhase = 3; newTitle = "VP FRANK (CRIMSON FURY)"; defMulti = 0.5; baseFrankImg = "phases/phase3frank.png"; } 
-    else if (hpPercent <= 0.75) { newPhase = 2; newTitle = "MANAGER FRANK (BURSTING)"; defMulti = 0.8; baseFrankImg = "phases/phase2frank.png"; } 
-    else { newPhase = 1; newTitle = "FRANK LV." + b.level; defMulti = 1.0; baseFrankImg = "phases/phase1frank.png"; }
+    if (hpPercent <= 0.25) { newPhase = 4; newTitle = "⚡ RICH GOES NUCLEAR · FRANK: ABSOLUTE MALICE (Lv." + b.level + ")"; defMulti = 0.2; baseFrankImg = "phases/phase4frank.png"; } 
+    else if (hpPercent <= 0.50) { newPhase = 3; newTitle = "🔥 RICH ON A RAMPAGE · FRANK: CRIMSON FURY (Lv." + b.level + ")"; defMulti = 0.5; baseFrankImg = "phases/phase3frank.png"; } 
+    else if (hpPercent <= 0.75) { newPhase = 2; newTitle = "RICH GETTING SERIOUS · FRANK: BURSTING (Lv." + b.level + ")"; defMulti = 0.8; baseFrankImg = "phases/phase2frank.png"; } 
+    else { newPhase = 1; newTitle = "District Manager Rich & Project Coordinator Frank · Lv." + b.level; defMulti = 1.0; baseFrankImg = "phases/phase1frank.png"; }
 
     if (currentPhase !== newPhase) { 
         currentPhase = newPhase; 
-        if(bossImg) {
-            if(!isAnimatingHit) bossImg.src = baseFrankImg;
-            bossImg.classList.remove('center-phase-1', 'center-phase-2', 'center-phase-3', 'center-phase-4');
-            bossImg.classList.add(`center-phase-${newPhase}`);
-            bossHitLayer.classList.remove('center-phase-1', 'center-phase-2', 'center-phase-3', 'center-phase-4');
-            bossHitLayer.classList.add(`center-phase-${newPhase}`);
-        }
+        if(bossImg && !isAnimatingHit) bossImg.src = baseFrankImg;
+        if(richImg && !isAnimatingHit) richImg.src = richPhaseImgs[newPhase - 1];
     }
 
     
@@ -187,7 +190,7 @@ function triggerVictoryScreen(newLevel) {
     vScreen.style.backgroundColor = 'rgba(0, 0, 0, 0.85)'; vScreen.style.display = 'flex'; vScreen.style.flexDirection = 'column';
     vScreen.style.justifyContent = 'center'; vScreen.style.alignItems = 'center'; vScreen.style.zIndex = '9999'; vScreen.style.fontFamily = 'monospace';
     vScreen.style.textAlign = 'center'; vScreen.style.textShadow = '3px 3px 0px #00ffff';
-    vScreen.innerHTML = `<h1 style="font-size: 5rem; color: #ff00ff; margin: 0; text-transform: uppercase;">PROMOTED!</h1><h2 style="font-size: 2rem; color: #fff; text-shadow: none;">FRANK RETREATED... FOR NOW.</h2><p style="font-size: 1.5rem; color: #00ffff; text-shadow: none; margin-top: 20px;">PREPARE FOR LEVEL ${newLevel}</p>`;
+    vScreen.innerHTML = `<h1 style="font-size: 5rem; color: #ff00ff; margin: 0; text-transform: uppercase;">PROMOTED!</h1><h2 style="font-size: 2rem; color: #fff; text-shadow: none;">Rich & Frank retreated... for now.</h2><p style="font-size: 1.5rem; color: #00ffff; text-shadow: none; margin-top: 20px;">PREPARE FOR LEVEL ${newLevel}</p>`;
     document.body.appendChild(vScreen);
     
     if(bossImg) bossImg.style.opacity = '0';
@@ -217,34 +220,53 @@ function createDynamicPopup(text, className, x, y) {
 }
 
 function playHitAnimation(x, y) {
-    if(!bossHitLayer || isAnimatingHit) return;
+    if(isAnimatingHit) return;
     isAnimatingHit = true;
-    
+
+    // ── Frank hit ──────────────────────────────────────────────────
     let phaseFilter = "none";
-    if (currentPhase === 4) phaseFilter = "hue-rotate(250deg) saturate(3) brightness(0.7)"; 
-    else if (currentPhase === 3) phaseFilter = "sepia(1) hue-rotate(-30deg) saturate(5) brightness(0.8)"; 
-    else if (currentPhase === 2) phaseFilter = "saturate(2) brightness(1.2)"; 
-    
-    bossImg.style.opacity = '0'; 
-    bossHitLayer.style.filter = phaseFilter; 
-    bossHitLayer.src = hitImages[0]; 
-    bossHitLayer.style.opacity = '1'; // Snaps on instantly (no CSS opacity transition)
-    
-    setTimeout(() => { bossHitLayer.src = hitImages[1]; }, 800);
-    setTimeout(() => { bossHitLayer.src = hitImages[0]; }, 1600);
-    
-    // Fade the hit layer out with a brief inline transition, then snap base image back
+    if (currentPhase === 4) phaseFilter = "hue-rotate(250deg) saturate(3) brightness(0.7)";
+    else if (currentPhase === 3) phaseFilter = "sepia(1) hue-rotate(-30deg) saturate(5) brightness(0.8)";
+    else if (currentPhase === 2) phaseFilter = "saturate(2) brightness(1.2)";
+
+    if(bossImg && bossHitLayer) {
+        bossImg.style.opacity = '0';
+        bossHitLayer.style.filter = phaseFilter;
+        bossHitLayer.src = hitImages[0];
+        bossHitLayer.style.opacity = '1';
+        setTimeout(() => { bossHitLayer.src = hitImages[1]; }, 800);
+        setTimeout(() => { bossHitLayer.src = hitImages[0]; }, 1600);
+    }
+
+    // ── Rich hit — screaming reaction, with occasional "fallen" flash ─
+    if(richImg && richHitLayer) {
+        richImg.style.opacity = '0.15';               // dim base (Rich reacts too)
+        richHitLayer.src = richHitImgs[0];            // screaming
+        richHitLayer.style.opacity = '0.9';
+        // 40% chance: briefly swap to the "knocked down" frame as a bonus flash
+        if(Math.random() < 0.40) {
+            setTimeout(() => { richHitLayer.src = richHitImgs[1]; richHitLayer.style.opacity = '0.6'; }, 900);
+            setTimeout(() => { richHitLayer.src = richHitImgs[0]; richHitLayer.style.opacity = '0.9'; }, 1700);
+        }
+    }
+
+    // ── Fade both back out ─────────────────────────────────────────
     setTimeout(() => {
-        bossHitLayer.style.transition = 'opacity 0.3s ease-out, transform 0.05s ease-out, filter 0.05s ease-out';
-        bossHitLayer.style.opacity = '0';
+        if(bossHitLayer) {
+            bossHitLayer.style.transition = 'opacity 0.3s ease-out';
+            bossHitLayer.style.opacity = '0';
+        }
+        if(richHitLayer) {
+            richHitLayer.style.transition = 'opacity 0.3s ease-out';
+            richHitLayer.style.opacity = '0';
+        }
         setTimeout(() => {
-            bossImg.style.opacity = '1';
+            if(bossImg)      { bossImg.style.opacity = '1'; bossHitLayer.style.transition = ''; }
+            if(richImg)      { richImg.style.opacity = '1'; richHitLayer.style.transition = ''; }
             isAnimatingHit = false;
-            // Reset hit layer transition back to no-opacity for next attack
-            bossHitLayer.style.transition = 'transform 0.05s ease-out, filter 0.05s ease-out';
         }, 300);
-    }, 2400); 
-    
+    }, 2400);
+
     if(Math.random() < 0.15) spawnQuote(x, y);
 }
 
@@ -301,10 +323,13 @@ function attack(e) {
     
     playHitAnimation(x, y); 
     
-    if(bossImg && bossHitLayer) {
-        bossImg.classList.add('quick-zoom'); bossHitLayer.classList.add('quick-zoom');
-        setTimeout(() => { bossImg.classList.remove('quick-zoom'); bossHitLayer.classList.remove('quick-zoom'); }, 50);
-    }
+    // Quick-zoom both characters on hit
+    [bossImg, richImg].forEach(el => {
+        if(el) {
+            el.classList.add('quick-zoom');
+            setTimeout(() => el.classList.remove('quick-zoom'), 120);
+        }
+    });
 
     // Critical hit check
     const isCrit = (Math.random() * 100) < critChance;
@@ -397,8 +422,7 @@ function startAutoTimer() {
 setInterval(() => { frenzy=Math.max(0, frenzy-2); multi=frenzy>=100?5:frenzy>=75?3:frenzy>=50?2:1; document.getElementById('frenzy-bar-fill').style.width=frenzy+'%'; document.getElementById('frenzy-text').innerText=multi>1?`COMBO ${multi}x` : `CHARGE METER`; }, 100);
 
 document.getElementById('btn-attack').onpointerdown = attack;
-// Attack on click anywhere in the boss area (not bossImg directly — at scale 2.0
-// the image overflows into the side columns and would intercept shop button clicks)
+// #boss-area handles click anywhere in the dual-boss zone
 document.getElementById('boss-area').onpointerdown = attack;
 
 // --- STRICTLY RETAIL / OFFICE SMALL TALK ---

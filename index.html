@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Defeat Frank! | Games We Miss</title>
-  <link rel="stylesheet" href="style.css?v=31">
+  <title>Defeat the Management! | Games We Miss</title>
+  <link rel="stylesheet" href="style.css?v=40">
 </head>
 <body>
   <div class="scanlines"></div>
@@ -27,7 +27,7 @@
   <div id="employee-container"></div>
   
   <div id="game-container" style="display: none;">
-    <h1 id="boss-name" class="title">CORPORATE FRANK</h1>
+    <h1 id="boss-name" class="title">DISTRICT MANAGER RICH &amp; PROJECT COORDINATOR FRANK</h1>
     
     <div id="game-wrapper">
       <div class="side-col" id="left-col">
@@ -42,7 +42,7 @@
 
         <div id="shop">
           <h2 class="shop-title">-- UPGRADES --</h2>
-          <button id="buy-click" class="shop-btn">Sharpen Blade (+2.5k) <br><span>Cost: 10</span></button>
+          <button id="buy-click" class="shop-btn">⚔️ Sharpen Blade (+2.5k) <br><span>Cost: 10</span></button>
           <button id="buy-auto" class="shop-btn">Hire Merc (+1k/s) <br><span>Cost: 50</span></button>
           <button id="buy-crit" class="shop-btn upgrade-new">🎯 Lucky Shot (+5% crit) <br><span class="cost-tag">Cost: 100</span></button>
           <button id="buy-overtime" class="shop-btn upgrade-new">⏱️ Overtime (faster auto) <br><span class="cost-tag">Cost: 200</span></button>
@@ -54,8 +54,25 @@
 
       <div id="center-col">
         <div id="boss-area">
-          <img id="boss-image" class="center-phase-1" src="phases/phase1frank.png" alt="Boss Body">
-          <img id="boss-hit-layer" class="center-phase-1" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="">
+
+          <!-- ── LEFT: District Manager Rich ─────────────────────── -->
+          <div class="boss-char-wrapper" id="rich-wrapper">
+            <span class="boss-char-name">District Manager Rich</span>
+            <div class="boss-char-inner">
+              <img id="rich-image"     src="phases/rich/rich_phase1.png" alt="Rich">
+              <img id="rich-hit-layer" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="">
+            </div>
+          </div>
+
+          <!-- ── RIGHT: Project Coordinator Frank ───────────────── -->
+          <div class="boss-char-wrapper" id="frank-wrapper">
+            <span class="boss-char-name">Project Coordinator Frank</span>
+            <div class="boss-char-inner">
+              <img id="boss-image"     src="phases/phase1frank.png" alt="Frank">
+              <img id="boss-hit-layer" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="">
+            </div>
+          </div>
+
           <div id="flash-overlay"></div>
         </div>
 
@@ -92,6 +109,6 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script src="https://www.youtube.com/iframe_api"></script>
-  <script src="script.js?v=31"></script>
+  <script src="script.js?v=40"></script>
 </body>
 </html>
