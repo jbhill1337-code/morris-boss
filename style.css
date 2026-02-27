@@ -238,5 +238,58 @@ body {
   0% { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: translateY(-80px) scale(1.2); }
 }
+/* --- RESPONSIVE LAYOUT --- */
+#game-wrapper {
+  display: flex;
+  flex-direction: column; /* Mobile default: stacks everything vertically */
+  gap: 20px;
+  align-items: center;
+  width: 100%;
+}
+
+.side-col {
+  width: 100%;
+  max-width: 400px;
+}
+
+#center-col {
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* When the screen is wide enough (Laptops/Desktops) */
+@media (min-width: 950px) {
+  #game-wrapper {
+    flex-direction: row; /* Spreads into 3 columns */
+    justify-content: space-between;
+    align-items: flex-start;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .side-col {
+    width: 25%;
+    position: sticky;
+    top: 20px; /* Keeps panels visible while scrolling */
+  }
+  #center-col {
+    width: 45%;
+  }
+}
+
+/* --- FRANK SIZE & IMPACT ANIMATIONS --- */
+#boss-image {
+  width: 100%;
+  max-width: 400px; /* Made Frank significantly bigger */
+  transition: transform 0.05s ease-out, filter 0.05s ease-out;
+}
+
+.boss-impact {
+  /* Scales up slightly and adds a muted, deep red glow instead of a bright flash */
+  transform: scale(1.04) rotate(-1deg) !important;
+  filter: drop-shadow(0 0 25px rgba(220, 20, 60, 0.6)) brightness(0.85) !important;
+}
 
 
