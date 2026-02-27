@@ -137,3 +137,53 @@ body { margin: 0; padding: 0; background-color: #050510; background-image: url('
     text-shadow: 0 0 12px #f00, 0 0 24px #ff0 !important;
     font-weight: bold;
 }
+#rpg-system {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  width: 400px;
+  background: #111;
+  padding: 10px;
+  border: 2px solid #444;
+  z-index: 9999;
+  font-family: sans-serif;
+}
+
+#inventory {
+  display: grid;
+  grid-template-columns: repeat(5, 64px);
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.item {
+  width: 64px;
+  height: 64px;
+  background-size: cover;
+  image-rendering: pixelated;
+  cursor: grab;
+}
+
+.slot {
+  width: 64px;
+  height: 64px;
+  border: 2px dashed #555;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #aaa;
+  margin-right: 10px;
+}
+
+.rarity-common { border: 2px solid #777; }
+.rarity-uncommon { border: 2px solid #2ecc71; }
+.rarity-rare { border: 2px solid #3498db; }
+.rarity-epic { border: 2px solid #9b59b6; }
+.rarity-legendary { border: 2px solid #f39c12; }
+
+#fx-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
