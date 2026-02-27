@@ -18,7 +18,7 @@ const employeesRef = db.ref('active_employees');
 
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
-// --- INTRO VIDEO LOGIC (YOUTUBE API) ---
+// --- INTRO VIDEO LOGIC ---
 const introContainer = document.getElementById('intro-container');
 const startIntroBtn = document.getElementById('start-intro-btn');
 const skipIntroBtn = document.getElementById('skip-intro-btn');
@@ -38,9 +38,8 @@ if (isOBS) {
     if (introContainer) introContainer.style.display = 'none';
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('game-container').style.display = 'block';
-    document.getElementById('player-stats').style.display = 'none';
-    document.getElementById('shop').style.display = 'none';
-    document.getElementById('inventory-panel').style.display = 'none'; // Hide inventory on stream
+    document.getElementById('left-col').style.display = 'none';
+    document.getElementById('right-col').style.display = 'none';
     document.querySelector('.action-buttons').style.display = 'none';
 } else {
     window.onYouTubeIframeAPIReady = function() {
@@ -66,23 +65,23 @@ if (isOBS) {
 
 // --- GAME VARIABLES ---
 let myCoins = 0, myClickDmg = 2500, myAutoDmg = 0, clickCost = 10, autoCost = 50, myUser = "";
-let myInventory = {}; // Stores collected items
+let myInventory = {}; 
 let curHP = 1000000000, maxHP = 1000000000, lastHP = 1000000000, frenzy = 0, multi = 1;
 let currentPhase = 1;
 let baseFrankImg = "phases/phase1frank.png";
 let defMulti = 1.0; 
 let lastLevel = 0; 
+let itemBuffMultiplier = 1.0; // The new dynamic multiplier
 
-// --- LOOT TABLE ---
 const lootTable = [
-    { id: 'paperclip', name: 'Bent Paperclip', rarity: 'common', icon: '📎' },
-    { id: 'sticky', name: 'Neon Sticky', rarity: 'common', icon: '📝' },
-    { id: 'mug', name: 'World\'s Okayest Boss Mug', rarity: 'uncommon', icon: '☕' },
-    { id: 'stapler', name: 'Red Stapler', rarity: 'rare', icon: '🖍️' },
-    { id: 'keyboard', name: 'Clacky Keyboard', rarity: 'rare', icon: '⌨️' },
-    { id: 'golden_pen', name: 'The Golden Pen', rarity: 'legendary', icon: '🖋️' },
-    { id: 'rolodex', name: 'CEO\'s Rolodex', rarity: 'legendary', icon: '📇' },
-    { id: 'briefcase', name: 'Nuclear Briefcase', rarity: 'legendary', icon: '💼' }
+    { id: 'paperclip', name: 'Bent Paperclip', rarity: 'common', icon: '📎', buff: 0.005 }, // +0.5%
+    { id: 'sticky', name: 'Neon Sticky', rarity: 'common', icon: '📝', buff: 0.005 },
+    { id: 'mug', name: 'World\'s Okayest Boss Mug', rarity: 'uncommon', icon: '☕', buff: 0.01 }, // +1.0%
+    { id: 'stapler', name: 'Red Stapler', rarity: 'rare', icon: '🖍️', buff: 0.025 }, // +2.5%
+    { id: 'keyboard', name: 'Clacky Keyboard', rarity: 'rare', icon: '⌨️', buff: 0.025 },
+    { id: 'golden_pen', name: 'The Golden Pen', rarity: 'legendary', icon: '🖋️', buff: 0.05 }, // +5.0%
+    { id: 'rolodex', name: 'CEO\'s Rolodex', rarity: 'legendary', icon: '📇', buff: 0.05 },
+    { id: 'briefcase', name: 'Nuclear Briefcase', rarity: 'legendary', icon: '💼', buff: 0.05 }
 ];
 
 const bossImg = document.getElementById('boss-image');
@@ -99,8 +98,9 @@ function load() {
     if(s) {
         const d = JSON.parse(s);
         myCoins=d.c; myClickDmg=d.cd; myAutoDmg=d.ad; clickCost=d.cc; autoCost=d.ac; myUser=d.u; 
-        myInventory = d.inv || {}; // Load inventory or start fresh
+        myInventory = d.inv || {}; 
         if (myUser && !isOBS) document.getElementById('username-input').value = myUser;
+        calculateLootBuff();
         updateUI();
         renderInventory();
     }
@@ -113,7 +113,7 @@ document.getElementById('btn-clock-in').onclick = () => {
     if(val) { myUser=val; document.getElementById('login-screen').style.display='none'; document.getElementById('game-container').style.display='block'; clockIn(myUser); save(); renderInventory(); }
 };
 
-// --- SYNC, PHASE & VICTORY LOGIC ---
+// --- SYNC & PHASE LOGIC ---
 bossRef.on('value', (snap) => {
     let b = snap.val();
     if(!b) { b={health:1000000000, level:1}; bossRef.set(b); }
@@ -161,11 +161,11 @@ function triggerVictoryScreen(newLevel) {
     }, 4000);
 }
 
+// --- NEW HEAVY HIT ANIMATION ---
 function triggerGlobalFX() {
     if(!bossImg) return;
-    bossImg.classList.add('shake');
-    bossImg.style.filter = 'brightness(1.5) sepia(1) hue-rotate(-50deg) saturate(5)'; 
-    setTimeout(() => { bossImg.classList.remove('shake'); bossImg.style.filter = 'none'; }, 150);
+    bossImg.classList.add('boss-impact');
+    setTimeout(() => { bossImg.classList.remove('boss-impact'); }, 100);
     if(Math.random() < 0.15) spawnQuote();
 }
 
@@ -178,25 +178,39 @@ function spawnQuote() {
     setTimeout(()=>q.remove(), 1000);
 }
 
-// --- LOOT MECHANICS ---
+// --- LOOT BUFF LOGIC ---
+function calculateLootBuff() {
+    let buffTotal = 0;
+    for (let id in myInventory) {
+        let item = lootTable.find(i => i.id === id);
+        if (item) buffTotal += (item.buff * myInventory[id]);
+    }
+    itemBuffMultiplier = 1.0 + buffTotal;
+    
+    const displayPercent = Math.floor(buffTotal * 100);
+    const buffEl = document.getElementById('loot-buff');
+    if(buffEl) buffEl.innerText = displayPercent;
+}
+
 function rollForLoot(x, y) {
-    if(Math.random() > 0.15) return; // 15% chance to drop *something* per click
+    if(Math.random() > 0.15) return; 
 
     const rarityRoll = Math.random();
     let pool = [];
 
-    if (rarityRoll < 0.02) { pool = lootTable.filter(i => i.rarity === 'legendary'); } // 2% of drops
-    else if (rarityRoll < 0.15) { pool = lootTable.filter(i => i.rarity === 'rare'); } // 13% of drops
-    else if (rarityRoll < 0.40) { pool = lootTable.filter(i => i.rarity === 'uncommon'); } // 25% of drops
-    else { pool = lootTable.filter(i => i.rarity === 'common'); } // 60% of drops
+    if (rarityRoll < 0.02) { pool = lootTable.filter(i => i.rarity === 'legendary'); } 
+    else if (rarityRoll < 0.15) { pool = lootTable.filter(i => i.rarity === 'rare'); } 
+    else if (rarityRoll < 0.40) { pool = lootTable.filter(i => i.rarity === 'uncommon'); } 
+    else { pool = lootTable.filter(i => i.rarity === 'common'); } 
 
     if (pool.length > 0) {
         const item = pool[Math.floor(Math.random() * pool.length)];
         myInventory[item.id] = (myInventory[item.id] || 0) + 1;
+        
+        calculateLootBuff(); // Recalculate multiplier immediately
         save();
         renderInventory();
         
-        // Spawn Loot Popup
         const p = document.createElement('div');
         p.className = 'loot-popup'; 
         p.innerText = `Loot: ${item.name}!`;
@@ -220,34 +234,32 @@ function renderInventory() {
             slot.innerHTML = `
                 ${item.icon}
                 <span class="inv-count">${myInventory[item.id]}</span>
-                <span class="inv-tooltip">${item.name} (${item.rarity})</span>
+                <span class="inv-tooltip">${item.name} (+${item.buff * 100}%)</span>
             `;
             grid.appendChild(slot);
         }
     });
 
-    if(!hasItems) {
-        grid.innerHTML = '<p style="color:#777; font-size:12px; width:100%; text-align:center;">Drawer is empty. Attack Frank!</p>';
-    }
+    if(!hasItems) { grid.innerHTML = '<p style="color:#777; font-size:12px; width:100%; text-align:center;">Drawer is empty. Attack Frank!</p>'; }
 }
 
 function attack(e) {
     if(isOBS) return;
-    const dmg = Math.floor(myClickDmg * multi * defMulti);
+    // Apply Frenzy Combo, Phase Defense, AND Inventory Loot Buffs!
+    const dmg = Math.floor(myClickDmg * multi * defMulti * itemBuffMultiplier);
+    
     bossRef.transaction(b => { if(b) { b.health -= dmg; if(b.health<=0){ b.level++; b.health=1000000000*b.level; } } return b; });
     myCoins += (1 * multi); frenzy = Math.min(100, frenzy+8); updateUI(); save();
     
     const x = (e.clientX || (e.touches ? e.touches[0].clientX : 0));
     const y = (e.clientY || (e.touches ? e.touches[0].clientY : 0));
     
-    // Spawn damage number
     const p = document.createElement('div');
     p.className='damage-popup'; p.innerText='+'+dmg.toLocaleString();
     p.style.left=x+'px'; p.style.top=y+'px';
     document.body.appendChild(p);
     setTimeout(()=>p.remove(),800);
 
-    // Roll for an item drop
     rollForLoot(x, y);
 }
 
@@ -263,7 +275,11 @@ document.getElementById('buy-click').onclick = () => { if(myCoins>=clickCost){ m
 document.getElementById('buy-auto').onclick = () => { if(myCoins>=autoCost){ myCoins-=autoCost; myAutoDmg+=1000; autoCost=Math.floor(autoCost*1.5); updateUI(); save(); } };
 
 setInterval(() => { 
-    if(myAutoDmg>0) { bossRef.transaction(b => { if(b) b.health -= Math.floor(myAutoDmg * defMulti); return b; }); }
+    if(myAutoDmg>0) { 
+        // Auto damage also benefits from the loot buff!
+        const autoDmgCalculated = Math.floor(myAutoDmg * defMulti * itemBuffMultiplier);
+        bossRef.transaction(b => { if(b) b.health -= autoDmgCalculated; return b; }); 
+    }
 }, 1000);
 setInterval(() => { frenzy=Math.max(0, frenzy-2); multi=frenzy>=100?5:frenzy>=75?3:frenzy>=50?2:1; document.getElementById('frenzy-bar-fill').style.width=frenzy+'%'; document.getElementById('frenzy-text').innerText=multi>1?`COMBO ${multi}x` : `CHARGE METER`; }, 100);
 
