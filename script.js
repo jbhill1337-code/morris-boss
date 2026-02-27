@@ -18,6 +18,11 @@ const employeesRef = db.ref('active_employees');
 
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
+// --- IMAGE PRELOADER (Fixes invisible animation bug) ---
+const preloadHit1 = new Image(); preloadHit1.src = 'boss-hit-var-2.png';
+const preloadHit2 = new Image(); preloadHit2.src = 'boss-hit-variation-3.png';
+const hitImages = ['boss-hit-var-2.png', 'boss-hit-variation-3.png'];
+
 // --- INTRO VIDEO LOGIC ---
 const introContainer = document.getElementById('intro-container');
 const startIntroBtn = document.getElementById('start-intro-btn');
@@ -27,10 +32,7 @@ let ytPlayer;
 const endIntro = () => {
     if (introContainer) {
         introContainer.style.opacity = '0';
-        setTimeout(() => {
-            introContainer.remove();
-            load(); 
-        }, 1000); 
+        setTimeout(() => { introContainer.remove(); load(); }, 1000); 
     }
 };
 
@@ -72,10 +74,7 @@ let baseFrankImg = "phases/phase1frank.png";
 let defMulti = 1.0; 
 let lastLevel = 0; 
 let itemBuffMultiplier = 1.0; 
-let isAnimatingHit = false; // Prevents animation overlap
-
-// Your root-level hit images
-const hitImages = ['boss-hit-var-2.png', 'boss-hit-variation-3.png'];
+let isAnimatingHit = false; 
 
 const lootTable = [
     { id: 'paperclip', name: 'Bent Paperclip', rarity: 'common', icon: '📎', buff: 0.005 },
@@ -153,7 +152,6 @@ function triggerVictoryScreen(newLevel) {
     vScreen.style.backgroundColor = 'rgba(0, 0, 0, 0.85)'; vScreen.style.display = 'flex'; vScreen.style.flexDirection = 'column';
     vScreen.style.justifyContent = 'center'; vScreen.style.alignItems = 'center'; vScreen.style.zIndex = '9999'; vScreen.style.fontFamily = 'monospace';
     vScreen.style.textAlign = 'center'; vScreen.style.textShadow = '3px 3px 0px #00ffff';
-
     vScreen.innerHTML = `
         <h1 style="font-size: 5rem; color: #ff00ff; margin: 0; text-transform: uppercase;">PROMOTED!</h1>
         <h2 style="font-size: 2rem; color: #fff; text-shadow: none;">FRANK RETREATED... FOR NOW.</h2>
@@ -176,15 +174,17 @@ function triggerGlobalFX() {
     isAnimatingHit = true;
     bossImg.classList.add('boss-impact');
     
-    // Swap to a random hit pose
     const randHit = hitImages[Math.floor(Math.random() * hitImages.length)];
     bossImg.src = randHit;
     
+    // Hold the animation for 300ms so you can actually see it
     setTimeout(() => { 
         bossImg.classList.remove('boss-impact'); 
-        bossImg.src = baseFrankImg; // Return to the current phase
-        isAnimatingHit = false; // Open the cooldown window again
-    }, 350); // Holds the animation for 350ms so it stays smooth
+        bossImg.src = baseFrankImg; 
+        
+        // Wait 100ms before allowing another animation to prevent seizure-flashing
+        setTimeout(() => { isAnimatingHit = false; }, 100); 
+    }, 300); 
     
     if(Math.random() < 0.15) spawnQuote();
 }
@@ -198,7 +198,6 @@ function spawnQuote() {
     setTimeout(()=>q.remove(), 1000);
 }
 
-// --- LOOT BUFF LOGIC ---
 function calculateLootBuff() {
     let buffTotal = 0;
     for (let id in myInventory) {
