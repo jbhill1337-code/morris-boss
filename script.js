@@ -26,7 +26,6 @@ try {
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
 /* ══ IMAGE FALLBACKS — use only images that exist in the project as filler ═══ */
-// All images in the repo (from RAR / assets); used for any missing animation/asset
 const FILLER_IMAGES = [
   'assets/backgrounds/background-server-room.png',
   'assets/phases/dave/dave_phase1.png',
@@ -69,8 +68,6 @@ function getNextFiller() {
   return src;
 }
 function resolveUrl(path) {
-  // The <base> tag in index.html handles all path resolution.
-  // Just return the relative path as-is.
   return path;
 }
 function useFiller(img) {
@@ -80,19 +77,17 @@ function useFiller(img) {
 }
 function initImageFallbacks() {
   var els = document.querySelectorAll(
-    '#boss-image, #rich-image, #boss-hit-layer, #rich-hit-layer, #mikita-char-img, #manny-char-img, #stress-hand-img, #richard-image'
+    '#boss-image, #companion-image, #boss-hit-layer, #companion-hit-layer, #mikita-char-img, #manny-char-img, #stress-hand-img, #richard-image'
   );
   els.forEach(function(el) {
     el.addEventListener('error', function() { useFiller(this); });
   });
 
-  // Boss and Rich: load via JS so path is resolved from HTML location; timeout fallback if load fails (e.g. file://)
   function loadWithFallback(img, src) {
     if (!img || img.dataset.fillerUsed) return;
     var url = src || img.getAttribute('data-src');
     if (!url) return;
     img.src = resolveUrl(url);
-    // Longer timeout for file:// protocol
     var timeout = location.protocol === 'file:' ? 2000 : 1000;
     setTimeout(function() {
       if (img.dataset.fillerUsed) return;
@@ -103,23 +98,19 @@ function initImageFallbacks() {
     }, timeout);
   }
   var bossImg = document.getElementById('boss-image');
-  var richImg = document.getElementById('rich-image');
+  var compImg = document.getElementById('companion-image');
   if (bossImg) loadWithFallback(bossImg, 'assets/phases/dave/dave_phase1.png');
-  if (richImg) loadWithFallback(richImg, 'assets/phases/rich/rich_phase1.png');
+  if (compImg) loadWithFallback(compImg, 'assets/chars/larry_frame1.png');
 
-  // Set background immediately - the <base> tag + CSS already handle this,
-  // but also set via JS as a belt-and-suspenders approach
   document.body.style.backgroundImage = "url('assets/backgrounds/background-server-room.png')";
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initImageFallbacks);
 else initImageFallbacks();
 
 /* ══ PRELOADS ═══════════════════════════════════════════════════════════════ */
-// VP Dave hit layers (dramatic face-punch close-ups) — sprite_001, sprite_002
 const daveHitImages = ['assets/hit/dave-hit-1.png', 'assets/hit/dave-hit-2.png'];
 daveHitImages.forEach(s => { const i = new Image(); i.src = resolveUrl(s); });
 
-// VP Dave phase images — sprite_003 (combat), sprite_004 (demonic), sprite_015 (casual)
 const davePhaseImgs = [
   'assets/phases/dave/dave_phase1.png',
   'assets/phases/dave/dave_phase2.png',
@@ -128,7 +119,6 @@ const davePhaseImgs = [
 ];
 davePhaseImgs.forEach(s => { const i = new Image(); i.src = resolveUrl(s); });
 
-// Rich phase images — sprite_011, sprites 005–009
 const richPhaseImgs = [
   'assets/phases/rich/rich_phase1.png',
   'assets/phases/rich/rich_phase2.png',
@@ -138,17 +128,14 @@ const richPhaseImgs = [
 const richHitImgs = ['assets/phases/rich/rich_hit_a.png', 'assets/phases/rich/rich_hit_b.png'];
 [...richPhaseImgs, ...richHitImgs].forEach(s => { const i = new Image(); i.src = resolveUrl(s); });
 
-// Richard side event — yourbossvar
 const richardImages = ['assets/richard/boss-pointing.png', 'assets/richard/boss-crossing.png'];
 richardImages.forEach(s => { const i = new Image(); i.src = resolveUrl(s); });
 
-// Manny STRESS TEST — sprite_012 (Manny), sprite_010 (click minigame hands)
 ['assets/chars/manny_frame1.png','assets/chars/manny_frame2.png','assets/chars/manny_frame3.png',
  'assets/chars/manny_frame4.png','assets/chars/manny_frame5.png','assets/chars/manny_frame6.png',
  'assets/minigame/click_frame1.png','assets/minigame/click_frame2.png','assets/minigame/click_frame3.png']
   .forEach(s => { const i = new Image(); i.src = resolveUrl(s); });
 
-// Larry side character (if used in future) — sprite_013
 ['assets/chars/larry_frame1.png','assets/chars/larry_frame2.png','assets/chars/larry_frame3.png',
  'assets/chars/larry_frame4.png','assets/chars/larry_frame5.png','assets/chars/larry_frame6.png']
   .forEach(s => { const i = new Image(); i.src = resolveUrl(s); });
@@ -166,7 +153,6 @@ const endIntro = () => {
   }
 };
 
-// Emergency failsafe — never get stuck on black screen
 if (introContainer && !isOBS) {
   setTimeout(() => {
     if (skipIntroBtn && skipIntroBtn.style.display === 'none') {
@@ -176,7 +162,6 @@ if (introContainer && !isOBS) {
   }, 4000);
 }
 
-// YouTube player setup — define callback at top level to avoid race conditions
 function onPlayerReady(event) {
   if (!startIntroBtn) return;
   startIntroBtn.style.display = 'block';
@@ -207,7 +192,7 @@ if (isOBS) {
   document.getElementById('right-col').style.display = 'none';
   document.querySelector('.action-buttons').style.display = 'none';
   document.getElementById('richard-event-container').style.display = 'none';
-  if (document.getElementById('rich-wrapper')) document.getElementById('rich-wrapper').style.display = 'none';
+  if (document.getElementById('companion-wrapper')) document.getElementById('companion-wrapper').style.display = 'none';
   if (document.getElementById('skill-panel')) document.getElementById('skill-panel').style.display = 'none';
 }
 
@@ -221,7 +206,6 @@ let currentPhase = 0;
 let baseDaveImg = davePhaseImgs[0];
 let defMulti = 1.0, lastLevel = 0, itemBuffMultiplier = 1.0, isAnimatingHit = false;
 
-// Upgrades
 let critChance = 0, critCost = 100;
 let autoInterval = 1000, overtimeCost = 200;
 let shopMultiplier = 1.0, synergyCost = 150;
@@ -232,8 +216,10 @@ let autoTimer = null;
 /* ══ DOM REFERENCES ═════════════════════════════════════════════════════════ */
 const bossImg      = document.getElementById('boss-image');
 const bossHitLayer = document.getElementById('boss-hit-layer');
-const richImg      = document.getElementById('rich-image');
-const richHitLayer = document.getElementById('rich-hit-layer');
+const companionImg = document.getElementById('companion-image');
+const mainBossNameEl = document.getElementById('main-boss-name');
+const companionNameEl = document.getElementById('companion-name');
+
 const richardContainer = document.getElementById('richard-event-container');
 const richardImage     = document.getElementById('richard-image');
 const richardDialogue  = document.getElementById('richard-dialogue');
@@ -306,60 +292,74 @@ document.getElementById('btn-clock-in').onclick = () => {
   }
 };
 
-/* ══ BOSS FIREBASE LISTENER ════════════════════════════════════════════════ */
+/* ══ TAG-TEAM BOSS SYSTEM & ANIMATIONS ═════════════════════════════════════ */
+const companions = {
+  larry: ['assets/chars/larry_frame1.png', 'assets/chars/larry_frame2.png', 'assets/chars/larry_frame3.png', 'assets/chars/larry_frame4.png', 'assets/chars/larry_frame5.png', 'assets/chars/larry_frame6.png'],
+  manny: ['assets/chars/manny_frame1.png', 'assets/chars/manny_frame2.png', 'assets/chars/manny_frame3.png', 'assets/chars/manny_frame4.png', 'assets/chars/manny_frame5.png', 'assets/chars/manny_frame6.png']
+};
+
+let currentCompanion = companions.larry; 
+let frameIndex = 0;
+
+setInterval(() => {
+  if (companionImg && !isAnimatingHit) {
+    frameIndex = (frameIndex + 1) % currentCompanion.length;
+    companionImg.src = currentCompanion[frameIndex];
+  }
+}, 150);
+
 if (bossRef) {
   bossRef.on('value', snap => {
     let b = snap.val();
     if (!b) { b = { health:1000000000, level:1 }; bossRef.set(b); }
 
-  if (lastLevel === 0) {
-    lastLevel = b.level;
-  } else if (b.level > lastLevel) {
-    if (lastLevel > 0 && lastLevel % 10 === 0 && !isOBS) {
-      myInventory['golden_paperclip'] = (myInventory['golden_paperclip'] || 0) + 1;
-      calculateLootBuff(); save(); renderInventory();
-      createDynamicPopup('PRESTIGE REWARD: Golden Paperclip!', 'loot-popup', window.innerWidth/2, window.innerHeight/2);
+    if (lastLevel === 0) {
+      lastLevel = b.level;
+    } else if (b.level > lastLevel) {
+      if (lastLevel > 0 && lastLevel % 10 === 0 && !isOBS) {
+        myInventory['golden_paperclip'] = (myInventory['golden_paperclip'] || 0) + 1;
+        calculateLootBuff(); save(); renderInventory();
+        createDynamicPopup('PRESTIGE REWARD: Golden Paperclip!', 'loot-popup', window.innerWidth/2, window.innerHeight/2);
+      }
+      triggerVictoryScreen(b.level);
+      lastLevel = b.level;
     }
-    triggerVictoryScreen(b.level);
-    lastLevel = b.level;
-  }
 
-  lastHP = b.health; curHP = b.health; maxHP = 1000000000 * b.level;
-  const hpPercent = Math.max(0, curHP / maxHP);
+    lastHP = b.health; curHP = b.health; maxHP = 1000000000 * b.level;
+    const hpPercent = Math.max(0, curHP / maxHP);
 
-  let newPhase = 1;
-  let newTitle = 'VP Dave & District Manager Rich · Lv.' + b.level;
+    const isDaveEncounter = (b.level % 2 !== 0);
+    
+    if (isDaveEncounter) {
+      currentCompanion = companions.larry;
+      if (companionNameEl) companionNameEl.innerText = 'Security Larry';
+      if (mainBossNameEl) mainBossNameEl.innerText = 'VP Dave · Lv.' + b.level;
+      
+      if (hpPercent <= 0.25) { baseDaveImg = 'assets/phases/dave/dave_phase4.png'; defMulti = 0.2; currentPhase = 4; }
+      else if (hpPercent <= 0.50) { baseDaveImg = 'assets/phases/dave/dave_phase3.png'; defMulti = 0.5; currentPhase = 3; }
+      else if (hpPercent <= 0.75) { baseDaveImg = 'assets/phases/dave/dave_phase2.png'; defMulti = 0.8; currentPhase = 2; }
+      else { baseDaveImg = 'assets/phases/dave/dave_phase1.png'; defMulti = 1.0; currentPhase = 1; }
+      
+      if (bossImg && !isAnimatingHit) bossImg.src = baseDaveImg;
 
-  if (hpPercent <= 0.25) {
-    newPhase = 4;
-    newTitle = '⚡ CORPORATE DEVIL DAVE · RICH GOES NUCLEAR (Lv.' + b.level + ')';
-    defMulti = 0.2; baseDaveImg = davePhaseImgs[3];
-  } else if (hpPercent <= 0.50) {
-    newPhase = 3;
-    newTitle = '🔥 VP Dave: FURIOUS · Rich: CRIMSON FURY (Lv.' + b.level + ')';
-    defMulti = 0.5; baseDaveImg = davePhaseImgs[2];
-  } else if (hpPercent <= 0.75) {
-    newPhase = 2;
-    newTitle = 'VP Dave: GETTING SERIOUS · Rich: BURSTING (Lv.' + b.level + ')';
-    defMulti = 0.8; baseDaveImg = davePhaseImgs[1];
-  } else {
-    newPhase = 1;
-    newTitle = 'VP Dave & District Manager Rich · Lv.' + b.level;
-    defMulti = 1.0; baseDaveImg = davePhaseImgs[0];
-  }
+    } else {
+      currentCompanion = companions.manny;
+      if (companionNameEl) companionNameEl.innerText = 'Intern Manny';
+      if (mainBossNameEl) mainBossNameEl.innerText = 'District Manager Rich · Lv.' + b.level;
+      
+      if (hpPercent <= 0.25) { baseDaveImg = 'assets/phases/rich/rich_phase4.png'; defMulti = 0.2; currentPhase = 4; }
+      else if (hpPercent <= 0.50) { baseDaveImg = 'assets/phases/rich/rich_phase3.png'; defMulti = 0.5; currentPhase = 3; }
+      else if (hpPercent <= 0.75) { baseDaveImg = 'assets/phases/rich/rich_phase2.png'; defMulti = 0.8; currentPhase = 2; }
+      else { baseDaveImg = 'assets/phases/rich/rich_phase1.png'; defMulti = 1.0; currentPhase = 1; }
+      
+      if (bossImg && !isAnimatingHit) bossImg.src = baseDaveImg;
+    }
 
-  if (currentPhase !== newPhase) {
-    currentPhase = newPhase;
-    if (bossImg && !isAnimatingHit) bossImg.src = baseDaveImg;
-    if (richImg  && !isAnimatingHit) richImg.src = richPhaseImgs[newPhase - 1];
-  }
-
-  hpFill.style.width = (hpPercent * 100) + '%';
-  hpText.innerText = curHP.toLocaleString() + ' / ' + maxHP.toLocaleString();
-  document.getElementById('boss-name').innerText = newTitle;
+    hpFill.style.width = (hpPercent * 100) + '%';
+    hpText.innerText = curHP.toLocaleString() + ' / ' + maxHP.toLocaleString();
+    document.getElementById('boss-name').innerText = `Level ${b.level} Corporate Takedown`;
   });
 } else {
-  // Firebase not available; set default values
   curHP = 1000000000;
   maxHP = 1000000000;
   lastHP = 1000000000;
@@ -410,75 +410,53 @@ function createDynamicPopup(text, className, x, y) {
   setTimeout(() => p.remove(), 1200);
 }
 
-/* ══ HIT ANIMATION (both bosses always react — dedicated hit or standing variation) ══ */
-// Each character: use dedicated hit sprites when available, else standing/phase with hit effect
-function getDaveHitOptions() {
+/* ══ HIT ANIMATION ═════════════════════════════════════════════════════════ */
+function getBossHitOptions() {
   const fallback = baseDaveImg;
-  return [...daveHitImages, fallback];
-}
-function getRichHitOptions() {
-  const fallback = richPhaseImgs[Math.max(0, currentPhase - 1)];
-  return [...richHitImgs, fallback];
-}
-
-function pickRandomHitOption(options, isFallbackIndex) {
-  const idx = Math.floor(Math.random() * options.length);
-  return { src: options[idx], useFallbackStyle: isFallbackIndex ? idx === options.length - 1 : idx >= 2 };
+  return [...daveHitImages, ...richHitImgs, fallback];
 }
 
 function playHitAnimation(x, y) {
   if (isAnimatingHit) return;
   isAnimatingHit = true;
 
-  const daveOptions = getDaveHitOptions();
-  const richOptions = getRichHitOptions();
-  const davePick = daveOptions[Math.floor(Math.random() * daveOptions.length)];
-  const richPick = richOptions[Math.floor(Math.random() * richOptions.length)];
-  const daveUseFallback = davePick === baseDaveImg;
-  const richUseFallback = richPick === richPhaseImgs[Math.max(0, currentPhase - 1)];
+  const options = getBossHitOptions();
+  const pick = options[Math.floor(Math.random() * options.length)];
+  const useFallback = pick === baseDaveImg;
 
   let phaseFilter = 'none';
   if (currentPhase === 4) phaseFilter = 'hue-rotate(250deg) saturate(3) brightness(0.7)';
   else if (currentPhase === 3) phaseFilter = 'sepia(1) hue-rotate(-30deg) saturate(5) brightness(0.8)';
   else if (currentPhase === 2) phaseFilter = 'saturate(2) brightness(1.2)';
 
-  // Dave — always show hit: dedicated face-punch or standing/phase with zoom+opacity hit effect
   if (bossImg && bossHitLayer) {
     bossImg.style.opacity = '0';
     bossHitLayer.style.filter = phaseFilter;
-    bossHitLayer.src = davePick;
-    bossHitLayer.classList.toggle('hit-active', !daveUseFallback);
-    bossHitLayer.classList.toggle('hit-using-fallback', daveUseFallback);
+    bossHitLayer.src = pick;
+    bossHitLayer.classList.toggle('hit-active', !useFallback);
+    bossHitLayer.classList.toggle('hit-using-fallback', useFallback);
     bossHitLayer.style.opacity = '1';
-    if (!daveUseFallback) {
-      setTimeout(() => { bossHitLayer.src = daveOptions[Math.floor(Math.random() * daveOptions.length)]; }, 800);
-      setTimeout(() => { bossHitLayer.src = davePick; }, 1600);
+    if (!useFallback) {
+      setTimeout(() => { bossHitLayer.src = options[Math.floor(Math.random() * options.length)]; }, 800);
+      setTimeout(() => { bossHitLayer.src = pick; }, 1600);
     }
   }
 
-  // Rich — always show hit: dedicated screaming/knocked or standing/phase with hit effect
-  if (richImg && richHitLayer) {
-    richImg.style.opacity = '0.15';
-    richHitLayer.src = richPick;
-    richHitLayer.classList.toggle('hit-using-fallback', richUseFallback);
-    richHitLayer.style.opacity = '0.9';
-    if (!richUseFallback && Math.random() < 0.40) {
-      const other = richHitImgs[Math.floor(Math.random() * richHitImgs.length)];
-      setTimeout(() => { richHitLayer.src = other; richHitLayer.style.opacity = '0.6'; }, 900);
-      setTimeout(() => { richHitLayer.src = richPick; richHitLayer.style.opacity = '0.9'; }, 1700);
-    }
-  }
-
-  // Random floating "character getting hit" pop-ups (zoom + lower opacity) — any variation
   if (Math.random() < 0.45) spawnFloatingHitPopup(x, y);
   if (Math.random() < 0.35) spawnFloatingHitPopup(x, y);
 
   setTimeout(() => {
-    if (bossHitLayer) { bossHitLayer.style.transition = 'opacity 0.3s ease-out'; bossHitLayer.style.opacity = '0'; bossHitLayer.classList.remove('hit-using-fallback'); }
-    if (richHitLayer) { richHitLayer.style.transition = 'opacity 0.3s ease-out'; richHitLayer.style.opacity = '0'; richHitLayer.classList.remove('hit-using-fallback'); }
+    if (bossHitLayer) { 
+      bossHitLayer.style.transition = 'opacity 0.3s ease-out'; 
+      bossHitLayer.style.opacity = '0'; 
+      bossHitLayer.classList.remove('hit-using-fallback'); 
+    }
     setTimeout(() => {
-      if (bossImg) { bossImg.style.opacity = '1'; if (bossHitLayer) bossHitLayer.classList.remove('hit-active'); bossHitLayer.style.transition = ''; }
-      if (richImg) { richImg.style.opacity = '1'; richHitLayer.style.transition = ''; }
+      if (bossImg) { 
+        bossImg.style.opacity = '1'; 
+        if (bossHitLayer) bossHitLayer.classList.remove('hit-active'); 
+        bossHitLayer.style.transition = ''; 
+      }
       isAnimatingHit = false;
     }, 300);
   }, 2400);
@@ -486,10 +464,8 @@ function playHitAnimation(x, y) {
   if (Math.random() < 0.15) spawnQuote(x, y);
 }
 
-// Zoomed, lower-opacity character pop-up — "getting hit" or "in combat" using any available sprite
 function spawnFloatingHitPopup(clickX, clickY) {
-  const useDave = Math.random() < 0.5;
-  const options = useDave ? getDaveHitOptions() : getRichHitOptions();
+  const options = getBossHitOptions();
   const src = options[Math.floor(Math.random() * options.length)];
 
   const wrap = document.createElement('div');
@@ -574,8 +550,8 @@ function attack(e) {
 
   playHitAnimation(x, y);
 
-  // Quick-zoom both characters
-  [bossImg, richImg].forEach(el => {
+  // Quick-zoom both characters (Main Boss and Companion)
+  [bossImg, companionImg].forEach(el => {
     if (el) { el.classList.add('quick-zoom'); setTimeout(() => el.classList.remove('quick-zoom'), 120); }
   });
 
@@ -734,7 +710,6 @@ const mikitaCloseBtnOk = document.getElementById('mikita-close-btn');
 function openMikitaPopup() {
   if (!mikitaOverlay) return;
   mikitaOverlay.style.display = 'flex';
-  // Animate Mikita character — cycle through instructor frames
   const frames = ['assets/chars/mikita_instructor.png', 'assets/chars/mikita_terminal.png', 'assets/chars/mikita_idle.png'];
   let fi = 0;
   const img = document.getElementById('mikita-char-img');
@@ -744,7 +719,6 @@ function openMikitaPopup() {
       fi = (fi + 1) % frames.length;
       img.src = frames[fi];
     }, 1800);
-    // Store timer on element to clear on close
     img._cycleTimer = cycleTimer;
   }
 }
@@ -761,7 +735,6 @@ if (document.getElementById('skill-phishing')) {
 }
 if (mikitaCloseBtn)   mikitaCloseBtn.onclick   = closeMikitaPopup;
 if (mikitaCloseBtnOk) mikitaCloseBtnOk.onclick = closeMikitaPopup;
-// Close on overlay backdrop click
 if (mikitaOverlay) {
   mikitaOverlay.onclick = (e) => { if (e.target === mikitaOverlay) closeMikitaPopup(); };
 }
@@ -778,7 +751,6 @@ const stressCloseBtn  = document.getElementById('stress-close-btn');
 const stressFill      = document.getElementById('stress-progress-fill');
 const stressCount     = document.getElementById('stress-click-count');
 
-// Manny animation frames during stress test
 const mannyFrames = [
   'assets/chars/manny_frame1.png','assets/chars/manny_frame2.png','assets/chars/manny_frame3.png',
   'assets/chars/manny_frame4.png','assets/chars/manny_frame5.png','assets/chars/manny_frame6.png'
@@ -794,7 +766,6 @@ let stressMannyInterval = null;
 let stressHandTimeout = null;
 
 function getStressQuota() {
-  // Quota scales slightly with player progress
   return Math.min(80, 40 + Math.floor(myClickDmg / 5000) * 5);
 }
 
@@ -808,7 +779,6 @@ function openStressTest() {
   stressCloseBtn.style.display = 'none';
   if (stressClickBtn) stressClickBtn.disabled = false;
 
-  // Update quota display
   const qNum = document.getElementById('stress-quota-num');
   const qLbl = document.getElementById('stress-quota-label');
   const tDisp = document.getElementById('stress-time-display');
@@ -822,14 +792,12 @@ function openStressTest() {
 
   stressOverlay.style.display = 'flex';
 
-  // Animate Manny's excitement — cycle through his frames
   let mi = 0;
   stressMannyInterval = setInterval(() => {
     mi = (mi + 1) % mannyFrames.length;
     if (mannyCharImg) mannyCharImg.src = mannyFrames[mi];
   }, 300);
 
-  // Countdown timer
   stressTimerInterval = setInterval(() => {
     stressTimeLeft--;
     if (tDisp) tDisp.innerText = stressTimeLeft;
@@ -841,7 +809,6 @@ function handleStressClick() {
   if (!stressActive || stressTimeLeft <= 0) return;
   stressClickCount++;
 
-  // Hand animation: briefly show frame 2 (clicking sparks), back to 1
   if (stressHandImg) {
     stressHandImg.src = handFrames[1];
     if (stressHandTimeout) clearTimeout(stressHandTimeout);
@@ -850,12 +817,10 @@ function handleStressClick() {
     }, 80);
   }
 
-  // Update progress bar
   const pct = Math.min(100, (stressClickCount / stressQuota) * 100);
   if (stressFill) stressFill.style.width = pct + '%';
   if (stressCount) stressCount.innerHTML = `${stressClickCount} / <span id="stress-quota-label">${stressQuota}</span>`;
 
-  // Auto-end if quota hit early
   if (stressClickCount >= stressQuota) endStressTest();
 }
 
@@ -867,7 +832,6 @@ function endStressTest() {
 
   if (stressClickBtn) stressClickBtn.disabled = true;
   if (stressHandImg) {
-    // Show destroyed mouse if quota was smashed, else normal
     stressHandImg.src = stressClickCount >= stressQuota ? handFrames[2] : handFrames[0];
   }
   if (mannyCharImg) {
@@ -895,20 +859,17 @@ function closeStressTest() {
   stressActive = false;
   clearInterval(stressTimerInterval);
   clearInterval(stressMannyInterval);
-  // Schedule the next one
   scheduleMannyStressTest();
 }
 
 function scheduleMannyStressTest() {
   if (isOBS) return;
-  // Random interval: 3–8 minutes (180k–480k ms)
   const delay = Math.random() * (480000 - 180000) + 180000;
   setTimeout(() => { openStressTest(); }, delay);
 }
 
 if (stressClickBtn) stressClickBtn.onpointerdown = handleStressClick;
 if (stressCloseBtn) stressCloseBtn.onclick = closeStressTest;
-// Prevent clicks on the stress test area from triggering boss attack
 if (stressOverlay) {
   stressOverlay.onpointerdown = e => e.stopPropagation();
 }
