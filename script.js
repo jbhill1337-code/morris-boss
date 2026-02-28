@@ -11,14 +11,14 @@ const db = firebase.database();
 const bossRef = db.ref('frank_corporate_data'); 
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
-// ASSETS FROM morris-boss-v3.rar
+// ASSETS: Paths updated to match your GitHub repository structure
 const davePhaseImgs = [
-    'morris-boss-v3/phases/dave/dave_phase1.png',
-    'morris-boss-v3/phases/dave/dave_phase2.png',
-    'morris-boss-v3/phases/dave/dave_phase3.png',
-    'morris-boss-v3/phases/dave/dave_phase3.png'
+    'phases/dave/dave_phase1.png',
+    'phases/dave/dave_phase2.png',
+    'phases/dave/dave_phase3.png',
+    'phases/dave/dave_phase4.png' 
 ];
-const hitImages = ['morris-boss-v3/dave-hit-2.png', 'morris-boss-v3/dave-hit-2.png'];
+const hitImages = ['dave-hit-1.png', 'dave-hit-2.png'];
 
 let myCoins = 0, myClickDmg = 2500, myAutoDmg = 0, clickCost = 10, autoCost = 50;
 let currentPhase = 0, lastLevel = 0, itemBuffMultiplier = 1.0, isAnimatingHit = false;
@@ -28,7 +28,6 @@ const bossHitLayer = document.getElementById('boss-hit-layer');
 const hpFill = document.getElementById('health-bar-fill');
 const hpText = document.getElementById('health-text');
 
-// Failsafe for black screen - triggers load sequence even if video fails
 const endIntro = () => {
     const intro = document.getElementById('intro-container');
     if (intro) { intro.style.opacity = '0'; setTimeout(() => { intro.remove(); load(); }, 1000); }
@@ -145,8 +144,8 @@ function animateCursor() {
 
 document.getElementById('btn-phish').onclick = () => {
     if (!isPhishing) return;
-    minigameHand.src = 'morris-boss-v3/minigame/click_frame3.png';
-    setTimeout(() => { minigameHand.src = 'morris-boss-v3/minigame/click_frame1.png'; }, 200);
+    minigameHand.src = 'minigame/click_frame3.png';
+    setTimeout(() => { minigameHand.src = 'minigame/click_frame1.png'; }, 200);
 
     if (cursorPos >= 40 && cursorPos <= 60) {
         const payout = Math.floor(Math.random() * 20000) + 5000;
