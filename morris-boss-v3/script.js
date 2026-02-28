@@ -21,8 +21,6 @@ const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 // All images in the repo (from RAR / assets); used for any missing animation/asset
 const FILLER_IMAGES = [
   'assets/backgrounds/background-server-room.png',
-  'backround-level-1.png',
-  'backround.png',
   'assets/phases/dave/dave_phase1.png',
   'assets/phases/dave/dave_phase2.png',
   'assets/phases/dave/dave_phase3.png',
@@ -37,11 +35,19 @@ const FILLER_IMAGES = [
   'assets/hit/dave-hit-2.png',
   'assets/chars/manny_frame1.png',
   'assets/chars/manny_frame2.png',
+  'assets/chars/manny_frame3.png',
+  'assets/chars/manny_frame4.png',
+  'assets/chars/manny_frame5.png',
+  'assets/chars/manny_frame6.png',
   'assets/chars/mikita_instructor.png',
   'assets/chars/mikita_terminal.png',
   'assets/chars/mikita_idle.png',
   'assets/chars/larry_frame1.png',
   'assets/chars/larry_frame2.png',
+  'assets/chars/larry_frame3.png',
+  'assets/chars/larry_frame4.png',
+  'assets/chars/larry_frame5.png',
+  'assets/chars/larry_frame6.png',
   'assets/minigame/click_frame1.png',
   'assets/minigame/click_frame2.png',
   'assets/minigame/click_frame3.png',
@@ -54,10 +60,16 @@ function getNextFiller() {
   fillerIndex++;
   return src;
 }
+function resolveUrl(path) {
+  if (typeof path !== 'string') return path;
+  var base = (location.pathname || location.href).replace(/\/[^/]*$/, '/');
+  if (location.protocol === 'file:') base = location.href.replace(/\/[^/]*$/, '/');
+  return base + path.replace(/^\//, '');
+}
 function useFiller(img) {
   if (!img || img.dataset.fillerUsed) return;
   img.dataset.fillerUsed = '1';
-  img.src = getNextFiller();
+  img.src = resolveUrl(getNextFiller());
 }
 function initImageFallbacks() {
   var els = document.querySelectorAll(
@@ -66,11 +78,28 @@ function initImageFallbacks() {
   els.forEach(function(el) {
     el.addEventListener('error', function() { useFiller(this); });
   });
+
+  // Boss and Rich: load via JS so path is resolved from HTML location; timeout fallback if load fails (e.g. file://)
+  function loadWithFallback(img, src) {
+    if (!img || img.dataset.fillerUsed) return;
+    var url = src || img.getAttribute('data-src');
+    if (!url) return;
+    img.src = resolveUrl(url);
+    setTimeout(function() {
+      if (img.dataset.fillerUsed) return;
+      if (!img.complete || img.naturalWidth === 0) useFiller(img);
+    }, 600);
+  }
+  var bossImg = document.getElementById('boss-image');
+  var richImg = document.getElementById('rich-image');
+  if (bossImg) loadWithFallback(bossImg, 'assets/phases/dave/dave_phase1.png');
+  if (richImg) loadWithFallback(richImg, 'assets/phases/rich/rich_phase1.png');
+
   var bg = new Image();
   bg.onerror = function() {
-    document.body.style.backgroundImage = "url('backround-level-1.png')";
+    document.body.style.backgroundImage = "url('" + resolveUrl('backround-level-1.png') + "')";
   };
-  bg.src = 'assets/backgrounds/background-server-room.png';
+  bg.src = resolveUrl('assets/backgrounds/background-server-room.png');
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initImageFallbacks);
 else initImageFallbacks();
@@ -78,7 +107,7 @@ else initImageFallbacks();
 /* ══ PRELOADS ═══════════════════════════════════════════════════════════════ */
 // VP Dave hit layers (dramatic face-punch close-ups) — sprite_001, sprite_002
 const daveHitImages = ['assets/hit/dave-hit-1.png', 'assets/hit/dave-hit-2.png'];
-daveHitImages.forEach(s => { const i = new Image(); i.src = s; });
+daveHitImages.forEach(s => { const i = new Image(); i.src = resolveUrl(s); });
 
 // VP Dave phase images — sprite_003 (combat), sprite_004 (demonic), sprite_015 (casual)
 const davePhaseImgs = [
@@ -87,7 +116,7 @@ const davePhaseImgs = [
   'assets/phases/dave/dave_phase3.png',
   'assets/phases/dave/dave_phase4.png'
 ];
-davePhaseImgs.forEach(s => { const i = new Image(); i.src = s; });
+davePhaseImgs.forEach(s => { const i = new Image(); i.src = resolveUrl(s); });
 
 // Rich phase images — sprite_011, sprites 005–009
 const richPhaseImgs = [
@@ -97,17 +126,22 @@ const richPhaseImgs = [
   'assets/phases/rich/rich_phase4.png'
 ];
 const richHitImgs = ['assets/phases/rich/rich_hit_a.png', 'assets/phases/rich/rich_hit_b.png'];
-[...richPhaseImgs, ...richHitImgs].forEach(s => { const i = new Image(); i.src = s; });
+[...richPhaseImgs, ...richHitImgs].forEach(s => { const i = new Image(); i.src = resolveUrl(s); });
 
 // Richard side event — yourbossvar
 const richardImages = ['assets/richard/boss-pointing.png', 'assets/richard/boss-crossing.png'];
-richardImages.forEach(s => { const i = new Image(); i.src = s; });
+richardImages.forEach(s => { const i = new Image(); i.src = resolveUrl(s); });
 
 // Manny STRESS TEST — sprite_012 (Manny), sprite_010 (click minigame hands)
 ['assets/chars/manny_frame1.png','assets/chars/manny_frame2.png','assets/chars/manny_frame3.png',
  'assets/chars/manny_frame4.png','assets/chars/manny_frame5.png','assets/chars/manny_frame6.png',
  'assets/minigame/click_frame1.png','assets/minigame/click_frame2.png','assets/minigame/click_frame3.png']
-  .forEach(s => { const i = new Image(); i.src = s; });
+  .forEach(s => { const i = new Image(); i.src = resolveUrl(s); });
+
+// Larry side character (if used in future) — sprite_013
+['assets/chars/larry_frame1.png','assets/chars/larry_frame2.png','assets/chars/larry_frame3.png',
+ 'assets/chars/larry_frame4.png','assets/chars/larry_frame5.png','assets/chars/larry_frame6.png']
+  .forEach(s => { const i = new Image(); i.src = resolveUrl(s); });
 
 /* ══ INTRO ══════════════════════════════════════════════════════════════════ */
 const introContainer = document.getElementById('intro-container');
@@ -132,6 +166,29 @@ if (introContainer && !isOBS) {
   }, 4000);
 }
 
+// YouTube player setup — define callback at top level to avoid race conditions
+function onPlayerReady(event) {
+  if (!startIntroBtn) return;
+  startIntroBtn.style.display = 'block';
+  startIntroBtn.onclick = () => {
+    startIntroBtn.style.display = 'none';
+    if (document.getElementById('yt-player')) document.getElementById('yt-player').style.display = 'block';
+    if (skipIntroBtn) skipIntroBtn.style.display = 'block';
+    event.target.playVideo();
+  };
+}
+
+function onPlayerStateChange(event) { if (event.data === 0) endIntro(); }
+
+window.onYouTubeIframeAPIReady = function () {
+  if (!introContainer || isOBS) return;
+  ytPlayer = new YT.Player('yt-player', {
+    videoId: 'HeKNgnDyD7I',
+    playerVars: { playsinline:1, controls:0, disablekb:1, fs:0, modestbranding:1, rel:0 },
+    events: { onReady: onPlayerReady, onStateChange: onPlayerStateChange }
+  });
+};
+
 if (isOBS) {
   if (introContainer) introContainer.style.display = 'none';
   document.getElementById('login-screen').style.display = 'none';
@@ -142,27 +199,9 @@ if (isOBS) {
   document.getElementById('richard-event-container').style.display = 'none';
   if (document.getElementById('rich-wrapper')) document.getElementById('rich-wrapper').style.display = 'none';
   if (document.getElementById('skill-panel')) document.getElementById('skill-panel').style.display = 'none';
-} else {
-  window.onYouTubeIframeAPIReady = function () {
-    if (!introContainer) return;
-    ytPlayer = new YT.Player('yt-player', {
-      videoId: 'HeKNgnDyD7I',
-      playerVars: { playsinline:1, controls:0, disablekb:1, fs:0, modestbranding:1, rel:0 },
-      events: { onReady: onPlayerReady, onStateChange: onPlayerStateChange }
-    });
-  };
-  function onPlayerReady(event) {
-    startIntroBtn.style.display = 'block';
-    startIntroBtn.onclick = () => {
-      startIntroBtn.style.display = 'none';
-      document.getElementById('yt-player').style.display = 'block';
-      skipIntroBtn.style.display = 'block';
-      event.target.playVideo();
-    };
-  }
-  function onPlayerStateChange(event) { if (event.data === 0) endIntro(); }
-  if (skipIntroBtn) skipIntroBtn.onclick = endIntro;
 }
+
+if (skipIntroBtn) skipIntroBtn.onclick = endIntro;
 
 /* ══ GAME STATE ═════════════════════════════════════════════════════════════ */
 let myCoins = 0, myClickDmg = 2500, myAutoDmg = 0, clickCost = 10, autoCost = 50, myUser = '';
