@@ -1,39 +1,3 @@
-/* ══════════════════════════════════════════════════════════════════════════
-   FIREBASE CONFIG
-═══════════════════════════════════════════════════════════════════════════ */
-const firebaseConfig = {
-  apiKey: "AIzaSyBvx5u1OGwS6YAvmVhBF9bstiUn-Vp6TVY",
-  authDomain: "corporate-extraction.firebaseapp.com",
-  databaseURL: "https://corporate-extraction-default-rtdb.firebaseio.com",
-  projectId: "corporate-extraction",
-  storageBucket: "corporate-extraction.firebasestorage.app",
-  messagingSenderId: "184892788723",
-  appId: "1:184892788723:web:93959fe24c883a27088c86"
-};
-
-if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
-const db = firebase.database();
-const bossRef = db.ref('frank_corporate_data');
-const employeesRef = db.ref('active_employees');
-const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
-
-// --- UPDATED IMAGE PRELOADERS FOR DAVE & MINIGAME ---
-const davePhaseImgs = [
-    'morris-boss-v3/phases/dave/dave_phase1.png',
-    'morris-boss-v3/phases/dave/dave_phase2.png',
-    'morris-boss-v3/phases/dave/dave_phase3.png',
-    'morris-boss-v3/phases/dave/dave_phase3.png' // Reusing phase 3 for phase 4 for now
-];
-const hitImages = ['morris-boss-v3/dave-hit-2.png', 'morris-boss-v3/dave-hit-2.png']; 
-
-[...davePhaseImgs, ...hitImages].forEach(s => { const i = new Image(); i.src = s; });
-
-const miniFrame1 = new Image(); miniFrame1.src = 'morris-boss-v3/minigame/click_frame1.png';
-const miniFrame2 = new Image(); miniFrame2.src = 'morris-boss-v3/minigame/click_frame2.png';
-const miniFrame3 = new Image(); miniFrame3.src = 'morris-boss-v3/minigame/click_frame3.png';
-
-// Rich phase images
-const richPhaseImgs = [
   'assets/phases/rich/rich_phase1.png',
   'assets/phases/rich/rich_phase2.png',
   'assets/phases/rich/rich_phase3.png',
