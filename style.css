@@ -16,7 +16,7 @@ body { margin:0; padding:0; background-color:#050510; background-image:url('asse
 
 /* ══ LAYOUT ═════════════════════════════════════════════════════════════════ */
 #game-container { padding:20px; max-width:1200px; margin:0 auto; display:flex; flex-direction:column; min-height:90vh; }
-#health-bar-container, #frenzy-container { width:100%; max-width:400px; height:30px; border:2px solid #fff; margin:10px auto; position:relative; background:#222; }
+#health-bar-container, #frenzy-container { width:100%; max-width:600px; height:30px; border:2px solid #fff; margin:10px auto; position:relative; background:#222; }
 #health-bar-fill { height:100%; background:linear-gradient(90deg,#ff00ff,#00ffff); width:100%; transition:width 0.1s; }
 #frenzy-bar-fill { height:100%; background:#f1c40f; width:0%; transition:width 0.1s; }
 #health-text, #frenzy-text { position:absolute; top:5px; width:100%; text-align:center; font-weight:bold; color:#fff; text-shadow:1px 1px 0 #000; }
@@ -46,16 +46,12 @@ body { margin:0; padding:0; background-color:#050510; background-image:url('asse
 .rarity-legendary { border:1px solid #f1c40f; filter:drop-shadow(0 0 12px rgba(241,196,15,1)); animation:legendary-pulse 2s infinite; }
 @keyframes legendary-pulse { 0%{filter:drop-shadow(0 0 10px rgba(241,196,15,0.8));}50%{filter:drop-shadow(0 0 16px rgba(241,196,15,1));}100%{filter:drop-shadow(0 0 10px rgba(241,196,15,0.8));} }
 
-/* ══ DUAL BOSS SYSTEM ═══════════════════════════════════════════════════════
-   Use explicit height (NOT transform:scale) — scale() bypasses
-   image-rendering:pixelated in the compositor, causing blur.
-   height+width:auto stays crisp at any size.                              */
-
+/* ══ DUAL BOSS SYSTEM ═══════════════════════════════════════════════════════ */
 #boss-area {
   display: flex;
   align-items: flex-end;
-  justify-content: center; /* Centers them perfectly instead of pushing them to edges */
-  gap: 50px; /* Adds space between them */
+  justify-content: center;
+  gap: 50px; 
   width: 100%;
   padding-bottom: 8px;
   overflow: visible;
@@ -63,16 +59,6 @@ body { margin:0; padding:0; background-color:#050510; background-image:url('asse
   cursor: pointer;
 }
 
-/* Give the Companion the exact same 280px height as the boss */
-#boss-image, #boss-hit-layer,
-#companion-image, #companion-hit-layer {
-  height: 280px;
-  width: auto;
-  display: block;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  pointer-events: none;
-}
 .boss-char-wrapper {
   display: flex;
   flex-direction: column;
@@ -97,20 +83,6 @@ body { margin:0; padding:0; background-color:#050510; background-image:url('asse
   align-items: flex-end;
 }
 
-/* VP Dave — 310×410 padded canvas, display at 280px tall */
-#boss-area {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center; /* Centers them perfectly instead of pushing them to edges */
-  gap: 50px; /* Adds space between them */
-  width: 100%;
-  padding-bottom: 8px;
-  overflow: visible;
-  position: relative;
-  cursor: pointer;
-}
-
-/* Give the Companion the exact same 280px height as the boss */
 #boss-image, #boss-hit-layer,
 #companion-image, #companion-hit-layer {
   height: 280px;
@@ -121,18 +93,7 @@ body { margin:0; padding:0; background-color:#050510; background-image:url('asse
   pointer-events: none;
 }
 
-/* Rich — 225×200 padded canvas, display at 280px tall */
-#rich-image, #rich-hit-layer {
-  height: 280px;
-  width: auto;
-  display: block;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  pointer-events: none;
-}
-
-/* Hit layers absolutely overlay their base image */
-#boss-hit-layer, #rich-hit-layer {
+#boss-hit-layer, #companion-hit-layer {
   position: absolute;
   bottom: 0;
   left: 50%;
@@ -142,23 +103,20 @@ body { margin:0; padding:0; background-color:#050510; background-image:url('asse
   pointer-events: none;
 }
 
-/* Dave's dramatic face-punch hit layers are landscape close-ups —
-   give them extra height so they fill the space dramatically */
 #boss-hit-layer.hit-active {
   height: 260px;
 }
 
-/* When no dedicated hit sprite: use standing/phase image with zoom + lower opacity "hit" effect */
 #boss-hit-layer.hit-using-fallback,
-#rich-hit-layer.hit-using-fallback {
+#companion-hit-layer.hit-using-fallback {
   transform: translateX(-50%) scale(1.12);
   opacity: 0.82;
   filter: brightness(1.35) saturate(1.4) contrast(1.1);
 }
 #boss-hit-layer.hit-using-fallback { height: 280px; }
-#rich-hit-layer.hit-using-fallback { height: 280px; }
+#companion-hit-layer.hit-using-fallback { height: 280px; }
 
-/* Floating "character getting hit" pop-ups — zoomed, lower opacity, any variation */
+/* Floating pop-ups */
 .hit-floating-popup {
   position: fixed;
   z-index: 9998;
@@ -207,24 +165,20 @@ body { margin:0; padding:0; background-color:#050510; background-image:url('asse
 #richard-event-container.active #richard-dialogue { opacity:1; transform:scale(1); }
 
 /* ══ POPUPS ══════════════════════════════════════════════════════════════════ */
-.damage-popup,.loot-popup,.quote-popup { position:absolute; pointer-events:none; z-index:9999; transform:translate(-50%,-50%); animation:popArc 1.2s cubic-bezier(0.15,1,0.3,1) forwards; }
+.damage-popup,.quote-popup { position:absolute; pointer-events:none; z-index:9999; transform:translate(-50%,-50%); animation:popArc 1.2s cubic-bezier(0.15,1,0.3,1) forwards; }
 .damage-popup { color:#ff00ff; font-size:6rem; font-weight:bold; text-shadow:5px 5px 0 #000,-3px -3px 0 #00ffff; -webkit-text-stroke:2px #fff; }
-.loot-popup { color:#FFD700; font-size:3.5rem; font-weight:bold; font-style:italic; text-shadow:2px 2px 0 #000,0 0 15px #FFD700; -webkit-text-stroke:1px #fff; }
-  color:#FFD700; font-size:3.5rem; font-weight:bold; font-style:italic;
-  text-shadow:2px 2px 0 #000,0 0 15px #FFD700; -webkit-text-stroke:1px #fff;
-  /* Override the default 1.2s popArc with a 3.5s slow version */
-  animation: lootArc 3.5s cubic-bezier(0.15,1,0.3,1) forwards !important; 
-}
+.quote-popup { background:rgba(0,0,0,0.85); color:#00ffff; font-size:2.5rem; font-weight:bold; padding:10px 20px; border:3px solid #ff00ff; box-shadow:6px 6px 0 #000; text-transform:uppercase; border-radius:10px; max-width:80vw; text-align:center; }
+@keyframes popArc { 0%{opacity:0;transform:translate(-50%,-50%) scale(0.2) rotate(0deg);}15%{opacity:1;transform:translate(calc(-50% + var(--tx) * 0.5),calc(-50% + var(--ty))) scale(1.2) rotate(calc(var(--rot) * 0.5));}100%{opacity:0;transform:translate(calc(-50% + var(--tx)),calc(-50% + var(--ty) + 150px)) scale(1) rotate(var(--rot));} }
+.crit-popup { font-size:2rem !important; color:#ff0 !important; text-shadow:0 0 12px #f00, 0 0 24px #ff0 !important; font-weight:bold; }
 
+/* Slow Loot Pops */
+.loot-popup { position:absolute; pointer-events:none; z-index:9999; transform:translate(-50%,-50%); color:#FFD700; font-size:3.5rem; font-weight:bold; font-style:italic; text-shadow:2px 2px 0 #000,0 0 15px #FFD700; -webkit-text-stroke:1px #fff; animation: lootArc 3.5s cubic-bezier(0.15,1,0.3,1) forwards !important; }
 @keyframes lootArc {
   0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.2) rotate(0deg); }
   10%  { opacity: 1; transform: translate(calc(-50% + var(--tx)*0.4), calc(-50% + var(--ty)*0.8)) scale(1.3) rotate(calc(var(--rot)*0.5)); }
   80%  { opacity: 1; transform: translate(calc(-50% + var(--tx)*0.8), calc(-50% + var(--ty)*0.9)) scale(1.1) rotate(calc(var(--rot)*0.8)); }
   100% { opacity: 0; transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty) + 150px)) scale(1) rotate(var(--rot)); }
 }
-.quote-popup { background:rgba(0,0,0,0.85); color:#00ffff; font-size:2.5rem; font-weight:bold; padding:10px 20px; border:3px solid #ff00ff; box-shadow:6px 6px 0 #000; text-transform:uppercase; border-radius:10px; max-width:80vw; text-align:center; }
-@keyframes popArc { 0%{opacity:0;transform:translate(-50%,-50%) scale(0.2) rotate(0deg);}15%{opacity:1;transform:translate(calc(-50% + var(--tx) * 0.5),calc(-50% + var(--ty))) scale(1.2) rotate(calc(var(--rot) * 0.5));}100%{opacity:0;transform:translate(calc(-50% + var(--tx)),calc(-50% + var(--ty) + 150px)) scale(1) rotate(var(--rot));} }
-.crit-popup { font-size:2rem !important; color:#ff0 !important; text-shadow:0 0 12px #f00, 0 0 24px #ff0 !important; font-weight:bold; }
 
 /* ══ SHOP UPGRADES ══════════════════════════════════════════════════════════ */
 .shop-btn.upgrade-new { border-color:#ff00ff; background:linear-gradient(135deg,#0a001a,#1a0030); color:#fff; position:relative; overflow:hidden; }
