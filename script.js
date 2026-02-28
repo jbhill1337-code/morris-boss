@@ -303,11 +303,16 @@ let frameIndex = 0;
 
 setInterval(() => {
   if (companionImg && !isAnimatingHit) {
-    frameIndex = (frameIndex + 1) % currentCompanion.length;
-    companionImg.src = currentCompanion[frameIndex];
+    let rumbles = 0;
+    let rumbleInt = setInterval(() => {
+      if (isAnimatingHit) { clearInterval(rumbleInt); return; }
+      frameIndex = (frameIndex + 1) % currentCompanion.length;
+      companionImg.src = currentCompanion[frameIndex];
+      rumbles++;
+      if (rumbles >= 3) clearInterval(rumbleInt); // Stops after a quick burst
+    }, 120);
   }
-}, 150);
-
+}, 2500); // Waits 2.5 seconds before rumbling again
 if (bossRef) {
   bossRef.on('value', snap => {
     let b = snap.val();
@@ -407,9 +412,11 @@ function createDynamicPopup(text, className, x, y) {
   p.style.setProperty('--rot', `${rot}deg`);
   p.style.left = x + 'px'; p.style.top = y + 'px';
   document.body.appendChild(p);
-  setTimeout(() => p.remove(), 1200);
+  
+  // Loot stays for 3.5s, everything else fades in 1.2s
+  const isLoot = className.includes('loot-popup');
+  setTimeout(() => p.remove(), isLoot ? 3500 : 1200); 
 }
-
 /* ══ HIT ANIMATION ═════════════════════════════════════════════════════════ */
 function getBossHitOptions() {
   const fallback = baseDaveImg;
@@ -550,11 +557,14 @@ function attack(e) {
 
   playHitAnimation(x, y);
 
-  // Quick-zoom both characters (Main Boss and Companion)
+ // Force restart the animation so rapid clicks feel heavy
   [bossImg, companionImg].forEach(el => {
-    if (el) { el.classList.add('quick-zoom'); setTimeout(() => el.classList.remove('quick-zoom'), 120); }
+    if (el) { 
+      el.classList.remove('quick-zoom'); 
+      void el.offsetWidth; // Browser trick to force animation reset
+      el.classList.add('quick-zoom'); 
+    }
   });
-
   const isCrit = (Math.random() * 100) < critChance;
   const dmg = Math.floor(myClickDmg * multi * defMulti * itemBuffMultiplier * shopMultiplier * (isCrit ? 10 : 1));
 
