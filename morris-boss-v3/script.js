@@ -11,10 +11,18 @@ const firebaseConfig = {
   appId: "1:184892788723:web:93959fe24c883a27088c86"
 };
 
-if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
-const db = firebase.database();
-const bossRef = db.ref('frank_corporate_data');
-const employeesRef = db.ref('active_employees');
+let db, bossRef, employeesRef;
+try {
+  if (typeof firebase !== 'undefined' && !firebase.apps.length) { 
+    firebase.initializeApp(firebaseConfig); 
+    db = firebase.database();
+    bossRef = db.ref('frank_corporate_data');
+    employeesRef = db.ref('active_employees');
+  }
+} catch(e) {
+  console.warn('Firebase failed to load; running offline:', e);
+}
+
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
 /* ══ IMAGE FALLBACKS — use only images that exist in the project as filler ═══ */
@@ -277,7 +285,13 @@ function load() {
   }
 }
 
-function clockIn(u) { const r = employeesRef.push(); r.set({ name:u, e:'💼' }); r.onDisconnect().remove(); }
+function clockIn(u) { 
+  if (employeesRef) { 
+    const r = employeesRef.push(); 
+    r.set({ name:u, e:'💼' }); 
+    r.onDisconnect().remove(); 
+  }
+}
 
 document.getElementById('btn-clock-in').onclick = () => {
   const val = document.getElementById('username-input').value.trim().toUpperCase();
@@ -291,9 +305,10 @@ document.getElementById('btn-clock-in').onclick = () => {
 };
 
 /* ══ BOSS FIREBASE LISTENER ════════════════════════════════════════════════ */
-bossRef.on('value', snap => {
-  let b = snap.val();
-  if (!b) { b = { health:1000000000, level:1 }; bossRef.set(b); }
+if (bossRef) {
+  bossRef.on('value', snap => {
+    let b = snap.val();
+    if (!b) { b = { health:1000000000, level:1 }; bossRef.set(b); }
 
   if (lastLevel === 0) {
     lastLevel = b.level;
@@ -340,7 +355,18 @@ bossRef.on('value', snap => {
   hpFill.style.width = (hpPercent * 100) + '%';
   hpText.innerText = curHP.toLocaleString() + ' / ' + maxHP.toLocaleString();
   document.getElementById('boss-name').innerText = newTitle;
-});
+  });
+} else {
+  // Firebase not available; set default values
+  curHP = 1000000000;
+  maxHP = 1000000000;
+  lastHP = 1000000000;
+  currentPhase = 1;
+  baseDaveImg = davePhaseImgs[0];
+  if (hpFill) hpFill.style.width = '100%';
+  if (hpText) hpText.innerText = '1,000,000,000 / 1,000,000,000';
+  if (document.getElementById('boss-name')) document.getElementById('boss-name').innerText = 'VP Dave & District Manager Rich · Lv.1';
+}
 
 /* ══ VICTORY SCREEN ═════════════════════════════════════════════════════════ */
 function triggerVictoryScreen(newLevel) {
@@ -554,13 +580,23 @@ function attack(e) {
   const isCrit = (Math.random() * 100) < critChance;
   const dmg = Math.floor(myClickDmg * multi * defMulti * itemBuffMultiplier * shopMultiplier * (isCrit ? 10 : 1));
 
-  bossRef.transaction(b => {
-    if (b) {
-      b.health -= dmg;
-      if (b.health <= 0) { b.level++; b.health = 1000000000 * b.level; }
+  if (bossRef) {
+    bossRef.transaction(b => {
+      if (b) {
+        b.health -= dmg;
+        if (b.health <= 0) { b.level++; b.health = 1000000000 * b.level; }
+      }
+      return b;
+    });
+  } else {
+    // Offline mode: just decrement health locally
+    curHP -= dmg;
+    if (curHP <= 0) {
+      currentPhase++;
+      if (currentPhase > 4) currentPhase = 4;
+      curHP = maxHP;
     }
-    return b;
-  });
+  }
 
   myCoins += (coinsPerClick * multi);
   frenzy = Math.min(100, frenzy + 8 + frenzyGainBonus);
@@ -634,7 +670,7 @@ document.getElementById('buy-hustle').onclick = () => {
 function startAutoTimer() {
   if (autoTimer) clearInterval(autoTimer);
   autoTimer = setInterval(() => {
-    if (myAutoDmg > 0) {
+    if (myAutoDmg > 0 && bossRef) {
       const dmg = Math.floor(myAutoDmg * defMulti * itemBuffMultiplier * shopMultiplier);
       bossRef.transaction(b => { if (b) b.health -= dmg; return b; });
       if (bossImg && !isOBS) {
