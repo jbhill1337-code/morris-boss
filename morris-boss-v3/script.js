@@ -70,9 +70,23 @@ function getNextFiller() {
 }
 function resolveUrl(path) {
   if (typeof path !== 'string') return path;
-  var base = (location.pathname || location.href).replace(/\/[^/]*$/, '/');
-  if (location.protocol === 'file:') base = location.href.replace(/\/[^/]*$/, '/');
-  return base + path.replace(/^\//, '');
+  
+  // Get the directory of the current HTML file
+  let base;
+  if (location.protocol === 'file:') {
+    // For file:// protocol, build the absolute path
+    const href = location.href;
+    // Remove the filename (everything after the last /)
+    base = href.substring(0, href.lastIndexOf('/') + 1);
+  } else {
+    // For http/https, use pathname
+    base = (location.pathname || location.href).replace(/\/[^/]*$/, '/');
+  }
+  
+  // Remove leading slash from path if present
+  const cleanPath = path.replace(/^\//, '');
+  const result = base + cleanPath;
+  return result;
 }
 function useFiller(img) {
   if (!img || img.dataset.fillerUsed) return;
@@ -81,7 +95,7 @@ function useFiller(img) {
 }
 function initImageFallbacks() {
   var els = document.querySelectorAll(
-    '#boss-image, #rich-image, #boss-hit-layer, #rich-hit-layer, #mikita-char-img, #manny-char-img, #stress-hand-img'
+    '#boss-image, #rich-image, #boss-hit-layer, #rich-hit-layer, #mikita-char-img, #manny-char-img, #stress-hand-img, #richard-image'
   );
   els.forEach(function(el) {
     el.addEventListener('error', function() { useFiller(this); });
@@ -93,10 +107,15 @@ function initImageFallbacks() {
     var url = src || img.getAttribute('data-src');
     if (!url) return;
     img.src = resolveUrl(url);
+    // Longer timeout for file:// protocol
+    var timeout = location.protocol === 'file:' ? 2000 : 1000;
     setTimeout(function() {
       if (img.dataset.fillerUsed) return;
-      if (!img.complete || img.naturalWidth === 0) useFiller(img);
-    }, 600);
+      if (!img.complete || img.naturalWidth === 0) {
+        console.warn('Image failed to load:', url, '- using fallback');
+        useFiller(img);
+      }
+    }, timeout);
   }
   var bossImg = document.getElementById('boss-image');
   var richImg = document.getElementById('rich-image');
@@ -105,7 +124,7 @@ function initImageFallbacks() {
 
   var bg = new Image();
   bg.onerror = function() {
-    document.body.style.backgroundImage = "url('" + resolveUrl('backround-level-1.png') + "')";
+    document.body.style.backgroundImage = "url('" + resolveUrl('assets/backgrounds/background-server-room.png') + "')";
   };
   bg.src = resolveUrl('assets/backgrounds/background-server-room.png');
 }
@@ -712,7 +731,7 @@ function startRichardLoop() {
 
 function triggerRichardEvent() {
   if (!richardContainer || !richardImage || !richardDialogue) return;
-  richardImage.src = richardImages[Math.floor(Math.random() * richardImages.length)];
+  richardImage.src = resolveUrl(richardImages[Math.floor(Math.random() * richardImages.length)]);
   richardDialogue.innerText = richardQuotes[Math.floor(Math.random() * richardQuotes.length)];
   const fromLeft = window.innerWidth < 950 ? Math.random() < 0.5 : true;
   richardImage.className = ''; richardDialogue.className = '';
