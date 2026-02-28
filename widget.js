@@ -3,9 +3,14 @@ let currentMaxHealth = BASE_HEALTH;
 let previousHealth = BASE_HEALTH;
 
 let currentPhase = 1;
-// Fixed folder paths for phases!
-let baseFrankImg = "phases/phase1frank.png";
-let lastLevel = 0; 
+let baseDaveImg = "assets/phases/dave/dave_phase1.png";
+let lastLevel = 0;
+const davePhaseImgs = [
+  'assets/phases/dave/dave_phase1.png',
+  'assets/phases/dave/dave_phase2.png',
+  'assets/phases/dave/dave_phase3.png',
+  'assets/phases/dave/dave_phase4.png'
+]; 
 
 const bossImageEl = document.getElementById('boss-image');
 const healthFill = document.getElementById('health-bar-fill');
@@ -54,25 +59,25 @@ bossRef.on('value', (snapshot) => {
   // Fixed folder paths for phases!
   if (hpPercent <= 0.25) {
       newPhase = 4;
-      newTitle = "CEO FRANK (ABSOLUTE MALICE)";
-      baseFrankImg = "phases/phase4frank.png";
+      newTitle = "VP DAVE (CORPORATE DEVIL)";
+      baseDaveImg = davePhaseImgs[3];
   } else if (hpPercent <= 0.50) {
       newPhase = 3;
-      newTitle = "VP FRANK (CRIMSON FURY)";
-      baseFrankImg = "phases/phase3frank.png";
+      newTitle = "VP DAVE (FURIOUS)";
+      baseDaveImg = davePhaseImgs[2];
   } else if (hpPercent <= 0.75) {
       newPhase = 2;
-      newTitle = "MANAGER FRANK (BURSTING)";
-      baseFrankImg = "phases/phase2frank.png";
+      newTitle = "VP DAVE (GETTING SERIOUS)";
+      baseDaveImg = davePhaseImgs[1];
   } else {
       newPhase = 1;
-      newTitle = "FRANK LV." + currentLevel;
-      baseFrankImg = "phases/phase1frank.png";
+      newTitle = "VP DAVE LV." + currentLevel;
+      baseDaveImg = davePhaseImgs[0];
   }
 
   if (currentPhase !== newPhase) {
       currentPhase = newPhase;
-      if (bossImageEl) bossImageEl.src = baseFrankImg;
+      if (bossImageEl) bossImageEl.src = baseDaveImg;
   }
 
   const percentage = Math.max(0, (currentHealth / currentMaxHealth) * 100);
@@ -99,7 +104,7 @@ function triggerVictoryScreen(newLevel) {
 
     vScreen.innerHTML = `
         <h1 style="font-size: 5rem; color: #ff00ff; margin: 0; text-transform: uppercase;">PROMOTED!</h1>
-        <h2 style="font-size: 2rem; color: #fff; text-shadow: none;">FRANK RETREATED... FOR NOW.</h2>
+        <h2 style="font-size: 2rem; color: #fff; text-shadow: none;">DAVE & RICH RETREATED... FOR NOW.</h2>
         <p style="font-size: 1.5rem; color: #00ffff; text-shadow: none; margin-top: 20px;">PREPARE FOR LEVEL ${newLevel}</p>
     `;
     document.body.appendChild(vScreen);
