@@ -549,3 +549,30 @@ body { margin:0; padding:0; background-color:#050510; background-image:url('asse
 }
 #stress-timer-ring.urgent { color: #ff0000; animation: timerFlash 0.4s infinite; }
 @keyframes timerFlash { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+/* ══ PHISHING MINIGAME ══════════════════════════════════════════════════════ */
+.phishing-game-box {
+  background: linear-gradient(160deg, #001a1a 0%, #000a10 100%);
+  border: 3px solid #00ffcc;
+  box-shadow: 0 0 40px rgba(0,255,204,0.4), inset 0 0 20px #000;
+  border-radius: 6px;
+  width: 90vw; max-width: 600px;
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 15px;
+}
+.phish-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #00ffcc; padding-bottom: 10px; }
+.phish-title { font-size: 2.2rem; color: #00ffcc; margin: 0; text-shadow: 2px 2px 0 #000; }
+.phish-stats { font-size: 1.5rem; color: #ff00ff; }
+
+.email-client { background: #ddd; border: 2px solid #555; border-radius: 4px; color: #222; font-family: 'Courier New', Courier, monospace; }
+.email-meta { background: #eee; border-bottom: 1px solid #aaa; padding: 10px; font-size: 1.1rem; line-height: 1.4; }
+.email-row strong { color: #555; }
+.email-body { padding: 15px; font-size: 1.2rem; min-height: 120px; white-space: pre-wrap; background: #fff; }
+
+.phish-timer-wrap { width: 100%; height: 15px; background: #222; border: 2px solid #00ffcc; }
+.phish-timer-fill { height: 100%; background: #00ffcc; width: 100%; transition: width 0.1s linear, background-color 0.3s; }
+
+.phish-controls { display: flex; gap: 20px; justify-content: center; width: 100%; }
+.phish-btn { flex: 1; font-family: 'VT323', monospace; font-size: 2rem; padding: 15px; border: 3px solid #fff; cursor: pointer; text-shadow: 2px 2px 0 #000; transition: transform 0.1s; }
+.phish-btn:active { transform: translate(2px, 2px); }
+.btn-safe { background: linear-gradient(90deg, #00aa55, #00ff88); color: #fff; }
+.btn-danger { background: linear-gradient(90deg, #aa0000, #ff4444); color: #fff; }
