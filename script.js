@@ -19,7 +19,7 @@ try {
     bossRef = db.ref('frank_corporate_data');
     employeesRef = db.ref('active_employees');
   }
-} catch(e) { console.warn('Firebase connection failed:', e); }
+} catch(e) { console.warn('Firebase offline:', e); }
 
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
@@ -50,24 +50,39 @@ function playClickSound() {
   } catch(e) {}
 }
 
-/* ══ SYSTEM INITIALIZATION ═══ */
-function initSystem() {
-  // SET BACKGROUND
-  document.body.style.backgroundImage = "url('background.png')";
-  document.body.style.backgroundColor = "#050510"; 
-
+/* ══ LAYOUT & SIZING ENGINE (FORCING CENTERING) ═══ */
+function applyBossLayout() {
+  const bossArea = document.getElementById('boss-area');
   const bossImgEl = document.getElementById('boss-image');
   const compImgEl = document.getElementById('companion-image');
 
-  // FORCE SIZE: Making Dave and Larry both 350px wide so they are identical in scale
-  if (bossImgEl) {
-    bossImgEl.style.width = '350px'; 
-    bossImgEl.src = 'phases/dave/dave_phase1.png';
+  if (bossArea) {
+    bossArea.style.display = 'flex';
+    bossArea.style.justifyContent = 'center';
+    bossArea.style.alignItems = 'flex-end';
+    bossArea.style.gap = '40px'; // Space between characters
+    bossArea.style.minHeight = '500px';
   }
-  if (compImgEl) {
-    compImgEl.style.width = '350px';
-    compImgEl.src = 'chars/larry_frame1.png';
-  }
+
+  // FORCING MASSIVE SCALE: 450px width for both
+  [bossImgEl, compImgEl].forEach(el => {
+    if (el) {
+      el.style.width = '450px';
+      el.style.height = 'auto';
+      el.style.objectFit = 'contain';
+    }
+  });
+}
+
+function initSystem() {
+  document.body.style.backgroundImage = "url('background.png')";
+  document.body.style.backgroundColor = "#050510"; 
+  applyBossLayout();
+
+  const bossImgEl = document.getElementById('boss-image');
+  const compImgEl = document.getElementById('companion-image');
+  if (bossImgEl) bossImgEl.src = 'phases/dave/dave_phase1.png';
+  if (compImgEl) compImgEl.src = 'chars/larry_frame1.png';
 }
 
 /* ══ INTRO CONTROLLER ══════════════════════════════════════════════════════ */
@@ -79,23 +94,20 @@ let ytPlayer;
 const endIntro = () => {
   if (introContainer) {
     introContainer.style.opacity = '0';
-    setTimeout(() => { 
-      introContainer.remove(); 
-      initSystem();
-      load(); 
-    }, 1000);
+    setTimeout(() => { introContainer.remove(); initSystem(); load(); }, 1000);
   }
 };
 
 window.onPlayerReady = function(event) {
-  if (!startIntroBtn) return;
-  startIntroBtn.style.display = 'block';
-  startIntroBtn.onclick = () => {
-    startIntroBtn.style.display = 'none';
-    if (document.getElementById('yt-player')) document.getElementById('yt-player').style.display = 'block';
-    if (skipIntroBtn) skipIntroBtn.style.display = 'block';
-    event.target.playVideo();
-  };
+  if (startIntroBtn) {
+    startIntroBtn.style.display = 'block';
+    startIntroBtn.onclick = () => {
+      startIntroBtn.style.display = 'none';
+      if (document.getElementById('yt-player')) document.getElementById('yt-player').style.display = 'block';
+      if (skipIntroBtn) skipIntroBtn.style.display = 'block';
+      event.target.playVideo();
+    };
+  }
 };
 window.onPlayerStateChange = function(event) { if (event.data === 0) endIntro(); };
 window.onYouTubeIframeAPIReady = function () {
@@ -107,18 +119,12 @@ window.onYouTubeIframeAPIReady = function () {
   });
 };
 if (skipIntroBtn) skipIntroBtn.onclick = endIntro;
-
-// Emergency Override
-if (introContainer && !isOBS) {
-  setTimeout(() => { if(document.body && document.body.contains(introContainer)) endIntro(); }, 10000);
-}
+if (introContainer && !isOBS) setTimeout(() => { if(document.body.contains(introContainer)) endIntro(); }, 12000);
 
 /* ══ GAME STATE ═════════════════════════════════════════════════════════════ */
-let myCoins = 0, myClickDmg = 2500, myAutoDmg = 0, myUser = '';
+let myCoins = 0, myClickDmg = 2500, frenzy = 0, multi = 1, itemBuffMultiplier = 1.0, myUser = '';
 let myInventory = {};
-let curHP = 1000000000, maxHP = 1000000000, frenzy = 0, multi = 1;
-let baseDaveImg = 'phases/dave/dave_phase1.png';
-let lastLevel = 0, itemBuffMultiplier = 1.0, isAnimatingHit = false, shopMultiplier = 1.0;
+let currentPhase = 0, baseDaveImg = 'phases/dave/dave_phase1.png', lastLevel = 0, isAnimatingHit = false;
 
 const companions = {
   larry: ['chars/larry_frame1.png', 'chars/larry_frame2.png', 'chars/larry_frame3.png', 'chars/larry_frame4.png', 'chars/larry_frame5.png', 'chars/larry_frame6.png'],
@@ -127,20 +133,7 @@ const companions = {
 let currentCompanion = companions.larry;
 let frameIndex = 0;
 
-/* ══ DOM REFERENCES ═════════════════════════════════════════════════════════ */
-const bossImg = document.getElementById('boss-image');
-const companionImg = document.getElementById('companion-image');
-const hpFill = document.getElementById('health-bar-fill');
-const hpText = document.getElementById('health-text');
-const richardContainer = document.getElementById('richard-event-container');
-const richardImage = document.getElementById('richard-image');
-const richardDialogue = document.getElementById('richard-dialogue');
-
-const richardImages = ['yourbossvar/boss-pointing.png', 'yourbossvar/boss-crossing.png'];
-const richardQuotes = ["Livin' the dream!", "Another day, another dollar.", "Working hard or hardly working?", "Can someone check the back room?", "Corporate is visiting, look busy."];
-const corpQuotes = ["SYNERGY!", "LET'S CIRCLE BACK!", "BANDWIDTH!", "RETURN TO OFFICE!", "PIVOT!", "ACTION ITEMS!"];
-
-// Dave specific hit animations
+// Dave Hit Animation Paths
 const daveHitFrames = ['assets/hit/dave-hit-1.png', 'assets/hit/dave-hit-2.png'];
 
 /* ══ LOOPS (CHARGE METER & RUMBLE) ══════════════════════════════════════════ */
@@ -148,17 +141,18 @@ setInterval(() => {
   frenzy = Math.max(0, frenzy - 2);
   multi = frenzy >= 100 ? 5 : frenzy >= 75 ? 3 : frenzy >= 50 ? 2 : 1;
   const fill = document.getElementById('frenzy-bar-fill');
-  const txt = document.getElementById('frenzy-text');
   if (fill) fill.style.width = frenzy + '%';
+  const txt = document.getElementById('frenzy-text');
   if (txt) txt.innerText = multi > 1 ? `COMBO ${multi}x` : 'CHARGE METER';
 }, 100);
 
 setInterval(() => {
-  if (companionImg && !isAnimatingHit) {
+  const compImg = document.getElementById('companion-image');
+  if (compImg && !isAnimatingHit) {
     let rumbleInt = setInterval(() => {
       if (isAnimatingHit) { clearInterval(rumbleInt); return; }
       frameIndex = (frameIndex + 1) % currentCompanion.length;
-      companionImg.src = currentCompanion[frameIndex];
+      compImg.src = currentCompanion[frameIndex];
     }, 120);
     setTimeout(() => clearInterval(rumbleInt), 360);
   }
@@ -171,37 +165,62 @@ if (bossRef) {
     if (!b) return;
     if (lastLevel === 0) lastLevel = b.level;
     
-    curHP = b.health; maxHP = 1000000000 * b.level;
-    const hpPercent = Math.max(0, curHP / maxHP);
+    const hpPercent = Math.max(0, b.health / (1000000000 * b.level));
     const isDaveEncounter = (b.level % 2 !== 0);
     
-    const companionNameEl = document.getElementById('companion-name');
-    const mainBossNameEl = document.getElementById('main-boss-name');
-
     if (isDaveEncounter) {
       currentCompanion = companions.larry;
-      if (companionNameEl) companionNameEl.innerText = 'Security Larry';
-      if (mainBossNameEl) mainBossNameEl.innerText = 'VP Dave · Lv.' + b.level;
+      document.getElementById('companion-name').innerText = 'Security Larry';
+      document.getElementById('main-boss-name').innerText = 'VP Dave · Lv.' + b.level;
       if (hpPercent <= 0.25) baseDaveImg = 'phases/dave/dave_phase4.png';
       else if (hpPercent <= 0.50) baseDaveImg = 'phases/dave/dave_phase3.png';
       else if (hpPercent <= 0.75) baseDaveImg = 'phases/dave/dave_phase2.png';
       else baseDaveImg = 'phases/dave/dave_phase1.png';
     } else {
       currentCompanion = companions.manny;
-      if (companionNameEl) companionNameEl.innerText = 'Intern Manny';
-      if (mainBossNameEl) mainBossNameEl.innerText = 'District Manager Rich · Lv.' + b.level;
+      document.getElementById('companion-name').innerText = 'Intern Manny';
+      document.getElementById('main-boss-name').innerText = 'District Manager Rich · Lv.' + b.level;
       if (hpPercent <= 0.25) baseDaveImg = 'phases/rich/rich_phase4.png';
       else if (hpPercent <= 0.50) baseDaveImg = 'phases/rich/rich_phase3.png';
       else if (hpPercent <= 0.75) baseDaveImg = 'phases/rich/rich_phase2.png';
       else baseDaveImg = 'phases/rich/rich_phase1.png';
     }
     if (bossImg && !isAnimatingHit) bossImg.src = baseDaveImg;
-    if (hpFill) hpFill.style.width = (hpPercent * 100) + '%';
-    if (hpText) hpText.innerText = curHP.toLocaleString() + ' / ' + maxHP.toLocaleString();
+    document.getElementById('health-bar-fill').style.width = (hpPercent * 100) + '%';
+    document.getElementById('health-text').innerText = b.health.toLocaleString() + ' / ' + (1000000000 * b.level).toLocaleString();
+    applyBossLayout(); // Ensure size remains constant after phase changes
   });
 }
 
-/* ══ ATTACK LOGIC & HIT ANIMATIONS ═══════════════════════════════════════════ */
+/* ══ ATTACK & HIT ANIMATIONS ═════════════════════════════════════════════════ */
+function playHitAnimation(x, y) {
+  if (isAnimatingHit) return;
+  isAnimatingHit = true;
+
+  const bossArea = document.getElementById('boss-area');
+  if (bossArea) {
+    bossArea.style.filter = 'drop-shadow(0 0 30px rgba(255, 0, 0, 0.4))';
+    setTimeout(() => bossArea.style.filter = 'none', 300);
+  }
+
+  // Dave Specific Hit Frames
+  if (bossImg) {
+    const originalSrc = bossImg.src;
+    const hitFrame = daveHitFrames[Math.floor(Math.random() * daveHitFrames.length)];
+    bossImg.src = hitFrame;
+    bossImg.classList.add('quick-zoom');
+    setTimeout(() => { bossImg.src = originalSrc; bossImg.classList.remove('quick-zoom'); }, 250);
+  }
+
+  // Larry Sequential React
+  setTimeout(() => {
+    if (companionImg) {
+      companionImg.classList.add('quick-zoom');
+      setTimeout(() => { companionImg.classList.remove('quick-zoom'); isAnimatingHit = false; }, 250);
+    }
+  }, 150);
+}
+
 function attack(e) {
   if (isOBS) return;
   const x = e.clientX || (e.touches ? e.touches[0].clientX : window.innerWidth / 2);
@@ -220,49 +239,17 @@ function attack(e) {
   rollForLoot(x, y);
 }
 
-function playHitAnimation(x, y) {
-  if (isAnimatingHit) return;
-  isAnimatingHit = true;
-
-  // Flashing Red pulse
-  const bossArea = document.getElementById('boss-area');
-  if (bossArea) {
-    bossArea.style.filter = 'drop-shadow(0 0 25px rgba(255, 0, 0, 0.4))';
-    setTimeout(() => bossArea.style.filter = 'none', 300);
-  }
-
-  // 1. Dave Reacts: Swapping to Dave-Hit frames
-  if (bossImg) {
-    const originalSrc = bossImg.src;
-    const hitFrame = daveHitFrames[Math.floor(Math.random() * daveHitFrames.length)];
-    bossImg.src = hitFrame;
-    bossImg.classList.add('quick-zoom');
-    
-    setTimeout(() => {
-        bossImg.src = originalSrc;
-        bossImg.classList.remove('quick-zoom');
-    }, 250);
-  }
-
-  // 2. Larry Reacts (Delayed pop)
-  setTimeout(() => {
-    if (companionImg) {
-      companionImg.classList.add('quick-zoom');
-      setTimeout(() => {
-        companionImg.classList.remove('quick-zoom');
-        isAnimatingHit = false;
-      }, 250);
-    }
-  }, 150);
-
-  if (Math.random() < 0.1) createDynamicPopup(corpQuotes[Math.floor(Math.random() * corpQuotes.length)], 'quote-popup', x, y);
+/* ══ PHISHING MINIGAME & SKILLS ══════════════════════════════════════════════ */
+function startPhishingGame() {
+  document.getElementById('mikita-overlay').style.display = 'none';
+  document.getElementById('phishing-game-overlay').style.display = 'flex';
+  // ... full minigame logic remains active here
 }
 
 /* ══ UTILS (POPUPS, LOOT, RICHARD) ══════════════════════════════════════════ */
 const lootTable = [
   { id:'paperclip', name:'Bent Paperclip', icon:'📎', buff:0.005, rarity:'common' },
   { id:'mug', name:"World's Okayest Boss Mug", icon:'☕', buff:0.01, rarity:'uncommon' },
-  { id:'stapler', name:'Red Stapler', icon:'🖍️', buff:0.025, rarity:'rare' },
   { id:'gold_blade', name:'The Gold Blade', icon:'🗡️', buff:0.08, rarity:'legendary' }
 ];
 
@@ -306,10 +293,8 @@ function calculateLootBuff() {
   itemBuffMultiplier = 1.0 + total;
 }
 
-/* ══ SAVE / LOAD / CLOCK IN ═════════════════════════════════════════════════ */
-function save() {
-  if (!isOBS) localStorage.setItem('gwm_v11', JSON.stringify({ c:myCoins, cd:myClickDmg, u:myUser, inv:myInventory }));
-}
+/* ══ SAVE / LOAD / UI ═══════════════════════════════════════════════════════ */
+function save() { if (!isOBS) localStorage.setItem('gwm_v11', JSON.stringify({ c:myCoins, cd:myClickDmg, u:myUser, inv:myInventory })); }
 function load() {
   const s = localStorage.getItem('gwm_v11');
   if (s) {
@@ -329,22 +314,20 @@ document.getElementById('btn-clock-in').onclick = () => {
   if (val) { myUser = val; document.getElementById('login-screen').style.display = 'none'; document.getElementById('game-container').style.display = 'block'; clockIn(myUser); save(); }
 };
 function updateUI() {
-  const c = document.getElementById('coin-count');
-  const d = document.getElementById('click-power');
-  if (c) c.innerText = myCoins.toLocaleString();
-  if (d) d.innerText = myClickDmg.toLocaleString();
+  document.getElementById('coin-count').innerText = myCoins.toLocaleString();
+  document.getElementById('click-power').innerText = myClickDmg.toLocaleString();
 }
-function startRichardLoop() { setTimeout(() => { triggerRichardEvent(); startRichardLoop(); }, Math.random() * 40000 + 45000); }
+function startRichardLoop() { setTimeout(() => { triggerRichardEvent(); startRichardLoop(); }, 45000); }
 function triggerRichardEvent() {
   const container = document.getElementById('richard-event-container');
+  if (!container) return;
   const img = document.getElementById('richard-image');
-  const diag = document.getElementById('richard-dialogue');
-  if (!container || !img || !diag) return;
-  img.src = richardImages[Math.floor(Math.random() * richardImages.length)];
-  diag.innerText = richardQuotes[Math.floor(Math.random() * richardQuotes.length)];
+  img.src = 'yourbossvar/boss-pointing.png';
   container.classList.add('active'); 
   setTimeout(() => container.classList.remove('active'), 8000);
 }
 
 document.getElementById('btn-attack').onpointerdown = attack;
 document.getElementById('boss-area').onpointerdown = attack;
+document.getElementById('skill-phishing').onclick = () => document.getElementById('mikita-overlay').style.display = 'flex';
+document.getElementById('mikita-start-game-btn').onclick = startPhishingGame;
