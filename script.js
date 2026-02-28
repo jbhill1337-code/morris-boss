@@ -25,9 +25,10 @@ const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
 /* ══ AUDIO SYSTEM ══════════════════════════════════════════════════════════ */
 const bgm = new Audio('nocturnal-window-lights.mp3');
-bgm.loop = true; bgm.volume = 0.15;
+bgm.loop = true;
+bgm.volume = 0.15;
 
-const clickSfxFiles = ['assets/sfx pack/Boss hit 1.wav', 'assets/sfx pack/Bubble 1.wav', 'assets/sfx pack/Hit damage 1.wav', 'assets/sfx pack/Select 1.wav'];
+const clickSfxFiles = ['sfx pack/Boss hit 1.wav', 'sfx pack/Bubble 1.wav', 'sfx pack/Hit damage 1.wav', 'sfx pack/Select 1.wav'];
 const attackSounds = clickSfxFiles.map(file => { const audio = new Audio(encodeURI(file)); audio.volume = 0.3; return audio; });
 
 function playClickSound() {
@@ -50,7 +51,7 @@ function injectStyles() {
       position: relative !important;
     }
     .char-wrapper {
-      width: 350px !important; height: 450px !important; /* Forces Dave and Larry to be identical size */
+      width: 350px !important; height: 450px !important; 
       display: flex !important; justify-content: center !important; align-items: flex-end !important;
     }
     #boss-image, #companion-image { 
@@ -81,7 +82,6 @@ function initSystem() {
   injectStyles();
   document.body.style.backgroundImage = "url('background.png')";
   
-  // Wrap characters to lock their size
   const bImg = document.getElementById('boss-image');
   const cImg = document.getElementById('companion-image');
   if (bImg && !bImg.parentElement.classList.contains('char-wrapper')) {
@@ -108,13 +108,14 @@ const endIntro = () => {
 window.onYouTubeIframeAPIReady = function() {
   if (isOBS || !introContainer) return;
   const skipBtn = document.getElementById('skip-intro-btn');
-  if (skipBtn) skipBtn.style.display = 'block'; // Always show skip button
+  if (skipBtn) skipBtn.style.display = 'block'; 
   
   new YT.Player('yt-player', {
     videoId: 'HeKNgnDyD7I',
     playerVars: { 
       playsinline: 1, controls: 0, disablekb: 1, fs: 0, modestbranding: 1, rel: 0, 
-      origin: window.location.origin // Fixes console error
+      origin: window.location.origin, 
+      host: 'https://www.youtube.com' // Fixes postMessage target origin error
     },
     events: { 
       onReady: (e) => { 
@@ -126,14 +127,13 @@ window.onYouTubeIframeAPIReady = function() {
   });
 };
 
-if (introContainer && !isOBS) setTimeout(endIntro, 10000); // 10s Failsafe
+if (introContainer && !isOBS) setTimeout(endIntro, 10000);
 
 /* ══ GAME STATE ═════════════════════════════════════════════════════════════ */
 let myCoins = 0, myClickDmg = 2500, myAutoDmg = 0, multi = 1, frenzy = 0, lastLevel = 0;
 let clickCost = 10, autoCost = 50, critChance = 0, critCost = 100, myUser = '', lastManualClick = 0;
 let myInventory = {}, itemBuffMultiplier = 1.0, isAnimatingHit = false;
 
-// Fixed Paths based on screenshot
 const daveHitFrames = ['assets/hit/dave-hit-1.png', 'assets/hit/dave-hit-2.png'];
 const richardImages = ['assets/yourbossvar/boss-pointing.png', 'assets/yourbossvar/boss-crossing.png'];
 const richardQuotes = ["SYNERGY IS KEY.", "LET'S CIRCLE BACK.", "LIVIN' THE DREAM.", "CHECK THE BACK ROOM.", "CORPORATE IS VISITING."];
@@ -202,7 +202,7 @@ setInterval(() => {
     frameIndex = (frameIndex + 1) % currentCompanion.length;
     compImg.src = currentCompanion[frameIndex];
   }
-}, 300); // Slowed Larry down as requested
+}, 300); 
 
 /* ══ COMBAT & ANIMATIONS ═══════════════════════════════════════════════════ */
 function attack(e) {
@@ -218,10 +218,10 @@ function attack(e) {
     const bImg = document.getElementById('boss-image');
     if (bImg) {
       const originalSrc = bImg.src;
-      bImg.src = daveHitFrames[0]; // Hit frame 1
+      bImg.src = daveHitFrames[0]; 
       bImg.style.transform = 'scale(1.05) rotate(-2deg)';
       setTimeout(() => { 
-        bImg.src = daveHitFrames[1] || originalSrc; // Hit frame 2
+        bImg.src = daveHitFrames[1] || originalSrc; 
         bImg.style.transform = 'scale(0.95) rotate(2deg)';
         setTimeout(() => { bImg.src = originalSrc; bImg.style.transform = 'scale(1) rotate(0deg)'; }, 150); 
       }, 100);
@@ -252,7 +252,7 @@ function startAutoTimer() {
   autoTimer = setInterval(() => { if (myAutoDmg > 0 && bossRef) bossRef.transaction(b => { if(b) b.health -= myAutoDmg; return b; }); }, 1000);
 }
 
-/* ══ PHISHING MINIGAME (HARDER EMAILS) ═════════════════════════════════════ */
+/* ══ PHISHING MINIGAME ═════════════════════════════════════════════════════ */
 const emailDatabase = [
   { sender: "IT-Helpdesk@corp-extraction.com", body: "Action Required: Update Microsoft 365 to avoid lockout. Click here.", isPhish: true },
   { sender: "payroll@corporate-extraction.com", body: "Your recent direct deposit failed. Verify bank details.", isPhish: true },
@@ -296,7 +296,7 @@ const lootTable = [{ id:'paperclip', name:'Bent Paperclip', icon:'📎', buff:0.
 function createDynamicPopup(t, c, x, y) { const p = document.createElement('div'); p.className = c; p.innerText = t; p.style.left = x + 'px'; p.style.top = y + 'px'; document.body.appendChild(p); setTimeout(() => p.remove(), 1200); }
 
 function rollForLoot(x, y) { 
-  if (Math.random() > 0.35) return; // Increased to 35% chance 
+  if (Math.random() > 0.35) return; 
   const i = lootTable[Math.floor(Math.random() * lootTable.length)]; 
   myInventory[i.id] = (myInventory[i.id] || 0) + 1; 
   calculateLootBuff(); renderInventory(); save(); 
@@ -336,56 +336,57 @@ function startRichardLoop() {
         c.classList.add('active'); 
         setTimeout(() => { c.classList.remove('active'); startRichardLoop(); }, 8000); 
     } else {
-        startRichardLoop(); // Retry
+        startRichardLoop(); 
     }
   }, 35000);
 }
 
-/* ══ EVENT DELEGATION (THE FIX FOR BROKEN CLICKS) ══════════════════════════ */
-// This attaches one master listener to the document. It works 100% of the time,
-// even if your HTML buttons load late or get replaced.
-document.addEventListener('click', (e) => {
-  // Intro
-  if (e.target.id === 'skip-intro-btn') endIntro();
+/* ══ EVENT DELEGATION (GUARANTEED BUTTON BINDING) ══════════════════════════ */
+// Define function globally so it never gets lost
+function bindInteractions() {
+  document.addEventListener('click', (e) => {
+    // Intro
+    if (e.target.id === 'skip-intro-btn') endIntro();
 
-  // Clock In
-  const clockBtn = e.target.closest('#btn-clock-in');
-  if (clockBtn) {
-    const v = document.getElementById('username-input');
-    if (v && v.value.trim()) {
-      myUser = v.value.trim().toUpperCase();
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('game-container').style.display = 'flex'; 
-      if (employeesRef) employeesRef.push({ name: myUser, status: '💼' }).onDisconnect().remove();
-      bgm.play().catch(() => {});
-      if (myAutoDmg > 0) startAutoTimer();
-      save();
+    // Clock In
+    const clockBtn = e.target.closest('#btn-clock-in');
+    if (clockBtn) {
+      const v = document.getElementById('username-input');
+      if (v && v.value.trim()) {
+        myUser = v.value.trim().toUpperCase();
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('game-container').style.display = 'flex'; 
+        if (employeesRef) employeesRef.push({ name: myUser, status: '💼' }).onDisconnect().remove();
+        bgm.play().catch(() => {});
+        if (myAutoDmg > 0) startAutoTimer();
+        save();
+      }
     }
-  }
 
-  // Upgrades
-  if (e.target.closest('#buy-click')) { if (myCoins >= clickCost) { myCoins -= clickCost; myClickDmg += 2500; clickCost = Math.floor(clickCost * 1.5); updateUI(); save(); } }
-  if (e.target.closest('#buy-auto')) { if (myCoins >= autoCost) { myCoins -= autoCost; myAutoDmg += 1000; autoCost = Math.floor(autoCost * 1.5); if (myAutoDmg === 1000) startAutoTimer(); updateUI(); save(); } }
-  if (e.target.closest('#buy-crit')) { if (myCoins >= critCost) { myCoins -= critCost; critChance = Math.min(95, critChance + 5); critCost = Math.floor(critCost * 1.8); updateUI(); save(); } }
+    // Upgrades
+    if (e.target.closest('#buy-click')) { if (myCoins >= clickCost) { myCoins -= clickCost; myClickDmg += 2500; clickCost = Math.floor(clickCost * 1.5); updateUI(); save(); } }
+    if (e.target.closest('#buy-auto')) { if (myCoins >= autoCost) { myCoins -= autoCost; myAutoDmg += 1000; autoCost = Math.floor(autoCost * 1.5); if (myAutoDmg === 1000) startAutoTimer(); updateUI(); save(); } }
+    if (e.target.closest('#buy-crit')) { if (myCoins >= critCost) { myCoins -= critCost; critChance = Math.min(95, critChance + 5); critCost = Math.floor(critCost * 1.8); updateUI(); save(); } }
 
-  // Minigame
-  if (e.target.closest('#skill-phishing') || e.target.id === 'skill-phishing') { const o = document.getElementById('mikita-overlay'); if(o) o.style.display = 'flex'; }
-  if (e.target.id === 'mikita-close') { const o = document.getElementById('mikita-overlay'); if(o) o.style.display = 'none'; }
-  if (e.target.id === 'phish-close-btn') { const o = document.getElementById('phishing-game-overlay'); if(o) o.style.display = 'none'; phishActive = false; clearInterval(phishTimerInt); }
-  if (e.target.id === 'mikita-start-game-btn') startPhishingGame();
-  if (e.target.id === 'btn-legit') handleChoice(false, currentPhishState);
-  if (e.target.id === 'btn-phish') handleChoice(true, currentPhishState);
-});
+    // Minigame
+    if (e.target.closest('#skill-phishing') || e.target.id === 'skill-phishing') { const o = document.getElementById('mikita-overlay'); if(o) o.style.display = 'flex'; }
+    if (e.target.id === 'mikita-close') { const o = document.getElementById('mikita-overlay'); if(o) o.style.display = 'none'; }
+    if (e.target.id === 'phish-close-btn') { const o = document.getElementById('phishing-game-overlay'); if(o) o.style.display = 'none'; phishActive = false; clearInterval(phishTimerInt); }
+    if (e.target.id === 'mikita-start-game-btn') startPhishingGame();
+    if (e.target.id === 'btn-legit') handleChoice(false, currentPhishState);
+    if (e.target.id === 'btn-phish') handleChoice(true, currentPhishState);
+  });
 
-// Pointerdown for faster attack response
-document.addEventListener('pointerdown', (e) => {
-  if (e.target.closest('#btn-attack') || e.target.closest('#boss-area')) {
-    attack(e);
-  }
-});
+  // Pointerdown for faster attack response
+  document.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('#btn-attack') || e.target.closest('#boss-area')) {
+      attack(e);
+    }
+  });
 
-// OBS Auto-start
-if (isOBS) { initSystem(); load(); }
-// Safely execute bindings based on page load state
+  if (isOBS) { initSystem(); load(); }
+}
+
+// Execute safely regardless of load state
 if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', bindInteractions); } 
 else { bindInteractions(); }
