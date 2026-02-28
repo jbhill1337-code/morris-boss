@@ -68,15 +68,25 @@
       <!-- CENTER: Bosses + Bars + Skills + Attack -->
       <div id="center-col">
 
-        <div id="boss-area">
-          <!-- LEFT: District Manager Rich -->
-          <div class="boss-char-wrapper" id="rich-wrapper">
-            <span class="boss-char-name">District Manager Rich</span>
-            <div class="boss-char-inner">
-              <img id="rich-image"     src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-src="assets/phases/rich/rich_phase1.png" alt="Rich">
-              <img id="rich-hit-layer" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="">
-            </div>
-          </div>
+       <div id="boss-area">
+  <div class="boss-char-wrapper" id="companion-wrapper">
+    <span class="boss-char-name" id="companion-name">Head of Security Larry</span>
+    <div class="boss-char-inner">
+      <img id="companion-image" src="assets/chars/larry_frame1.png" alt="Companion">
+      <img id="companion-hit-layer" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="">
+    </div>
+  </div>
+
+  <div class="boss-char-wrapper" id="boss-wrapper">
+    <span class="boss-char-name" id="main-boss-name">VP Dave</span>
+    <div class="boss-char-inner">
+      <img id="boss-image" src="assets/phases/dave/dave_phase1.png" alt="Main Boss">
+      <img id="boss-hit-layer" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="">
+    </div>
+  </div>
+
+  <div id="flash-overlay"></div>
+</div>
 
           <!-- RIGHT: VP Dave -->
           <div class="boss-char-wrapper" id="dave-wrapper">
