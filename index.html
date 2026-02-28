@@ -181,10 +181,43 @@
             <p>Watch for red flags: weird sender domains, urgent threats, suspicious links.</p>
           </div>
           <div class="instructor-coming-soon">
-            <span>📡 MINIGAME COMING SOON</span>
-            <button class="vapor-btn" id="mikita-close-btn" style="font-size:1rem; padding:6px 16px; margin-top:10px;">GOT IT</button>
+            <span>📡 MINIGAME READY</span>
+            <button class="vapor-btn" id="mikita-start-game-btn" style="font-size:1rem; padding:6px 16px; margin-top:10px;">START MINIGAME</button>
           </div>
         </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="phishing-game-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:200005; align-items:center; justify-content:center;">
+    <div class="phishing-game-box">
+      
+      <div class="phish-header">
+        <h2 class="phish-title">🎣 INBOX INSPECTOR</h2>
+        <div class="phish-stats">SCORE: <span id="phish-score">0</span>/5</div>
+      </div>
+
+      <div class="email-client">
+        <div class="email-meta">
+          <div class="email-row"><strong>FROM:</strong> <span id="phish-sender">...</span></div>
+          <div class="email-row"><strong>SUBJECT:</strong> <span id="phish-subject">...</span></div>
+        </div>
+        <div class="email-body" id="phish-body">...</div>
+      </div>
+
+      <div class="phish-timer-wrap">
+        <div id="phish-timer-fill" class="phish-timer-fill"></div>
+      </div>
+
+      <div class="phish-controls" id="phish-buttons">
+        <button id="btn-legit" class="phish-btn btn-safe">✅ LEGIT</button>
+        <button id="btn-phish" class="phish-btn btn-danger">🚩 PHISH!</button>
+      </div>
+
+      <div id="phish-result-screen" style="display:none; text-align:center; width:100%;">
+        <h3 id="phish-final-msg" style="font-size:2rem; margin-bottom:10px;"></h3>
+        <button id="phish-close-btn" class="vapor-btn" style="font-size:1.2rem;">BACK TO WORK</button>
       </div>
 
     </div>
