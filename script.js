@@ -19,7 +19,7 @@ try {
     bossRef = db.ref('frank_corporate_data');
     employeesRef = db.ref('active_employees');
   }
-} catch(e) { console.warn('Firebase failed to load; running offline:', e); }
+} catch(e) { console.warn('Firebase connection failed:', e); }
 
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
@@ -29,10 +29,10 @@ bgm.loop = true;
 bgm.volume = 0.15;
 
 const clickSfxFiles = [
-  'sfx pack/Boss hit 1.wav',
-  'sfx pack/Bubble 1.wav',
-  'sfx pack/Hit damage 1.wav',
-  'sfx pack/Select 1.wav'
+  'assets/sfx pack/Boss hit 1.wav',
+  'assets/sfx pack/Bubble 1.wav',
+  'assets/sfx pack/Hit damage 1.wav',
+  'assets/sfx pack/Select 1.wav'
 ];
 
 const attackSounds = clickSfxFiles.map(file => {
@@ -50,30 +50,19 @@ function playClickSound() {
   } catch(e) {}
 }
 
-/* ══ IMAGE FALLBACKS ═══ */
-const FILLER_IMAGES = [
-  'assets/backgrounds/background-server-room.png',
-  'assets/phases/dave/dave_phase1.png',
-  'assets/chars/manny_frame1.png',
-  'assets/chars/larry_frame1.png',
-  'assets/richard/boss-pointing.png'
-];
-let fillerIndex = 0;
-function resolveUrl(path) { return path; }
-function useFiller(img) {
-  if (!img || img.dataset.fillerUsed) return;
-  img.dataset.fillerUsed = '1';
-  img.src = resolveUrl(FILLER_IMAGES[fillerIndex++ % FILLER_IMAGES.length]);
-}
-function initImageFallbacks() {
-  var els = document.querySelectorAll('#boss-image, #companion-image, #richard-image');
-  els.forEach(el => el.addEventListener('error', function() { useFiller(this); }));
+/* ══ SYSTEM INITIALIZATION ═══ */
+function initSystem() {
   document.body.style.backgroundImage = "url('background.png')";
-}
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initImageFallbacks);
-else initImageFallbacks();
+  document.body.style.backgroundColor = "#050510"; 
 
-/* ══ INTRO ══════════════════════════════════════════════════════════════════ */
+  const bossImgEl = document.getElementById('boss-image');
+  const compImgEl = document.getElementById('companion-image');
+  // Fixed paths to assets/chars/ folder
+  if (bossImgEl) bossImgEl.src = 'assets/phases/dave/dave_phase1.png';
+  if (compImgEl) compImgEl.src = 'assets/chars/larry_frame1.png';
+}
+
+/* ══ INTRO CONTROLLER ══════════════════════════════════════════════════════ */
 const introContainer = document.getElementById('intro-container');
 const startIntroBtn  = document.getElementById('start-intro-btn');
 const skipIntroBtn   = document.getElementById('skip-intro-btn');
@@ -82,7 +71,11 @@ let ytPlayer;
 const endIntro = () => {
   if (introContainer) {
     introContainer.style.opacity = '0';
-    setTimeout(() => { introContainer.remove(); load(); }, 1000);
+    setTimeout(() => { 
+      introContainer.remove(); 
+      initSystem();
+      load(); 
+    }, 1000);
   }
 };
 
@@ -97,15 +90,28 @@ function onPlayerReady(event) {
   };
 }
 function onPlayerStateChange(event) { if (event.data === 0) endIntro(); }
+
 window.onYouTubeIframeAPIReady = function () {
   if (!introContainer || isOBS) return;
   ytPlayer = new YT.Player('yt-player', {
     videoId: 'HeKNgnDyD7I',
-    playerVars: { playsinline:1, controls:0, disablekb:1, modestbranding:1, rel:0 },
+    playerVars: { playsinline:1, controls:0, disablekb:1, fs:0, modestbranding:1, rel:0 },
     events: { onReady: onPlayerReady, onStateChange: onPlayerStateChange }
   });
 };
+
+if (isOBS) {
+  if (introContainer) introContainer.style.display = 'none';
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('game-container').style.display = 'block';
+  window.onload = () => { initSystem(); load(); };
+}
 if (skipIntroBtn) skipIntroBtn.onclick = endIntro;
+
+// Emergency Bypass
+if (introContainer && !isOBS) {
+  setTimeout(() => { if(document.body && document.body.contains(introContainer)) endIntro(); }, 10000);
+}
 
 /* ══ GAME STATE ═════════════════════════════════════════════════════════════ */
 let myCoins = 0, myClickDmg = 2500, myAutoDmg = 0, clickCost = 10, autoCost = 50, myUser = '';
@@ -115,57 +121,70 @@ let currentPhase = 0, baseDaveImg = 'assets/phases/dave/dave_phase1.png';
 let defMulti = 1.0, lastLevel = 0, itemBuffMultiplier = 1.0, isAnimatingHit = false;
 let critChance = 0, critCost = 100, autoInterval = 1000, shopMultiplier = 1.0, synergyCost = 150, rageCost = 75, coinsPerClick = 1, hustleCost = 30, autoTimer = null;
 
+const companions = {
+  larry: ['assets/chars/larry_frame1.png', 'assets/chars/larry_frame2.png', 'assets/chars/larry_frame3.png', 'assets/chars/larry_frame4.png', 'assets/chars/larry_frame5.png', 'assets/chars/larry_frame6.png'],
+  manny: ['assets/chars/manny_frame1.png', 'assets/chars/manny_frame2.png', 'assets/chars/manny_frame3.png', 'assets/chars/manny_frame4.png', 'assets/chars/manny_frame5.png', 'assets/chars/manny_frame6.png']
+};
+let currentCompanion = companions.larry;
+let frameIndex = 0;
+
 /* ══ DOM REFERENCES ═════════════════════════════════════════════════════════ */
-const bossImg = document.getElementById('boss-image');
-const companionImg = document.getElementById('companion-image');
-const companionNameEl = document.getElementById('companion-name');
-const mainBossNameEl = document.getElementById('main-boss-name');
 const richardContainer = document.getElementById('richard-event-container');
 const richardImage = document.getElementById('richard-image');
 const richardDialogue = document.getElementById('richard-dialogue');
 const hpFill = document.getElementById('health-bar-fill');
 const hpText = document.getElementById('health-text');
-
+const corpQuotes = ["SYNERGY!", "LET'S CIRCLE BACK!", "BANDWIDTH!", "RETURN TO OFFICE!", "PIVOT!", "ACTION ITEMS!"];
 const richardImages = ['assets/richard/boss-pointing.png', 'assets/richard/boss-crossing.png'];
 const richardQuotes = ["Livin' the dream!", "Another day, another dollar.", "Working hard or hardly working?", "Can someone check the back room?", "Corporate is visiting, look busy."];
 
-const companions = {
-  larry: ['assets/chars/larry_frame1.png', 'assets/chars/larry_frame2.png', 'assets/chars/larry_frame3.png', 'assets/chars/larry_frame4.png', 'assets/chars/larry_frame5.png', 'assets/chars/larry_frame6.png'],
-  manny: ['assets/chars/manny_frame1.png', 'assets/chars/manny_frame2.png', 'assets/chars/manny_frame3.png', 'assets/chars/manny_frame4.png', 'assets/chars/manny_frame5.png', 'assets/chars/manny_frame6.png']
-};
-let currentCompanion = companions.larry; let frameIndex = 0;
+/* ══ LOOT TABLE ═════════════════════════════════════════════════════════════ */
+const lootTable = [
+  { id:'paperclip', name:'Bent Paperclip', icon:'📎', buff:0.005, rarity:'common' },
+  { id:'mug', name:"World's Okayest Boss Mug", icon:'☕', buff:0.01, rarity:'uncommon' },
+  { id:'stapler', name:'Red Stapler', icon:'🖍️', buff:0.025, rarity:'rare' },
+  { id:'gold_blade', name:'The Gold Blade', icon:'🗡️', buff:0.08, rarity:'legendary' }
+];
 
-/* ══ LOOPS ══════════════════════════════════════════════════════════════════ */
+/* ══ LOOPS (CHARGE METER & RUMBLE) ══════════════════════════════════════════ */
 setInterval(() => {
   frenzy = Math.max(0, frenzy - 2);
   multi = frenzy >= 100 ? 5 : frenzy >= 75 ? 3 : frenzy >= 50 ? 2 : 1;
   const fill = document.getElementById('frenzy-bar-fill');
-  if (fill) fill.style.width = frenzy + '%';
   const txt = document.getElementById('frenzy-text');
+  if (fill) fill.style.width = frenzy + '%';
   if (txt) txt.innerText = multi > 1 ? `COMBO ${multi}x` : 'CHARGE METER';
 }, 100);
 
 setInterval(() => {
-  if (companionImg && !isAnimatingHit) {
+  const compImg = document.getElementById('companion-image');
+  if (compImg && !isAnimatingHit) {
     let rumbles = 0;
     let rumbleInt = setInterval(() => {
       if (isAnimatingHit) { clearInterval(rumbleInt); return; }
       frameIndex = (frameIndex + 1) % currentCompanion.length;
-      companionImg.src = currentCompanion[frameIndex];
+      compImg.src = currentCompanion[frameIndex];
       rumbles++;
-      if (rumbles >= 3) clearInterval(rumbleInt);
+      if (rumbles >= 3) clearInterval(rumbleInt); 
     }, 120);
   }
 }, 2500);
 
-/* ══ FIREBASE BOSS LOGIC ════════════════════════════════════════════════════ */
+/* ══ BOSS SYNC ══════════════════════════════════════════════════════════════ */
 if (bossRef) {
   bossRef.on('value', snap => {
     let b = snap.val();
     if (!b) return;
+    if (lastLevel === 0) lastLevel = b.level;
+    else if (b.level > lastLevel) { lastLevel = b.level; }
+    
     lastHP = b.health; curHP = b.health; maxHP = 1000000000 * b.level;
     const hpPercent = Math.max(0, curHP / maxHP);
     const isDaveEncounter = (b.level % 2 !== 0);
+    
+    const bossImgEl = document.getElementById('boss-image');
+    const companionNameEl = document.getElementById('companion-name');
+    const mainBossNameEl = document.getElementById('main-boss-name');
 
     if (isDaveEncounter) {
       currentCompanion = companions.larry;
@@ -184,19 +203,30 @@ if (bossRef) {
       else if (hpPercent <= 0.75) baseDaveImg = 'assets/phases/rich/rich_phase2.png';
       else baseDaveImg = 'assets/phases/rich/rich_phase1.png';
     }
-    if (bossImg && !isAnimatingHit) bossImg.src = baseDaveImg;
+    if (bossImgEl && !isAnimatingHit) bossImgEl.src = baseDaveImg;
     if (hpFill) hpFill.style.width = (hpPercent * 100) + '%';
     if (hpText) hpText.innerText = curHP.toLocaleString() + ' / ' + maxHP.toLocaleString();
   });
 }
 
-/* ══ CORE FUNCTIONS ═════════════════════════════════════════════════════════ */
+/* ══ SAVE / LOAD / CLOCK IN ═════════════════════════════════════════════════ */
+function save() {
+  if (!isOBS) localStorage.setItem('gwm_v11', JSON.stringify({ c:myCoins, cd:myClickDmg, u:myUser, inv:myInventory }));
+}
+function load() {
+  const s = localStorage.getItem('gwm_v11');
+  if (s) {
+    const d = JSON.parse(s);
+    myCoins = d.c || 0; myClickDmg = d.cd || 2500; myUser = d.u || ''; myInventory = d.inv || {};
+    if (myUser && !isOBS) document.getElementById('username-input').value = myUser;
+    updateUI(); renderInventory();
+  }
+}
 function clockIn(u) { 
   if (employeesRef) { const r = employeesRef.push(); r.set({ name:u, e:'💼' }); r.onDisconnect().remove(); }
   bgm.play().catch(e => {});
   startRichardLoop(); startAutoTimer(); scheduleMannyStressTest();
 }
-
 document.getElementById('btn-clock-in').onclick = () => {
   const val = document.getElementById('username-input').value.trim().toUpperCase();
   if (val) {
@@ -207,46 +237,98 @@ document.getElementById('btn-clock-in').onclick = () => {
   }
 };
 
+/* ══ ATTACK LOGIC ═══════════════════════════════════════════════════════════ */
 function attack(e) {
   if (isOBS) return;
+  const x = e.clientX || (e.touches ? e.touches[0].clientX : window.innerWidth / 2);
+  const y = e.clientY || (e.touches ? e.touches[0].clientY : window.innerHeight / 2);
+
   playClickSound();
-  [bossImg, companionImg].forEach(el => {
+  const bossImgEl = document.getElementById('boss-image');
+  const compImgEl = document.getElementById('companion-image');
+
+  [bossImgEl, compImgEl].forEach(el => {
     if (el) { el.classList.remove('quick-zoom'); void el.offsetWidth; el.classList.add('quick-zoom'); }
   });
-  const dmg = Math.floor(myClickDmg * multi * shopMultiplier);
+
+  const dmg = Math.floor(myClickDmg * multi * itemBuffMultiplier);
   if (bossRef) bossRef.transaction(b => { if (b) { b.health -= dmg; if (b.health <= 0) { b.level++; b.health = 1000000000 * b.level; } } return b; });
-  myCoins += (1 * multi); updateUI(); save();
+
+  myCoins += (1 * multi);
+  frenzy = Math.min(100, frenzy + 8);
+  updateUI(); save();
+  createDynamicPopup('+' + dmg.toLocaleString(), 'damage-popup', x, y);
+  rollForLoot(x, y);
+  if (Math.random() < 0.1) spawnQuote(x, y);
 }
 
 function updateUI() {
-  document.getElementById('coin-count').innerText = myCoins.toLocaleString();
-  document.getElementById('click-power').innerText = myClickDmg.toLocaleString();
-}
-
-function startRichardLoop() { 
-  setTimeout(() => { triggerRichardEvent(); startRichardLoop(); }, Math.random() * 40000 + 40000); 
-}
-
-function triggerRichardEvent() {
-  if (!richardContainer || !richardImage || !richardDialogue) return;
-  richardImage.src = richardImages[Math.floor(Math.random() * richardImages.length)];
-  richardDialogue.innerText = richardQuotes[Math.floor(Math.random() * richardQuotes.length)];
-  richardContainer.classList.add('active'); 
-  setTimeout(() => richardContainer.classList.remove('active'), 8000);
-}
-
-function save() { if (!isOBS) localStorage.setItem('gwm_v11', JSON.stringify({ c:myCoins, cd:myClickDmg, u:myUser })); }
-function load() {
-  const s = localStorage.getItem('gwm_v11');
-  if (s) {
-    const d = JSON.parse(s); myCoins = d.c || 0; myClickDmg = d.cd || 2500; myUser = d.u || '';
-    if (myUser) { document.getElementById('username-input').value = myUser; }
-    updateUI();
-  }
+  const c = document.getElementById('coin-count');
+  const d = document.getElementById('click-power');
+  if (c) c.innerText = myCoins.toLocaleString();
+  if (d) d.innerText = myClickDmg.toLocaleString();
 }
 
 document.getElementById('btn-attack').onpointerdown = attack;
 document.getElementById('boss-area').onpointerdown = attack;
+
+/* ══ UTILS (POPUPS, LOOT, RICHARD) ══════════════════════════════════════════ */
+function createDynamicPopup(text, className, x, y) {
+  const p = document.createElement('div');
+  p.className = className; p.innerText = text;
+  const tx = (Math.random() - 0.5) * 600;
+  const ty = -Math.random() * 300 - 200;
+  const rot = (Math.random() - 0.5) * 60;
+  p.style.setProperty('--tx', `${tx}px`);
+  p.style.setProperty('--ty', `${ty}px`);
+  p.style.setProperty('--rot', `${rot}deg`);
+  p.style.left = x + 'px'; p.style.top = y + 'px';
+  document.body.appendChild(p);
+  const isLoot = className.includes('loot-popup');
+  setTimeout(() => p.remove(), isLoot ? 3500 : 1200); 
+}
+
+function spawnQuote(x, y) {
+  createDynamicPopup(corpQuotes[Math.floor(Math.random() * corpQuotes.length)], 'quote-popup', x, y);
+}
+
+function rollForLoot(x, y) {
+  if (Math.random() > 0.15) return;
+  const item = lootTable[Math.floor(Math.random() * lootTable.length)];
+  myInventory[item.id] = (myInventory[item.id] || 0) + 1;
+  save(); renderInventory();
+  createDynamicPopup(`Loot: ${item.name}!`, 'loot-popup', x, y);
+}
+
+function renderInventory() {
+  const grid = document.getElementById('inventory-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  for (let id in myInventory) {
+    const item = lootTable.find(i => i.id === id);
+    if (item && myInventory[id] > 0) {
+      const slot = document.createElement('div');
+      slot.className = `inv-item rarity-${item.rarity}`;
+      slot.innerHTML = `${item.icon}<span class="inv-count">${myInventory[id]}</span>`;
+      grid.appendChild(slot);
+    }
+  }
+}
+
+function startRichardLoop() { 
+  setTimeout(() => { triggerRichardEvent(); startRichardLoop(); }, Math.random() * 40000 + 45000); 
+}
+
+function triggerRichardEvent() {
+  const container = document.getElementById('richard-event-container');
+  const img = document.getElementById('richard-image');
+  const diag = document.getElementById('richard-dialogue');
+  if (!container || !img || !diag) return;
+  img.src = richardImages[Math.floor(Math.random() * richardImages.length)];
+  diag.innerText = richardQuotes[Math.floor(Math.random() * richardQuotes.length)];
+  container.classList.add('active'); 
+  setTimeout(() => container.classList.remove('active'), 8000);
+}
 
 function startAutoTimer() {}
 function scheduleMannyStressTest() {}
