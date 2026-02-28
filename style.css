@@ -54,7 +54,8 @@ body { margin:0; padding:0; background-color:#050510; background-image:url('asse
 #boss-area {
   display: flex;
   align-items: flex-end;
-  justify-content: space-evenly;
+  justify-content: center; /* Centers them perfectly instead of pushing them to edges */
+  gap: 50px; /* Adds space between them */
   width: 100%;
   padding-bottom: 8px;
   overflow: visible;
@@ -62,6 +63,16 @@ body { margin:0; padding:0; background-color:#050510; background-image:url('asse
   cursor: pointer;
 }
 
+/* Give the Companion the exact same 280px height as the boss */
+#boss-image, #boss-hit-layer,
+#companion-image, #companion-hit-layer {
+  height: 280px;
+  width: auto;
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  pointer-events: none;
+}
 .boss-char-wrapper {
   display: flex;
   flex-direction: column;
@@ -87,7 +98,21 @@ body { margin:0; padding:0; background-color:#050510; background-image:url('asse
 }
 
 /* VP Dave — 310×410 padded canvas, display at 280px tall */
-#boss-image, #boss-hit-layer {
+#boss-area {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center; /* Centers them perfectly instead of pushing them to edges */
+  gap: 50px; /* Adds space between them */
+  width: 100%;
+  padding-bottom: 8px;
+  overflow: visible;
+  position: relative;
+  cursor: pointer;
+}
+
+/* Give the Companion the exact same 280px height as the boss */
+#boss-image, #boss-hit-layer,
+#companion-image, #companion-hit-layer {
   height: 280px;
   width: auto;
   display: block;
