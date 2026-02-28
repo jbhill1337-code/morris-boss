@@ -313,6 +313,7 @@ setInterval(() => {
     }, 120);
   }
 }, 2500); // Waits 2.5 seconds before rumbling again
+
 if (bossRef) {
   bossRef.on('value', snap => {
     let b = snap.val();
@@ -417,6 +418,7 @@ function createDynamicPopup(text, className, x, y) {
   const isLoot = className.includes('loot-popup');
   setTimeout(() => p.remove(), isLoot ? 3500 : 1200); 
 }
+
 /* ══ HIT ANIMATION ═════════════════════════════════════════════════════════ */
 function getBossHitOptions() {
   const fallback = baseDaveImg;
@@ -557,7 +559,7 @@ function attack(e) {
 
   playHitAnimation(x, y);
 
- // Force restart the animation so rapid clicks feel heavy
+  // Force restart the animation so rapid clicks feel heavy
   [bossImg, companionImg].forEach(el => {
     if (el) { 
       el.classList.remove('quick-zoom'); 
@@ -565,6 +567,7 @@ function attack(e) {
       el.classList.add('quick-zoom'); 
     }
   });
+
   const isCrit = (Math.random() * 100) < critChance;
   const dmg = Math.floor(myClickDmg * multi * defMulti * itemBuffMultiplier * shopMultiplier * (isCrit ? 10 : 1));
 
@@ -711,25 +714,39 @@ function triggerRichardEvent() {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   SKILL PANEL — Supply-Chain Mgr Mikita (Phishing instructor)
+   SKILL PANEL & PHISHING MINIGAME
 ═══════════════════════════════════════════════════════════════════════════ */
 const mikitaOverlay    = document.getElementById('mikita-overlay');
 const mikitaCloseBtn   = document.getElementById('mikita-close');
-const mikitaCloseBtnOk = document.getElementById('mikita-close-btn');
+const mikitaStartGameBtn = document.getElementById('mikita-start-game-btn'); 
+
+// The Database of Emails (Satirical & Tricky)
+const emailDatabase = [
+  { sender: "IT-Admin@corp-extracion.com", subject: "URGENT: Password Expiry", body: "Your corporate password expires in 2 hours. \n\nPlease click the link below to verify your credentials immediately or risk being locked out of the mainframe.\n\nhttp://login-verify-corporate.net", isPhish: true },
+  { sender: "HR@corporate-extraction.com", subject: "Updated PTO Policy", body: "Team,\n\nPlease review the attached PDF regarding the updated Paid Time Off (PTO) policy for Q3.\n\nLet HR know if you have questions.", isPhish: false },
+  { sender: "rich.district.mgr@gmail.com", subject: "Are you at your desk?", body: "I am in a meeting with a client and need you to buy 5 Apple Gift Cards ($100 each) right now. I will reimburse you later.\n\nDo not call me, just reply with the codes.", isPhish: true },
+  { sender: "dave.vp@corporate-extraction.com", subject: "Synergy Alignment Recap", body: "Good work on the quarterly deliverables. We need to circle back on bandwidth issues next week.\n\nSee you in the Monday standup.\n- VP Dave", isPhish: false },
+  { sender: "Billing-Dept@paypal-support-web.com", subject: "Invoice #9982 Overdue", body: "Dear Customer,\n\nYour account has been charged $499.99 for Software License Renewal. If you did not authorize this, click here to cancel:\n\nhttp://cancel-my-invoice-now.com", isPhish: true },
+  { sender: "Mikita.Supply@corporate-extraction.com", subject: "Inventory Manifest", body: "Attached is the spreadsheet for next week's inbound hardware shipment.\n\nPlease verify the monitor count.", isPhish: false }
+];
+
+const phishOverlay = document.getElementById('phishing-game-overlay');
+let phishActive = false;
+let currentEmail = null;
+let phishScore = 0;
+let phishEmailsPlayed = 0;
+let phishTimeLeft = 80; 
+let phishTimerInt = null;
 
 function openMikitaPopup() {
   if (!mikitaOverlay) return;
   mikitaOverlay.style.display = 'flex';
+  const img = document.getElementById('mikita-char-img');
   const frames = ['assets/chars/mikita_instructor.png', 'assets/chars/mikita_terminal.png', 'assets/chars/mikita_idle.png'];
   let fi = 0;
-  const img = document.getElementById('mikita-char-img');
   if (img) {
     img.src = frames[0];
-    const cycleTimer = setInterval(() => {
-      fi = (fi + 1) % frames.length;
-      img.src = frames[fi];
-    }, 1800);
-    img._cycleTimer = cycleTimer;
+    img._cycleTimer = setInterval(() => { fi = (fi + 1) % frames.length; img.src = frames[fi]; }, 1800);
   }
 }
 
@@ -740,14 +757,98 @@ function closeMikitaPopup() {
   if (img && img._cycleTimer) { clearInterval(img._cycleTimer); img._cycleTimer = null; }
 }
 
-if (document.getElementById('skill-phishing')) {
-  document.getElementById('skill-phishing').onclick = openMikitaPopup;
+function startPhishingGame() {
+  closeMikitaPopup(); 
+  if (phishActive || isOBS) return;
+  
+  phishActive = true;
+  phishScore = 0;
+  phishEmailsPlayed = 0;
+  
+  document.getElementById('phish-buttons').style.display = 'flex';
+  document.getElementById('phish-result-screen').style.display = 'none';
+  document.querySelector('.email-client').style.display = 'block';
+  phishOverlay.style.display = 'flex'; 
+  
+  loadNextEmail();
 }
-if (mikitaCloseBtn)   mikitaCloseBtn.onclick   = closeMikitaPopup;
-if (mikitaCloseBtnOk) mikitaCloseBtnOk.onclick = closeMikitaPopup;
-if (mikitaOverlay) {
-  mikitaOverlay.onclick = (e) => { if (e.target === mikitaOverlay) closeMikitaPopup(); };
+
+function loadNextEmail() {
+  if (phishEmailsPlayed >= 5) { return endPhishingGame(true); } 
+  
+  currentEmail = emailDatabase[Math.floor(Math.random() * emailDatabase.length)];
+  
+  document.getElementById('phish-sender').innerText = currentEmail.sender;
+  document.getElementById('phish-subject').innerText = currentEmail.subject;
+  document.getElementById('phish-body').innerText = currentEmail.body;
+  document.getElementById('phish-score').innerText = phishScore;
+  
+  phishTimeLeft = 80; 
+  const fillBar = document.getElementById('phish-timer-fill');
+  fillBar.style.width = '100%';
+  fillBar.style.backgroundColor = '#00ffcc';
+
+  clearInterval(phishTimerInt);
+  phishTimerInt = setInterval(() => {
+    phishTimeLeft--;
+    fillBar.style.width = (phishTimeLeft / 80 * 100) + '%';
+    if (phishTimeLeft < 30) fillBar.style.backgroundColor = '#ff4444'; 
+    if (phishTimeLeft <= 0) {
+      clearInterval(phishTimerInt);
+      handleChoice(null); 
+    }
+  }, 100);
 }
+
+function handleChoice(playerChosePhish) {
+  if (!phishActive) return;
+  clearInterval(phishTimerInt);
+  
+  if (playerChosePhish === null) {
+    endPhishingGame(false, "TIME RAN OUT!");
+    return;
+  } else if (playerChosePhish === currentEmail.isPhish) {
+    phishScore++;
+    phishEmailsPlayed++;
+    
+    document.querySelector('.phishing-game-box').style.borderColor = '#00ff88';
+    setTimeout(() => { document.querySelector('.phishing-game-box').style.borderColor = '#00ffcc'; loadNextEmail(); }, 400);
+  } else {
+    endPhishingGame(false, currentEmail.isPhish ? "YOU CLICKED A PHISHING LINK!" : "YOU DELETED A LEGIT EMAIL!");
+  }
+}
+
+function endPhishingGame(won, failReason = "") {
+  phishActive = false;
+  clearInterval(phishTimerInt);
+  
+  document.getElementById('phish-buttons').style.display = 'none';
+  document.querySelector('.email-client').style.display = 'none';
+  const resultScreen = document.getElementById('phish-result-screen');
+  const msgEl = document.getElementById('phish-final-msg');
+  
+  if (won) {
+    const bonus = 25000 * multi; 
+    myCoins += bonus; save(); updateUI();
+    msgEl.innerHTML = `<span style="color:#00ff88">SYSTEM SECURED!</span><br><span style="font-size:1.2rem;color:#fff;">+${bonus.toLocaleString()} VAPOR COINS</span>`;
+  } else {
+    msgEl.innerHTML = `<span style="color:#ff4444">SECURITY BREACH!</span><br><span style="font-size:1.2rem;color:#aaa;">${failReason}<br>Score: ${phishScore}/5</span>`;
+  }
+  
+  resultScreen.style.display = 'block';
+}
+
+if (document.getElementById('skill-phishing')) document.getElementById('skill-phishing').onclick = openMikitaPopup;
+if (mikitaCloseBtn) mikitaCloseBtn.onclick = closeMikitaPopup;
+if (mikitaStartGameBtn) mikitaStartGameBtn.onclick = startPhishingGame;
+
+if (document.getElementById('btn-legit')) document.getElementById('btn-legit').onclick = () => handleChoice(false);
+if (document.getElementById('btn-phish')) document.getElementById('btn-phish').onclick = () => handleChoice(true);
+if (document.getElementById('phish-close-btn')) document.getElementById('phish-close-btn').onclick = () => phishOverlay.style.display = 'none';
+
+if (mikitaOverlay) mikitaOverlay.onpointerdown = e => e.stopPropagation();
+if (phishOverlay) phishOverlay.onpointerdown = e => e.stopPropagation();
+
 
 /* ══════════════════════════════════════════════════════════════════════════
    MANNY STRESS TEST — Click Quota Minigame (100% client-side)
@@ -882,7 +983,4 @@ if (stressClickBtn) stressClickBtn.onpointerdown = handleStressClick;
 if (stressCloseBtn) stressCloseBtn.onclick = closeStressTest;
 if (stressOverlay) {
   stressOverlay.onpointerdown = e => e.stopPropagation();
-}
-if (mikitaOverlay) {
-  mikitaOverlay.onpointerdown = e => e.stopPropagation();
 }
