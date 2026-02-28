@@ -12,7 +12,7 @@
       document.write('<base href="' + base + '">');
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=50">
+  <link rel="stylesheet" href="style.css?v=51">
 </head>
 <body>
   <div class="scanlines"></div>
@@ -20,7 +20,7 @@
   <div id="intro-container">
     <button id="start-intro-btn" class="vapor-btn" style="display:none;">INITIALIZE SYSTEM</button>
     <div id="yt-player" style="display:none; width:100%; height:100%; pointer-events:none;"></div>
-    <button id="skip-intro-btn" class="vapor-btn" style="display:none;">SKIP</button>
+    <button id="skip-intro-btn" class="vapor-btn" style="position:absolute; bottom:30px; right:30px; display:block; z-index:10001; font-size:1rem; background:rgba(0,0,0,0.7);">SKIP INTRO ▶</button>
   </div>
 
   <div id="login-screen">
@@ -152,8 +152,8 @@
   </div>
 
   <div id="richard-event-container">
+    <img id="richard-image" src="" alt="District Manager Rich">
     <div id="richard-dialogue"></div>
-    <img id="richard-image" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="">
   </div>
 
   <div id="mikita-overlay" class="instructor-overlay" style="display:none;">
@@ -260,6 +260,6 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script src="https://www.youtube.com/iframe_api"></script>
-  <script src="script.js?v=50"></script>
+  <script src="script.js?v=51"></script>
 </body>
 </html>
