@@ -19,17 +19,17 @@ try {
     bossRef = db.ref('frank_corporate_data');
     employeesRef = db.ref('active_employees');
   }
-} catch(e) {
-  console.warn('Firebase failed to load; running offline:', e);
-}
+} catch(e) { console.warn('Firebase offline:', e); }
 
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
 /* ══ AUDIO SYSTEM ══════════════════════════════════════════════════════════ */
+// Using the exact filename from your root folder
 const bgm = new Audio('nocturnal-window-lights.mp3');
 bgm.loop = true;
 bgm.volume = 0.15;
 
+// Exact filenames from your "sfx pack" folder screenshots
 const clickSfxFiles = [
   'sfx pack/Boss hit 1.wav',
   'sfx pack/Bubble 1.wav',
@@ -38,7 +38,7 @@ const clickSfxFiles = [
 ];
 
 const attackSounds = clickSfxFiles.map(file => {
-  const audio = new Audio(file);
+  const audio = new Audio(encodeURI(file)); // Handles the space in "sfx pack"
   audio.volume = 0.3;
   return audio;
 });
@@ -52,77 +52,45 @@ function playClickSound() {
   } catch(e) {}
 }
 
-/* ══ IMAGE FALLBACKS ═══ */
-const FILLER_IMAGES = [
-  'assets/backgrounds/background-server-room.png',
-  'assets/phases/dave/dave_phase1.png',
-  'assets/phases/dave/dave_phase2.png',
-  'assets/phases/dave/dave_phase3.png',
-  'assets/phases/dave/dave_phase4.png',
-  'assets/phases/rich/rich_phase1.png',
-  'assets/phases/rich/rich_phase2.png',
-  'assets/phases/rich/rich_phase3.png',
-  'assets/phases/rich/rich_phase4.png',
-  'assets/phases/rich/rich_hit_a.png',
-  'assets/phases/rich/rich_hit_b.png',
-  'assets/hit/dave-hit-1.png',
-  'assets/hit/dave-hit-2.png',
-  'assets/chars/manny_frame1.png',
-  'assets/chars/manny_frame2.png',
-  'assets/chars/manny_frame3.png',
-  'assets/chars/manny_frame4.png',
-  'assets/chars/manny_frame5.png',
-  'assets/chars/manny_frame6.png',
-  'assets/chars/mikita_instructor.png',
-  'assets/chars/mikita_terminal.png',
-  'assets/chars/mikita_idle.png',
-  'assets/chars/larry_frame1.png',
-  'assets/chars/larry_frame2.png',
-  'assets/chars/larry_frame3.png',
-  'assets/chars/larry_frame4.png',
-  'assets/chars/larry_frame5.png',
-  'assets/chars/larry_frame6.png'
-];
-let fillerIndex = 0;
-function getNextFiller() {
-  const src = FILLER_IMAGES[fillerIndex % FILLER_IMAGES.length];
-  fillerIndex++;
-  return src;
-}
-function resolveUrl(path) { return path; }
-function useFiller(img) {
-  if (!img || img.dataset.fillerUsed) return;
-  img.dataset.fillerUsed = '1';
-  img.src = resolveUrl(getNextFiller());
-}
-function initImageFallbacks() {
-  var els = document.querySelectorAll('#boss-image, #companion-image, #boss-hit-layer, #companion-hit-layer, #mikita-char-img, #manny-char-img, #stress-hand-img, #richard-image');
-  els.forEach(function(el) { el.addEventListener('error', function() { useFiller(this); }); });
+/* ══ BACKGROUND & IMAGE FIXES ═══ */
+function initSystem() {
+  // SET BACKGROUND IMMEDIATELY (Using the background.png found in your root folder)
+  document.body.style.backgroundImage = "url('background.png')";
+  document.body.style.backgroundColor = "#050510"; 
 
-  function loadWithFallback(img, src) {
-    if (!img || img.dataset.fillerUsed) return;
-    img.src = resolveUrl(src || img.getAttribute('data-src'));
-    setTimeout(() => { if (!img.complete || img.naturalWidth === 0) useFiller(img); }, 1000);
-  }
-  var bossImg = document.getElementById('boss-image');
-  var compImg = document.getElementById('companion-image');
-  if (bossImg) loadWithFallback(bossImg, 'assets/phases/dave/dave_phase1.png');
-  if (compImg) loadWithFallback(compImg, 'assets/chars/larry_frame1.png');
-  document.body.style.backgroundImage = "url('assets/backgrounds/background-server-room.png')";
+  const bossImg = document.getElementById('boss-image');
+  const compImg = document.getElementById('companion-image');
+  if (bossImg) bossImg.src = 'assets/phases/dave/dave_phase1.png';
+  if (compImg) compImg.src = 'assets/chars/larry_frame1.png';
 }
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initImageFallbacks);
-else initImageFallbacks();
+
+/* ══ INTRO CONTROLLER ══════════════════════════════════════════════════════ */
+const introContainer = document.getElementById('intro-container');
+const endIntro = () => {
+  if (introContainer) {
+    introContainer.style.opacity = '0';
+    setTimeout(() => { 
+      introContainer.remove(); 
+      initSystem(); // Load background and images after intro
+      load();       // Load player data
+    }, 1000);
+  }
+};
+
+// EMERGENCY OVERRIDE: If the screen is still black after 5 seconds, FORCE the game to show.
+if (introContainer && !isOBS) {
+  setTimeout(() => {
+    console.log("Emergency Intro Override Triggered");
+    endIntro();
+  }, 5000); 
+}
 
 /* ══ PRELOADS ═══════════════════════════════════════════════════════════════ */
 const daveHitImages = ['assets/hit/dave-hit-1.png', 'assets/hit/dave-hit-2.png'];
-daveHitImages.forEach(s => { const i = new Image(); i.src = resolveUrl(s); });
 const davePhaseImgs = ['assets/phases/dave/dave_phase1.png','assets/phases/dave/dave_phase2.png','assets/phases/dave/dave_phase3.png','assets/phases/dave/dave_phase4.png'];
-davePhaseImgs.forEach(s => { const i = new Image(); i.src = resolveUrl(s); });
 const richPhaseImgs = ['assets/phases/rich/rich_phase1.png','assets/phases/rich/rich_phase2.png','assets/phases/rich/rich_phase3.png','assets/phases/rich/rich_phase4.png'];
 const richHitImgs = ['assets/phases/rich/rich_hit_a.png', 'assets/phases/rich/rich_hit_b.png'];
-[...richPhaseImgs, ...richHitImgs].forEach(s => { const i = new Image(); i.src = resolveUrl(s); });
 const richardImages = ['assets/richard/boss-pointing.png', 'assets/richard/boss-crossing.png'];
-richardImages.forEach(s => { const i = new Image(); i.src = resolveUrl(s); });
 
 /* ══ GAME STATE ═════════════════════════════════════════════════════════════ */
 let myCoins = 0, myClickDmg = 2500, myAutoDmg = 0, clickCost = 10, autoCost = 50, myUser = '';
@@ -154,8 +122,12 @@ function load() {
   if (s) {
     const d = JSON.parse(s);
     myCoins = d.c; myClickDmg = d.cd; myAutoDmg = d.ad; clickCost = d.cc; autoCost = d.ac; myUser = d.u; myInventory = d.inv || {};
-    critChance = d.critChance; critCost = d.critCost; autoInterval = d.autoInterval; overtimeCost = d.overtimeCost; shopMultiplier = d.shopMultiplier; synergyCost = d.synergyCost; frenzyGainBonus = d.frenzyGainBonus; rageCost = d.rageCost; coinsPerClick = d.coinsPerClick; hustleCost = d.hustleCost;
-    if (myUser && !isOBS) document.getElementById('username-input').value = myUser;
+    critChance = d.critChance || 0; critCost = d.critCost || 100; autoInterval = d.autoInterval || 1000; overtimeCost = d.overtimeCost || 200; shopMultiplier = d.shopMultiplier || 1.0; synergyCost = d.synergyCost || 150; frenzyGainBonus = d.frenzyGainBonus || 0; rageCost = d.rageCost || 75; coinsPerClick = d.coinsPerClick || 1; hustleCost = d.hustleCost || 30;
+    if (myUser && !isOBS) {
+        document.getElementById('username-input').value = myUser;
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('game-container').style.display = 'block';
+    }
     calculateLootBuff(); updateUI(); renderInventory();
     if (!isOBS) { startRichardLoop(); startAutoTimer(); scheduleMannyStressTest(); }
   }
@@ -229,9 +201,10 @@ if (bossRef) {
       else { baseDaveImg = 'assets/phases/rich/rich_phase1.png'; defMulti = 1.0; currentPhase = 1; }
       if (bossImg && !isAnimatingHit) bossImg.src = baseDaveImg;
     }
-    hpFill.style.width = (hpPercent * 100) + '%';
-    hpText.innerText = curHP.toLocaleString() + ' / ' + maxHP.toLocaleString();
-    document.getElementById('boss-name').innerText = `Level ${b.level} Corporate Takedown`;
+    if (hpFill) hpFill.style.width = (hpPercent * 100) + '%';
+    if (hpText) hpText.innerText = curHP.toLocaleString() + ' / ' + maxHP.toLocaleString();
+    const bName = document.getElementById('boss-name');
+    if (bName) bName.innerText = `Level ${b.level} Corporate Takedown`;
   });
 }
 
@@ -266,8 +239,7 @@ function createDynamicPopup(text, className, x, y) {
 
 /* ══ HIT ANIMATION ═════════════════════════════════════════════════════════ */
 function getBossHitOptions() {
-  const fallback = baseDaveImg;
-  return [...daveHitImages, ...richHitImgs, fallback];
+  return [...daveHitImages, ...richHitImgs, baseDaveImg];
 }
 
 function playHitAnimation(x, y) {
@@ -289,15 +261,15 @@ function playHitAnimation(x, y) {
     bossHitLayer.classList.toggle('hit-using-fallback', useFallback);
     bossHitLayer.style.opacity = '1';
     if (!useFallback) {
-      setTimeout(() => { bossHitLayer.src = options[Math.floor(Math.random() * options.length)]; }, 800);
-      setTimeout(() => { bossHitLayer.src = pick; }, 1600);
+      setTimeout(() => { if(bossHitLayer) bossHitLayer.src = options[Math.floor(Math.random() * options.length)]; }, 800);
+      setTimeout(() => { if(bossHitLayer) bossHitLayer.src = pick; }, 1600);
     }
   }
 
   if (Math.random() < 0.45) spawnFloatingHitPopup(x, y);
   setTimeout(() => {
     if (bossHitLayer) { bossHitLayer.style.transition = 'opacity 0.3s ease-out'; bossHitLayer.style.opacity = '0'; bossHitLayer.classList.remove('hit-using-fallback'); }
-    setTimeout(() => { if (bossImg) { bossImg.style.opacity = '1'; if (bossHitLayer) bossHitLayer.classList.remove('hit-active'); bossHitLayer.style.transition = ''; } isAnimatingHit = false; }, 300);
+    setTimeout(() => { if (bossImg) { bossImg.style.opacity = '1'; if (bossHitLayer) bossHitLayer.classList.remove('hit-active'); if(bossHitLayer) bossHitLayer.style.transition = ''; } isAnimatingHit = false; }, 300);
   }, 2400);
   if (Math.random() < 0.15) spawnQuote(x, y);
 }
@@ -343,7 +315,7 @@ function rollForLoot(x, y) {
   else if (r < 0.15) pool = valid.filter(i => i.rarity === 'rare');
   else if (r < 0.40) pool = valid.filter(i => i.rarity === 'uncommon');
   else pool = valid.filter(i => i.rarity === 'common');
-  if (pool.length > 0) {
+  if (pool && pool.length > 0) {
     const item = pool[Math.floor(Math.random() * pool.length)];
     myInventory[item.id] = (myInventory[item.id] || 0) + 1;
     calculateLootBuff(); save(); renderInventory();
@@ -440,7 +412,7 @@ const richardQuotes = ["Livin' the dream!", "Another day, another dollar.", "Wor
 function startRichardLoop() { setTimeout(() => { triggerRichardEvent(); startRichardLoop(); }, Math.random() * (90000 - 45000) + 45000); }
 function triggerRichardEvent() {
   if (!richardContainer || !richardImage || !richardDialogue) return;
-  richardImage.src = resolveUrl(richardImages[Math.floor(Math.random() * richardImages.length)]);
+  richardImage.src = richardImages[Math.floor(Math.random() * richardImages.length)];
   richardDialogue.innerText = richardQuotes[Math.floor(Math.random() * richardQuotes.length)];
   richardContainer.classList.add('active'); setTimeout(() => richardContainer.classList.remove('active'), 8000);
 }
@@ -459,7 +431,7 @@ let phishActive = false, currentEmail = null, phishScore = 0, phishEmailsPlayed 
 function openMikitaPopup() { if (mikitaOverlay) mikitaOverlay.style.display = 'flex'; }
 function closeMikitaPopup() { if (mikitaOverlay) mikitaOverlay.style.display = 'none'; }
 function startPhishingGame() { closeMikitaPopup(); if (phishActive || isOBS) return; phishActive = true; phishScore = 0; phishEmailsPlayed = 0; document.getElementById('phish-buttons').style.display = 'flex'; document.getElementById('phish-result-screen').style.display = 'none'; document.querySelector('.email-client').style.display = 'block'; phishOverlay.style.display = 'flex'; loadNextEmail(); }
-function loadNextEmail() { if (phishEmailsPlayed >= 5) { return endPhishingGame(true); } currentEmail = emailDatabase[Math.floor(Math.random() * emailDatabase.length)]; document.getElementById('phish-sender').innerText = currentEmail.sender; document.getElementById('phish-subject').innerText = currentEmail.subject; document.getElementById('phish-body').innerText = currentEmail.body; document.getElementById('phish-score').innerText = phishScore; phishTimeLeft = 80; const fillBar = document.getElementById('phish-timer-fill'); fillBar.style.width = '100%'; clearInterval(phishTimerInt); phishTimerInt = setInterval(() => { phishTimeLeft--; fillBar.style.width = (phishTimeLeft / 80 * 100) + '%'; if (phishTimeLeft <= 0) { clearInterval(phishTimerInt); handleChoice(null); } }, 100); }
+function loadNextEmail() { if (phishEmailsPlayed >= 5) { return endPhishingGame(true); } currentEmail = emailDatabase[Math.floor(Math.random() * emailDatabase.length)]; document.getElementById('phish-sender').innerText = currentEmail.sender; document.getElementById('phish-subject').innerText = currentEmail.subject; document.getElementById('phish-body').innerText = currentEmail.body; document.getElementById('phish-score').innerText = phishScore; phishTimeLeft = 80; const fillBar = document.getElementById('phish-timer-fill'); if(fillBar) fillBar.style.width = '100%'; clearInterval(phishTimerInt); phishTimerInt = setInterval(() => { phishTimeLeft--; if(fillBar) fillBar.style.width = (phishTimeLeft / 80 * 100) + '%'; if (phishTimeLeft <= 0) { clearInterval(phishTimerInt); handleChoice(null); } }, 100); }
 function handleChoice(playerChosePhish) { if (!phishActive) return; clearInterval(phishTimerInt); if (playerChosePhish === null) { endPhishingGame(false, "TIME RAN OUT!"); return; } else if (playerChosePhish === currentEmail.isPhish) { phishScore++; phishEmailsPlayed++; loadNextEmail(); } else { endPhishingGame(false, currentEmail.isPhish ? "PHISHING LINK CLICKED!" : "LEGIT EMAIL DELETED!"); } }
 function endPhishingGame(won, failReason = "") { phishActive = false; clearInterval(phishTimerInt); document.getElementById('phish-buttons').style.display = 'none'; document.querySelector('.email-client').style.display = 'none'; const resultScreen = document.getElementById('phish-result-screen'); const msgEl = document.getElementById('phish-final-msg'); if (won) { const bonus = 25000 * multi; myCoins += bonus; save(); updateUI(); msgEl.innerHTML = `SYSTEM SECURED! +${bonus.toLocaleString()}`; } else { msgEl.innerHTML = `BREACH! ${failReason}`; } resultScreen.style.display = 'block'; }
 
@@ -473,11 +445,15 @@ if (document.getElementById('phish-close-btn')) document.getElementById('phish-c
 /* ══ MANNY STRESS TEST ══════════════════════════════════════════════════════ */
 const stressOverlay = document.getElementById('stress-test-overlay');
 let stressActive = false, stressClickCount = 0, stressTimeLeft = 15, stressQuota = 50, stressTimerInterval = null;
-function openStressTest() { if (stressActive || isOBS) return; stressActive = true; stressClickCount = 0; stressTimeLeft = 15; stressOverlay.style.display = 'flex'; stressTimerInterval = setInterval(() => { stressTimeLeft--; if (stressTimeLeft <= 0) endStressTest(); }, 1000); }
+function openStressTest() { if (stressActive || isOBS) return; stressActive = true; stressClickCount = 0; stressTimeLeft = 15; if(stressOverlay) stressOverlay.style.display = 'flex'; stressTimerInterval = setInterval(() => { stressTimeLeft--; if (stressTimeLeft <= 0) endStressTest(); }, 1000); }
 function handleStressClick() { if (!stressActive) return; stressClickCount++; if (stressClickCount >= stressQuota) endStressTest(); }
-function endStressTest() { stressActive = false; clearInterval(stressTimerInterval); stressOverlay.style.display = 'none'; scheduleMannyStressTest(); }
+function endStressTest() { stressActive = false; clearInterval(stressTimerInterval); if(stressOverlay) stressOverlay.style.display = 'none'; scheduleMannyStressTest(); }
 function scheduleMannyStressTest() { if (isOBS) return; setTimeout(() => openStressTest(), Math.random() * (480000 - 180000) + 180000); }
 if (document.getElementById('stress-click-btn')) document.getElementById('stress-click-btn').onpointerdown = handleStressClick;
 if (stressOverlay) stressOverlay.onpointerdown = e => e.stopPropagation();
 
-load();
+// START THE GAME!
+window.onload = () => {
+    initSystem();
+    load();
+};
