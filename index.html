@@ -4,6 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Games We Miss | Corporate Takedown</title>
+  <script>
+    (function(){
+      var p = location.pathname || location.href;
+      var base = p.replace(/\/[^/]*$/, '/');
+      if (location.protocol === 'file:') base = location.href.replace(/\/[^/]*$/, '/');
+      document.write('<base href="' + base + '">');
+    })();
+  </script>
   <link rel="stylesheet" href="style.css?v=50">
 </head>
 <body>
@@ -65,7 +73,7 @@
           <div class="boss-char-wrapper" id="rich-wrapper">
             <span class="boss-char-name">District Manager Rich</span>
             <div class="boss-char-inner">
-              <img id="rich-image"     src="assets/phases/rich/rich_phase1.png" alt="Rich">
+              <img id="rich-image"     src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-src="assets/phases/rich/rich_phase1.png" alt="Rich">
               <img id="rich-hit-layer" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="">
             </div>
           </div>
@@ -74,7 +82,7 @@
           <div class="boss-char-wrapper" id="dave-wrapper">
             <span class="boss-char-name">VP Dave</span>
             <div class="boss-char-inner">
-              <img id="boss-image"     src="assets/phases/dave/dave_phase1.png" alt="VP Dave">
+              <img id="boss-image"     src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-src="assets/phases/dave/dave_phase1.png" alt="VP Dave">
               <img id="boss-hit-layer" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="">
             </div>
           </div>

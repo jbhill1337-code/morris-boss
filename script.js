@@ -69,24 +69,9 @@ function getNextFiller() {
   return src;
 }
 function resolveUrl(path) {
-  if (typeof path !== 'string') return path;
-  
-  // Get the directory of the current HTML file
-  let base;
-  if (location.protocol === 'file:') {
-    // For file:// protocol, build the absolute path
-    const href = location.href;
-    // Remove the filename (everything after the last /)
-    base = href.substring(0, href.lastIndexOf('/') + 1);
-  } else {
-    // For http/https, use pathname
-    base = (location.pathname || location.href).replace(/\/[^/]*$/, '/');
-  }
-  
-  // Remove leading slash from path if present
-  const cleanPath = path.replace(/^\//, '');
-  const result = base + cleanPath;
-  return result;
+  // The <base> tag in index.html handles all path resolution.
+  // Just return the relative path as-is.
+  return path;
 }
 function useFiller(img) {
   if (!img || img.dataset.fillerUsed) return;
@@ -122,11 +107,9 @@ function initImageFallbacks() {
   if (bossImg) loadWithFallback(bossImg, 'assets/phases/dave/dave_phase1.png');
   if (richImg) loadWithFallback(richImg, 'assets/phases/rich/rich_phase1.png');
 
-  var bg = new Image();
-  bg.onerror = function() {
-    document.body.style.backgroundImage = "url('" + resolveUrl('assets/backgrounds/background-server-room.png') + "')";
-  };
-  bg.src = resolveUrl('assets/backgrounds/background-server-room.png');
+  // Set background immediately - the <base> tag + CSS already handle this,
+  // but also set via JS as a belt-and-suspenders approach
+  document.body.style.backgroundImage = "url('assets/backgrounds/background-server-room.png')";
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initImageFallbacks);
 else initImageFallbacks();
