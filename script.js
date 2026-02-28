@@ -35,30 +35,44 @@ function playClickSound() {
   try { const randomIdx = Math.floor(Math.random() * attackSounds.length); const sound = attackSounds[randomIdx].cloneNode(); sound.volume = 0.3; sound.play().catch(e => {}); } catch(e) {}
 }
 
-/* ══ UI STYLES & LOCKED LAYOUT ═════════════════════════════════════════════ */
+/* ══ BULLETPROOF LAYOUT ENGINE (OVERRIDES ALL CSS CONFLICTS) ═══════════════ */
 function injectStyles() {
   const style = document.createElement('style');
   style.innerHTML = `
-    #game-container { max-width: 1400px; margin: 0 auto; display: flex; gap: 10px; padding: 10px; overflow: hidden; }
-    #boss-area { flex: 1; display: flex; justify-content: center; align-items: flex-end; height: 550px; position: relative; }
-    .char-container { width: 500px; height: 500px; display: flex; justify-content: center; align-items: flex-end; }
-    #boss-image, #companion-image { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; transition: transform 0.1s; }
-    
+    #game-container { 
+      max-width: 1400px !important; margin: 0 auto !important; 
+      display: flex !important; flex-direction: row !important; 
+      gap: 15px !important; padding: 10px !important; align-items: flex-start !important; 
+    }
+    #boss-area { 
+      flex: 1 !important; display: flex !important; justify-content: center !important; 
+      align-items: flex-end !important; height: 500px !important; gap: 20px !important; 
+      position: relative !important; overflow: visible !important;
+    }
+    #boss-image, #companion-image { 
+      width: 400px !important; height: 450px !important; 
+      object-fit: contain !important; object-position: bottom center !important; 
+      image-rendering: pixelated !important; transition: transform 0.1s ease-out !important; 
+      display: block !important;
+    }
     /* Spectral Richard */
     #richard-event-container { pointer-events: none; opacity: 0; transition: opacity 1s; position: fixed; bottom: 0; left: 0; width: 100%; height: 100%; z-index: 100; display: flex; align-items: flex-end; }
     #richard-event-container.active { opacity: 1; }
     #richard-image { width: 900px; transform: scale(2); opacity: 0.25; filter: grayscale(1) brightness(1.5); }
-    #richard-dialogue { 
-      background: white; border: 4px solid black; border-radius: 15px; padding: 15px; color: black; font-family: monospace; font-weight: bold; font-size: 1.4rem;
-      position: absolute; bottom: 350px; left: 250px; max-width: 350px; box-shadow: 8px 8px 0px rgba(0,0,0,0.5);
-    }
+    #richard-dialogue { background: white; border: 4px solid black; border-radius: 15px; padding: 15px; color: black; font-family: monospace; font-weight: bold; font-size: 1.4rem; position: absolute; bottom: 350px; left: 250px; max-width: 350px; box-shadow: 8px 8px 0px rgba(0,0,0,0.5); }
     #richard-dialogue::after { content: ''; position: absolute; bottom: -20px; left: 40px; border-left: 20px solid transparent; border-right: 20px solid transparent; border-top: 20px solid white; }
+    
+    @media (max-width: 900px) {
+      #game-container { flex-direction: column !important; align-items: center !important; }
+      #boss-area { height: 350px !important; width: 100% !important; }
+      #boss-image, #companion-image { width: 200px !important; height: 250px !important; }
+    }
   `;
   document.head.appendChild(style);
 }
 
 /* ══ GAME STATE ═════════════════════════════════════════════════════════════ */
-let myCoins = 0, myClickDmg = 2500, myAutoDmg = 0, multi = 1, frenzy = 0;
+let myCoins = 0, myClickDmg = 2500, myAutoDmg = 0, multi = 1, frenzy = 0, lastLevel = 0;
 let clickCost = 10, autoCost = 50, critChance = 0, critCost = 100, myUser = '', lastManualClick = 0;
 let myInventory = {}, itemBuffMultiplier = 1.0, isAnimatingHit = false;
 
@@ -67,66 +81,46 @@ const richardQuotes = ["SYNERGY IS KEY.", "LET'S CIRCLE BACK.", "LIVIN' THE DREA
 const companions = { larry: ['chars/larry_frame1.png', 'chars/larry_frame2.png', 'chars/larry_frame3.png'], manny: ['chars/manny_frame1.png', 'chars/manny_frame2.png', 'chars/manny_frame3.png'] };
 let currentCompanion = companions.larry; let frameIndex = 0;
 
-/* ══ SYSTEM INIT & INTRO ═══════════════════════════════════════════════════ */
+/* ══ SYSTEM INIT & YOUTUBE API FIX ═════════════════════════════════════════ */
 const introContainer = document.getElementById('intro-container');
 
 function initSystem() {
   injectStyles();
   document.body.style.backgroundImage = "url('background.png')";
-  
-  // Wrap characters in containers for size locking if not already done
   const bImg = document.getElementById('boss-image');
   const cImg = document.getElementById('companion-image');
-  if (bImg && !bImg.parentNode.classList.contains('char-container')) {
-    const wrap = document.createElement('div'); wrap.className = 'char-container';
-    bImg.parentNode.insertBefore(wrap, bImg); wrap.appendChild(bImg);
-  }
-  if (cImg && !cImg.parentNode.classList.contains('char-container')) {
-    const wrap = document.createElement('div'); wrap.className = 'char-container';
-    cImg.parentNode.insertBefore(wrap, cImg); wrap.appendChild(cImg);
-  }
-  
   if (bImg) bImg.src = 'phases/dave/dave_phase1.png';
   if (cImg) cImg.src = 'chars/larry_frame1.png';
-  
   startRichardLoop();
   if (myAutoDmg > 0) startAutoTimer();
 }
 
 const endIntro = () => { 
-  if (introContainer) { 
-    introContainer.style.opacity = '0'; 
-    setTimeout(() => { introContainer.style.display = 'none'; initSystem(); load(); }, 1000); 
-  } else {
-    initSystem(); load();
-  }
+  if (introContainer) { introContainer.style.opacity = '0'; setTimeout(() => { introContainer.style.display = 'none'; initSystem(); load(); }, 1000); } 
+  else { initSystem(); load(); }
 };
 
 window.onYouTubeIframeAPIReady = function() {
   if (isOBS || !introContainer) return;
   new YT.Player('yt-player', {
     videoId: 'HeKNgnDyD7I',
-    playerVars: { playsinline:1, controls:0, disablekb:1, fs:0, modestbranding:1, rel:0 },
+    playerVars: { 
+      playsinline: 1, controls: 0, disablekb: 1, fs: 0, modestbranding: 1, rel: 0, 
+      origin: window.location.origin // FIXES YOUTUBE POSTMESSAGE ERROR
+    },
     events: { 
       onReady: (e) => { 
         const btn = document.getElementById('start-intro-btn');
-        if (btn) {
-          btn.style.display = 'block'; 
-          btn.onclick = () => { 
-            btn.style.display = 'none'; 
-            if(document.getElementById('yt-player')) document.getElementById('yt-player').style.display = 'block'; 
-            e.target.playVideo(); 
-          };
-        }
+        if (btn) { btn.style.display = 'block'; btn.onclick = () => { btn.style.display = 'none'; document.getElementById('yt-player').style.display = 'block'; e.target.playVideo(); }; }
       },
       onStateChange: (e) => { if(e.data === 0) endIntro(); } 
     }
   });
 };
 
-if (introContainer && !isOBS) setTimeout(endIntro, 12000); // Failsafe
+if (introContainer && !isOBS) setTimeout(endIntro, 10000); // 10s Failsafe
 
-/* ══ BOSS & PRESTIGE LOGIC ═════════════════════════════════════════════════ */
+/* ══ BOSS SYNC & PRESTIGE ══════════════════════════════════════════════════ */
 if (bossRef) {
   bossRef.on('value', snap => {
     let b = snap.val(); if (!b) return;
@@ -153,7 +147,7 @@ if (bossRef) {
     const fill = document.getElementById('health-bar-fill');
     const txt = document.getElementById('health-text');
     if (fill) fill.style.width = (Math.max(0, b.health/maxHP)*100) + '%';
-    if (txt) txt.innerText = b.health.toLocaleString() + ' / ' + maxHP.toLocaleString();
+    if (txt) txt.innerText = Math.max(0, b.health).toLocaleString() + ' / ' + maxHP.toLocaleString();
   });
 }
 
@@ -163,12 +157,13 @@ function handleDefeat(b) {
     nextLvl = 1;
     const active = (Date.now() - lastManualClick) < 10000;
     myCoins += active ? 1000000 : 250000;
+    createDynamicPopup(active ? "ACTIVE PRESTIGE! +1M COINS" : "PRESTIGE! +250K COINS", 'loot-popup', window.innerWidth/2, window.innerHeight/2);
     updateUI();
   }
   bossRef.set({ level: nextLvl, health: 1000000000 * nextLvl });
 }
 
-/* ══ LOOPS (CHARGE METER & RUMBLE) ══════════════════════════════════════════ */
+/* ══ LOOPS (CHARGE & IDLE) ═════════════════════════════════════════════════ */
 setInterval(() => {
   frenzy = Math.max(0, frenzy - 2);
   multi = frenzy >= 100 ? 5 : frenzy >= 75 ? 3 : frenzy >= 50 ? 2 : 1;
@@ -184,39 +179,35 @@ setInterval(() => {
     frameIndex = (frameIndex + 1) % currentCompanion.length;
     compImg.src = currentCompanion[frameIndex];
   }
-}, 150); // Faster idle rumble
+}, 150);
 
-/* ══ ACTIONS & COMBAT ══════════════════════════════════════════════════════ */
+/* ══ COMBAT & ANIMATIONS ═══════════════════════════════════════════════════ */
 function attack(e) {
   if (isOBS) return;
   lastManualClick = Date.now();
   playClickSound();
   
-  if(isAnimatingHit) return;
-  isAnimatingHit = true;
+  if(!isAnimatingHit) {
+    isAnimatingHit = true;
+    const bArea = document.getElementById('boss-area');
+    if (bArea) { bArea.style.filter = 'drop-shadow(0 0 30px rgba(255, 0, 0, 0.4))'; setTimeout(() => bArea.style.filter = 'none', 300); }
 
-  const bArea = document.getElementById('boss-area');
-  if (bArea) { bArea.style.filter = 'drop-shadow(0 0 30px rgba(255, 0, 0, 0.4))'; setTimeout(() => bArea.style.filter = 'none', 300); }
-
-  const bImg = document.getElementById('boss-image');
-  const cImg = document.getElementById('companion-image');
-  
-  if (bImg) {
-    const old = bImg.src;
-    bImg.src = daveHitFrames[Math.floor(Math.random()*daveHitFrames.length)];
-    bImg.style.transform = 'scale(1.05)';
-    setTimeout(() => { bImg.src = old; bImg.style.transform = 'scale(1)'; }, 200);
-  }
-  
-  setTimeout(() => {
-    if (cImg) {
-      cImg.style.transform = 'scale(1.05)';
-      setTimeout(() => { cImg.style.transform = 'scale(1)'; isAnimatingHit = false; }, 200);
+    const bImg = document.getElementById('boss-image');
+    if (bImg) {
+      const old = bImg.src;
+      bImg.src = daveHitFrames[Math.floor(Math.random()*daveHitFrames.length)];
+      bImg.style.transform = 'scale(1.05)';
+      setTimeout(() => { bImg.src = old; bImg.style.transform = 'scale(1)'; }, 200);
     }
-  }, 100);
+    
+    setTimeout(() => {
+      const cImg = document.getElementById('companion-image');
+      if (cImg) { cImg.style.transform = 'scale(1.05)'; setTimeout(() => { cImg.style.transform = 'scale(1)'; isAnimatingHit = false; }, 200); }
+    }, 100);
+  }
 
   const isCrit = (Math.random()*100) < critChance;
-  const dmg = Math.floor(myClickDmg * multi * itemBuffMultiplier * (isCrit ? 10 : 1));
+  const dmg = Math.floor(myClickDmg * multi * itemBuffMultiplier * (isCrit ? 5 : 1)); // Crit is 5x damage
   if(bossRef) bossRef.transaction(b => { if(b) b.health -= dmg; return b; });
   
   myCoins += (1 * multi); frenzy = Math.min(100, frenzy + 8);
@@ -230,56 +221,22 @@ function attack(e) {
 let autoTimer;
 function startAutoTimer() {
   if (autoTimer) clearInterval(autoTimer);
-  autoTimer = setInterval(() => {
-    if (myAutoDmg > 0 && bossRef) bossRef.transaction(b => { if(b) b.health -= myAutoDmg; return b; });
-  }, 1000);
+  autoTimer = setInterval(() => { if (myAutoDmg > 0 && bossRef) bossRef.transaction(b => { if(b) b.health -= myAutoDmg; return b; }); }, 1000);
 }
 
-/* ══ PHISHING MINIGAME ═════════════════════════════════════════════════════ */
-const emailDatabase = [
-  { sender: "IT-Support@corp-extraction.com", body: "Password reset required immediately.", isPhish: true },
-  { sender: "HR@corporate-extraction.com", body: "Updated PTO forms attached.", isPhish: false },
-  { sender: "boss@gmail.com", body: "Buy 5 gift cards right now.", isPhish: true },
-  { sender: "dave.vp@corporate-extraction.com", body: "Meeting moved to 2PM.", isPhish: false }
-];
-let phishActive = false, phishScore = 0, phishEmailsPlayed = 0, phishTimerInt = null;
-
-function startPhishingGame() {
-  const o = document.getElementById('mikita-overlay'); if(o) o.style.display = 'none';
-  if (phishActive) return; phishActive = true; phishScore = 0; phishEmailsPlayed = 0;
-  const p = document.getElementById('phishing-game-overlay'); if(p) p.style.display = 'flex';
-  loadNextEmail();
-}
-
-function loadNextEmail() {
-  if (phishEmailsPlayed >= 5) return endPhishingGame(true);
-  const email = emailDatabase[Math.floor(Math.random() * emailDatabase.length)];
-  const s = document.getElementById('phish-sender'); if(s) s.innerText = email.sender;
-  const b = document.getElementById('phish-body'); if(b) b.innerText = email.body;
-  const sc = document.getElementById('phish-score'); if(sc) sc.innerText = phishScore;
-  
-  let t = 80; clearInterval(phishTimerInt);
-  phishTimerInt = setInterval(() => { 
-    t--; 
-    const fill = document.getElementById('phish-timer-fill'); if(fill) fill.style.width = (t/80*100)+'%'; 
-    if(t<=0) handleChoice(null, email.isPhish); 
-  }, 100);
-}
-
-function handleChoice(chosePhish, isActuallyPhish) { clearInterval(phishTimerInt); if (chosePhish === isActuallyPhish) { phishScore++; phishEmailsPlayed++; loadNextEmail(); } else { endPhishingGame(false); } }
-function endPhishingGame(won) { phishActive = false; clearInterval(phishTimerInt); if (won) { myCoins += 25000 * multi; } const p = document.getElementById('phishing-game-overlay'); if(p) p.style.display = 'none'; updateUI(); save(); }
-
-/* ══ UTILS, UI, & SAVE/LOAD ════════════════════════════════════════════════ */
+/* ══ UTILS, UI & SAVE SYSTEM ═══════════════════════════════════════════════ */
 function createDynamicPopup(t, c, x, y) { const p = document.createElement('div'); p.className = c; p.innerText = t; p.style.left = x + 'px'; p.style.top = y + 'px'; document.body.appendChild(p); setTimeout(() => p.remove(), 1200); }
+
 function updateUI() {
-  const c = document.getElementById('coin-count'); if(c) c.innerText = myCoins.toLocaleString();
-  const cp = document.getElementById('click-power'); if(cp) cp.innerText = myClickDmg.toLocaleString();
-  const ap = document.getElementById('auto-power'); if(ap) ap.innerText = myAutoDmg.toLocaleString();
+  const ids = { 'coin-count': myCoins, 'click-power': myClickDmg, 'auto-power': myAutoDmg };
+  for (let id in ids) { const el = document.getElementById(id); if (el) el.innerText = ids[id].toLocaleString(); }
   const bc = document.getElementById('buy-click'); if(bc) bc.innerHTML = `⚔️ Upgrade Click <br><span>Cost: ${clickCost}</span>`;
   const ba = document.getElementById('buy-auto'); if(ba) ba.innerHTML = `Hire Merc <br><span>Cost: ${autoCost}</span>`;
   const cr = document.getElementById('buy-crit'); if(cr) cr.innerHTML = `🎯 Crit Chance <br><span>Cost: ${critCost}</span>`;
 }
+
 function save() { if (!isOBS) localStorage.setItem('gwm_v11', JSON.stringify({ c:myCoins, cd:myClickDmg, ad:myAutoDmg, ac:autoCost, cc:clickCost, critC:critChance, critCost:critCost, u:myUser })); }
+
 function load() { 
   const s = localStorage.getItem('gwm_v11'); 
   if(s) { 
@@ -288,6 +245,7 @@ function load() {
     updateUI(); 
   } 
 }
+
 function startRichardLoop() {
   setTimeout(() => {
     const c = document.getElementById('richard-event-container');
@@ -296,18 +254,17 @@ function startRichardLoop() {
   }, 45000);
 }
 
-/* ══ EVENT BINDING (SAFE ZONE) ═════════════════════════════════════════════ */
-// This ensures no events are attached until the HTML actually exists on the page.
-window.addEventListener('DOMContentLoaded', () => {
-  const safeBind = (id, event, func) => { const el = document.getElementById(id); if (el) el[event] = func; };
+/* ══ EVENT BINDING (THE FIX FOR BROKEN CLICKS) ═════════════════════════════ */
+// This function strictly binds events ONLY when the browser says the HTML exists.
+function bindInteractions() {
+  const bind = (id, event, func) => { const el = document.getElementById(id); if (el) el.addEventListener(event, func); };
 
-  // Clock In
-  safeBind('btn-clock-in', 'onclick', () => {
+  bind('btn-clock-in', 'click', () => {
     const v = document.getElementById('username-input').value.trim().toUpperCase();
     if (v) {
       myUser = v;
       document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('game-container').style.display = 'flex'; // Use flex for layout
+      document.getElementById('game-container').style.display = 'flex'; 
       if (employeesRef) employeesRef.push({ name: myUser, status: '💼' }).onDisconnect().remove();
       bgm.play().catch(() => {});
       if (myAutoDmg > 0) startAutoTimer();
@@ -315,23 +272,16 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Combat
-  safeBind('btn-attack', 'onpointerdown', attack);
-  safeBind('boss-area', 'onpointerdown', attack);
+  bind('btn-attack', 'pointerdown', attack);
+  bind('boss-area', 'pointerdown', attack);
 
-  // Upgrades
-  safeBind('buy-click', 'onclick', () => { if (myCoins >= clickCost) { myCoins -= clickCost; myClickDmg += 2500; clickCost = Math.floor(clickCost * 1.5); updateUI(); save(); } });
-  safeBind('buy-auto', 'onclick', () => { if (myCoins >= autoCost) { myCoins -= autoCost; myAutoDmg += 1000; autoCost = Math.floor(autoCost * 1.5); if (myAutoDmg === 1000) startAutoTimer(); updateUI(); save(); } });
-  safeBind('buy-crit', 'onclick', () => { if (myCoins >= critCost) { myCoins -= critCost; critChance = Math.min(95, critChance + 5); critCost = Math.floor(critCost * 1.8); updateUI(); save(); } });
-
-  // Minigame
-  safeBind('skill-phishing', 'onclick', () => { const o = document.getElementById('mikita-overlay'); if(o) o.style.display = 'flex'; });
-  safeBind('mikita-close', 'onclick', () => { const o = document.getElementById('mikita-overlay'); if(o) o.style.display = 'none'; });
-  safeBind('phish-close-btn', 'onclick', () => { const o = document.getElementById('phishing-game-overlay'); if(o) o.style.display = 'none'; phishActive = false; clearInterval(phishTimerInt); });
-  safeBind('mikita-start-game-btn', 'onclick', startPhishingGame);
-  safeBind('btn-legit', 'onclick', () => handleChoice(false, false));
-  safeBind('btn-phish', 'onclick', () => handleChoice(true, true));
+  bind('buy-click', 'click', () => { if (myCoins >= clickCost) { myCoins -= clickCost; myClickDmg += 2500; clickCost = Math.floor(clickCost * 1.5); updateUI(); save(); } });
+  bind('buy-auto', 'click', () => { if (myCoins >= autoCost) { myCoins -= autoCost; myAutoDmg += 1000; autoCost = Math.floor(autoCost * 1.5); if (myAutoDmg === 1000) startAutoTimer(); updateUI(); save(); } });
+  bind('buy-crit', 'click', () => { if (myCoins >= critCost) { myCoins -= critCost; critChance = Math.min(95, critChance + 5); critCost = Math.floor(critCost * 1.8); updateUI(); save(); } });
   
-  // OBS Bypass Initialization
   if (isOBS) { initSystem(); load(); }
-});
+}
+
+// Safely execute bindings based on page load state
+if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', bindInteractions); } 
+else { bindInteractions(); }
