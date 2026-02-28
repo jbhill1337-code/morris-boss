@@ -18,21 +18,21 @@ const employeesRef = db.ref('active_employees');
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
 // --- UPDATED IMAGE PRELOADERS FOR DAVE & MINIGAME ---
-const preloadHit1 = new Image(); preloadHit1.src = 'morris-boss-v3/dave-hit-2.png';
-// Reusing dave-hit-2 for both frames unless you drop a dave-hit-3 in the folder!
+const davePhaseImgs = [
+    'morris-boss-v3/phases/dave/dave_phase1.png',
+    'morris-boss-v3/phases/dave/dave_phase2.png',
+    'morris-boss-v3/phases/dave/dave_phase3.png',
+    'morris-boss-v3/phases/dave/dave_phase3.png' // Reusing phase 3 for phase 4 for now
+];
 const hitImages = ['morris-boss-v3/dave-hit-2.png', 'morris-boss-v3/dave-hit-2.png']; 
+
+[...davePhaseImgs, ...hitImages].forEach(s => { const i = new Image(); i.src = s; });
 
 const miniFrame1 = new Image(); miniFrame1.src = 'morris-boss-v3/minigame/click_frame1.png';
 const miniFrame2 = new Image(); miniFrame2.src = 'morris-boss-v3/minigame/click_frame2.png';
 const miniFrame3 = new Image(); miniFrame3.src = 'morris-boss-v3/minigame/click_frame3.png';
 
-const preloadRichard1 = new Image(); preloadRichard1.src = 'yourbossvar/boss-pointing.png';
-const preloadRichard2 = new Image(); preloadRichard2.src = 'yourbossvar/boss-crossing.png';
-const richardImages = ['yourbossvar/boss-pointing.png', 'yourbossvar/boss-crossing.png'];
-];
-davePhaseImgs.forEach(s => { const i = new Image(); i.src = s; });
-
-// Rich phase images — sprite_011, sprites 005–009
+// Rich phase images
 const richPhaseImgs = [
   'assets/phases/rich/rich_phase1.png',
   'assets/phases/rich/rich_phase2.png',
@@ -43,15 +43,14 @@ const richHitImgs = ['assets/phases/rich/rich_hit_a.png', 'assets/phases/rich/ri
 [...richPhaseImgs, ...richHitImgs].forEach(s => { const i = new Image(); i.src = s; });
 
 // Richard side event — yourbossvar
-const richardImages = ['assets/richard/boss-pointing.png', 'assets/richard/boss-crossing.png'];
+const richardImages = ['yourbossvar/boss-pointing.png', 'yourbossvar/boss-crossing.png'];
 richardImages.forEach(s => { const i = new Image(); i.src = s; });
 
-// Manny STRESS TEST — sprite_012 (Manny), sprite_010 (click minigame hands)
+// Manny STRESS TEST
 ['assets/chars/manny_frame1.png','assets/chars/manny_frame2.png','assets/chars/manny_frame3.png',
  'assets/chars/manny_frame4.png','assets/chars/manny_frame5.png','assets/chars/manny_frame6.png',
- 'assets/minigame/click_frame1.png','assets/minigame/click_frame2.png','assets/minigame/click_frame3.png']
+ 'morris-boss-v3/minigame/click_frame1.png','morris-boss-v3/minigame/click_frame2.png','morris-boss-v3/minigame/click_frame3.png']
   .forEach(s => { const i = new Image(); i.src = s; });
-
 /* ══ INTRO ══════════════════════════════════════════════════════════════════ */
 const introContainer = document.getElementById('intro-container');
 const startIntroBtn  = document.getElementById('start-intro-btn');
