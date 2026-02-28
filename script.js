@@ -29,10 +29,10 @@ bgm.loop = true;
 bgm.volume = 0.15;
 
 const clickSfxFiles = [
-  'assets/sfx pack/Boss hit 1.wav',
-  'assets/sfx pack/Bubble 1.wav',
-  'assets/sfx pack/Hit damage 1.wav',
-  'assets/sfx pack/Select 1.wav'
+  'sfx pack/Boss hit 1.wav',
+  'sfx pack/Bubble 1.wav',
+  'sfx pack/Hit damage 1.wav',
+  'sfx pack/Select 1.wav'
 ];
 
 const attackSounds = clickSfxFiles.map(file => {
@@ -52,14 +52,15 @@ function playClickSound() {
 
 /* ══ SYSTEM INITIALIZATION ═══ */
 function initSystem() {
+  // SET BACKGROUND (Root location)
   document.body.style.backgroundImage = "url('background.png')";
   document.body.style.backgroundColor = "#050510"; 
 
+  // SET CHARACTER IMAGES (Removing assets/ prefix based on your root folder structure)
   const bossImgEl = document.getElementById('boss-image');
   const compImgEl = document.getElementById('companion-image');
-  // Fixed paths to assets/chars/ folder
-  if (bossImgEl) bossImgEl.src = 'assets/phases/dave/dave_phase1.png';
-  if (compImgEl) compImgEl.src = 'assets/chars/larry_frame1.png';
+  if (bossImgEl) bossImgEl.src = 'phases/dave/dave_phase1.png';
+  if (compImgEl) compImgEl.src = 'chars/larry_frame1.png';
 }
 
 /* ══ INTRO CONTROLLER ══════════════════════════════════════════════════════ */
@@ -79,7 +80,8 @@ const endIntro = () => {
   }
 };
 
-function onPlayerReady(event) {
+// YouTube API Callbacks must be global
+window.onPlayerReady = function(event) {
   if (!startIntroBtn) return;
   startIntroBtn.style.display = 'block';
   startIntroBtn.onclick = () => {
@@ -88,15 +90,18 @@ function onPlayerReady(event) {
     if (skipIntroBtn) skipIntroBtn.style.display = 'block';
     event.target.playVideo();
   };
-}
-function onPlayerStateChange(event) { if (event.data === 0) endIntro(); }
+};
+
+window.onPlayerStateChange = function(event) { 
+    if (event.data === 0) endIntro(); 
+};
 
 window.onYouTubeIframeAPIReady = function () {
   if (!introContainer || isOBS) return;
   ytPlayer = new YT.Player('yt-player', {
     videoId: 'HeKNgnDyD7I',
     playerVars: { playsinline:1, controls:0, disablekb:1, fs:0, modestbranding:1, rel:0 },
-    events: { onReady: onPlayerReady, onStateChange: onPlayerStateChange }
+    events: { onReady: window.onPlayerReady, onStateChange: window.onPlayerStateChange }
   });
 };
 
@@ -108,22 +113,22 @@ if (isOBS) {
 }
 if (skipIntroBtn) skipIntroBtn.onclick = endIntro;
 
-// Emergency Bypass
+// EMERGENCY BLACK SCREEN OVERRIDE (Fires if video fails after 8s)
 if (introContainer && !isOBS) {
-  setTimeout(() => { if(document.body && document.body.contains(introContainer)) endIntro(); }, 10000);
+  setTimeout(() => { if(document.body.contains(introContainer)) endIntro(); }, 8000);
 }
 
 /* ══ GAME STATE ═════════════════════════════════════════════════════════════ */
 let myCoins = 0, myClickDmg = 2500, myAutoDmg = 0, clickCost = 10, autoCost = 50, myUser = '';
 let myInventory = {};
 let curHP = 1000000000, maxHP = 1000000000, lastHP = 1000000000, frenzy = 0, multi = 1;
-let currentPhase = 0, baseDaveImg = 'assets/phases/dave/dave_phase1.png';
+let currentPhase = 0, baseDaveImg = 'phases/dave/dave_phase1.png';
 let defMulti = 1.0, lastLevel = 0, itemBuffMultiplier = 1.0, isAnimatingHit = false;
 let critChance = 0, critCost = 100, autoInterval = 1000, shopMultiplier = 1.0, synergyCost = 150, rageCost = 75, coinsPerClick = 1, hustleCost = 30, autoTimer = null;
 
 const companions = {
-  larry: ['assets/chars/larry_frame1.png', 'assets/chars/larry_frame2.png', 'assets/chars/larry_frame3.png', 'assets/chars/larry_frame4.png', 'assets/chars/larry_frame5.png', 'assets/chars/larry_frame6.png'],
-  manny: ['assets/chars/manny_frame1.png', 'assets/chars/manny_frame2.png', 'assets/chars/manny_frame3.png', 'assets/chars/manny_frame4.png', 'assets/chars/manny_frame5.png', 'assets/chars/manny_frame6.png']
+  larry: ['chars/larry_frame1.png', 'chars/larry_frame2.png', 'chars/larry_frame3.png', 'chars/larry_frame4.png', 'chars/larry_frame5.png', 'chars/larry_frame6.png'],
+  manny: ['chars/manny_frame1.png', 'chars/manny_frame2.png', 'chars/manny_frame3.png', 'chars/manny_frame4.png', 'chars/manny_frame5.png', 'chars/manny_frame6.png']
 };
 let currentCompanion = companions.larry;
 let frameIndex = 0;
@@ -135,18 +140,10 @@ const richardDialogue = document.getElementById('richard-dialogue');
 const hpFill = document.getElementById('health-bar-fill');
 const hpText = document.getElementById('health-text');
 const corpQuotes = ["SYNERGY!", "LET'S CIRCLE BACK!", "BANDWIDTH!", "RETURN TO OFFICE!", "PIVOT!", "ACTION ITEMS!"];
-const richardImages = ['assets/richard/boss-pointing.png', 'assets/richard/boss-crossing.png'];
+const richardImages = ['yourbossvar/boss-pointing.png', 'yourbossvar/boss-crossing.png'];
 const richardQuotes = ["Livin' the dream!", "Another day, another dollar.", "Working hard or hardly working?", "Can someone check the back room?", "Corporate is visiting, look busy."];
 
-/* ══ LOOT TABLE ═════════════════════════════════════════════════════════════ */
-const lootTable = [
-  { id:'paperclip', name:'Bent Paperclip', icon:'📎', buff:0.005, rarity:'common' },
-  { id:'mug', name:"World's Okayest Boss Mug", icon:'☕', buff:0.01, rarity:'uncommon' },
-  { id:'stapler', name:'Red Stapler', icon:'🖍️', buff:0.025, rarity:'rare' },
-  { id:'gold_blade', name:'The Gold Blade', icon:'🗡️', buff:0.08, rarity:'legendary' }
-];
-
-/* ══ LOOPS (CHARGE METER & RUMBLE) ══════════════════════════════════════════ */
+/* ══ LOOPS ══════════════════════════════════════════════════════════════════ */
 setInterval(() => {
   frenzy = Math.max(0, frenzy - 2);
   multi = frenzy >= 100 ? 5 : frenzy >= 75 ? 3 : frenzy >= 50 ? 2 : 1;
@@ -176,7 +173,6 @@ if (bossRef) {
     let b = snap.val();
     if (!b) return;
     if (lastLevel === 0) lastLevel = b.level;
-    else if (b.level > lastLevel) { lastLevel = b.level; }
     
     lastHP = b.health; curHP = b.health; maxHP = 1000000000 * b.level;
     const hpPercent = Math.max(0, curHP / maxHP);
@@ -190,18 +186,18 @@ if (bossRef) {
       currentCompanion = companions.larry;
       if (companionNameEl) companionNameEl.innerText = 'Security Larry';
       if (mainBossNameEl) mainBossNameEl.innerText = 'VP Dave · Lv.' + b.level;
-      if (hpPercent <= 0.25) baseDaveImg = 'assets/phases/dave/dave_phase4.png';
-      else if (hpPercent <= 0.50) baseDaveImg = 'assets/phases/dave/dave_phase3.png';
-      else if (hpPercent <= 0.75) baseDaveImg = 'assets/phases/dave/dave_phase2.png';
-      else baseDaveImg = 'assets/phases/dave/dave_phase1.png';
+      if (hpPercent <= 0.25) baseDaveImg = 'phases/dave/dave_phase4.png';
+      else if (hpPercent <= 0.50) baseDaveImg = 'phases/dave/dave_phase3.png';
+      else if (hpPercent <= 0.75) baseDaveImg = 'phases/dave/dave_phase2.png';
+      else baseDaveImg = 'phases/dave/dave_phase1.png';
     } else {
       currentCompanion = companions.manny;
       if (companionNameEl) companionNameEl.innerText = 'Intern Manny';
       if (mainBossNameEl) mainBossNameEl.innerText = 'District Manager Rich · Lv.' + b.level;
-      if (hpPercent <= 0.25) baseDaveImg = 'assets/phases/rich/rich_phase4.png';
-      else if (hpPercent <= 0.50) baseDaveImg = 'assets/phases/rich/rich_phase3.png';
-      else if (hpPercent <= 0.75) baseDaveImg = 'assets/phases/rich/rich_phase2.png';
-      else baseDaveImg = 'assets/phases/rich/rich_phase1.png';
+      if (hpPercent <= 0.25) baseDaveImg = 'phases/rich/rich_phase4.png';
+      else if (hpPercent <= 0.50) baseDaveImg = 'phases/rich/rich_phase3.png';
+      else if (hpPercent <= 0.75) baseDaveImg = 'phases/rich/rich_phase2.png';
+      else baseDaveImg = 'phases/rich/rich_phase1.png';
     }
     if (bossImgEl && !isAnimatingHit) bossImgEl.src = baseDaveImg;
     if (hpFill) hpFill.style.width = (hpPercent * 100) + '%';
@@ -209,24 +205,13 @@ if (bossRef) {
   });
 }
 
-/* ══ SAVE / LOAD / CLOCK IN ═════════════════════════════════════════════════ */
-function save() {
-  if (!isOBS) localStorage.setItem('gwm_v11', JSON.stringify({ c:myCoins, cd:myClickDmg, u:myUser, inv:myInventory }));
-}
-function load() {
-  const s = localStorage.getItem('gwm_v11');
-  if (s) {
-    const d = JSON.parse(s);
-    myCoins = d.c || 0; myClickDmg = d.cd || 2500; myUser = d.u || ''; myInventory = d.inv || {};
-    if (myUser && !isOBS) document.getElementById('username-input').value = myUser;
-    updateUI(); renderInventory();
-  }
-}
+/* ══ CORE FUNCTIONS ═════════════════════════════════════════════════════════ */
 function clockIn(u) { 
   if (employeesRef) { const r = employeesRef.push(); r.set({ name:u, e:'💼' }); r.onDisconnect().remove(); }
   bgm.play().catch(e => {});
-  startRichardLoop(); startAutoTimer(); scheduleMannyStressTest();
+  startRichardLoop();
 }
+
 document.getElementById('btn-clock-in').onclick = () => {
   const val = document.getElementById('username-input').value.trim().toUpperCase();
   if (val) {
@@ -237,7 +222,6 @@ document.getElementById('btn-clock-in').onclick = () => {
   }
 };
 
-/* ══ ATTACK LOGIC ═══════════════════════════════════════════════════════════ */
 function attack(e) {
   if (isOBS) return;
   const x = e.clientX || (e.touches ? e.touches[0].clientX : window.innerWidth / 2);
@@ -251,14 +235,11 @@ function attack(e) {
     if (el) { el.classList.remove('quick-zoom'); void el.offsetWidth; el.classList.add('quick-zoom'); }
   });
 
-  const dmg = Math.floor(myClickDmg * multi * itemBuffMultiplier);
+  const dmg = Math.floor(myClickDmg * multi * shopMultiplier);
   if (bossRef) bossRef.transaction(b => { if (b) { b.health -= dmg; if (b.health <= 0) { b.level++; b.health = 1000000000 * b.level; } } return b; });
 
-  myCoins += (1 * multi);
-  frenzy = Math.min(100, frenzy + 8);
-  updateUI(); save();
+  myCoins += (1 * multi); updateUI(); save();
   createDynamicPopup('+' + dmg.toLocaleString(), 'damage-popup', x, y);
-  rollForLoot(x, y);
   if (Math.random() < 0.1) spawnQuote(x, y);
 }
 
@@ -272,7 +253,7 @@ function updateUI() {
 document.getElementById('btn-attack').onpointerdown = attack;
 document.getElementById('boss-area').onpointerdown = attack;
 
-/* ══ UTILS (POPUPS, LOOT, RICHARD) ══════════════════════════════════════════ */
+/* ══ POPUPS & RICHARD LOOP ══════════════════════════════════════════════════ */
 function createDynamicPopup(text, className, x, y) {
   const p = document.createElement('div');
   p.className = className; p.innerText = text;
@@ -284,35 +265,11 @@ function createDynamicPopup(text, className, x, y) {
   p.style.setProperty('--rot', `${rot}deg`);
   p.style.left = x + 'px'; p.style.top = y + 'px';
   document.body.appendChild(p);
-  const isLoot = className.includes('loot-popup');
-  setTimeout(() => p.remove(), isLoot ? 3500 : 1200); 
+  setTimeout(() => p.remove(), 1200); 
 }
 
 function spawnQuote(x, y) {
   createDynamicPopup(corpQuotes[Math.floor(Math.random() * corpQuotes.length)], 'quote-popup', x, y);
-}
-
-function rollForLoot(x, y) {
-  if (Math.random() > 0.15) return;
-  const item = lootTable[Math.floor(Math.random() * lootTable.length)];
-  myInventory[item.id] = (myInventory[item.id] || 0) + 1;
-  save(); renderInventory();
-  createDynamicPopup(`Loot: ${item.name}!`, 'loot-popup', x, y);
-}
-
-function renderInventory() {
-  const grid = document.getElementById('inventory-grid');
-  if (!grid) return;
-  grid.innerHTML = '';
-  for (let id in myInventory) {
-    const item = lootTable.find(i => i.id === id);
-    if (item && myInventory[id] > 0) {
-      const slot = document.createElement('div');
-      slot.className = `inv-item rarity-${item.rarity}`;
-      slot.innerHTML = `${item.icon}<span class="inv-count">${myInventory[id]}</span>`;
-      grid.appendChild(slot);
-    }
-  }
 }
 
 function startRichardLoop() { 
@@ -330,5 +287,14 @@ function triggerRichardEvent() {
   setTimeout(() => container.classList.remove('active'), 8000);
 }
 
+function save() { if (!isOBS) localStorage.setItem('gwm_v11', JSON.stringify({ c:myCoins, cd:myClickDmg, u:myUser })); }
+function load() {
+  const s = localStorage.getItem('gwm_v11');
+  if (s) {
+    const d = JSON.parse(s); myCoins = d.c || 0; myClickDmg = d.cd || 2500; myUser = d.u || '';
+    if (myUser) { document.getElementById('username-input').value = myUser; }
+    updateUI();
+  }
+}
 function startAutoTimer() {}
 function scheduleMannyStressTest() {}
