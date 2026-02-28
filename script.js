@@ -19,7 +19,7 @@ try {
     bossRef = db.ref('frank_corporate_data');
     employeesRef = db.ref('active_employees');
   }
-} catch(e) { console.warn('Firebase offline:', e); }
+} catch(e) { console.warn('Firebase connection failed:', e); }
 
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
@@ -50,17 +50,18 @@ function playClickSound() {
   } catch(e) {}
 }
 
-/* ══ SYSTEM INITIALIZATION & SIZING ═══ */
+/* ══ SYSTEM INITIALIZATION ═══ */
 function initSystem() {
+  // SET BACKGROUND
   document.body.style.backgroundImage = "url('background.png')";
   document.body.style.backgroundColor = "#050510"; 
 
-  // Fix Sizing: Ensure Boss and Larry are large
   const bossImgEl = document.getElementById('boss-image');
   const compImgEl = document.getElementById('companion-image');
-  
+
+  // FORCE SIZE: Making Dave and Larry both 350px wide so they are identical in scale
   if (bossImgEl) {
-    bossImgEl.style.width = '350px'; // 3x Bigger as requested
+    bossImgEl.style.width = '350px'; 
     bossImgEl.src = 'phases/dave/dave_phase1.png';
   }
   if (compImgEl) {
@@ -69,7 +70,7 @@ function initSystem() {
   }
 }
 
-/* ══ INTRO CONTROLLER (RESTORING VIDEO) ════════════════════════════════════ */
+/* ══ INTRO CONTROLLER ══════════════════════════════════════════════════════ */
 const introContainer = document.getElementById('intro-container');
 const startIntroBtn  = document.getElementById('start-intro-btn');
 const skipIntroBtn   = document.getElementById('skip-intro-btn');
@@ -96,9 +97,7 @@ window.onPlayerReady = function(event) {
     event.target.playVideo();
   };
 };
-
 window.onPlayerStateChange = function(event) { if (event.data === 0) endIntro(); };
-
 window.onYouTubeIframeAPIReady = function () {
   if (!introContainer || isOBS) return;
   ytPlayer = new YT.Player('yt-player', {
@@ -107,22 +106,19 @@ window.onYouTubeIframeAPIReady = function () {
     events: { onReady: window.onPlayerReady, onStateChange: window.onPlayerStateChange }
   });
 };
-
-if (isOBS) {
-  if (introContainer) introContainer.style.display = 'none';
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('game-container').style.display = 'block';
-  window.onload = () => { initSystem(); load(); };
-}
 if (skipIntroBtn) skipIntroBtn.onclick = endIntro;
 
+// Emergency Override
+if (introContainer && !isOBS) {
+  setTimeout(() => { if(document.body && document.body.contains(introContainer)) endIntro(); }, 10000);
+}
+
 /* ══ GAME STATE ═════════════════════════════════════════════════════════════ */
-let myCoins = 0, myClickDmg = 2500, myAutoDmg = 0, clickCost = 10, autoCost = 50, myUser = '';
+let myCoins = 0, myClickDmg = 2500, myAutoDmg = 0, myUser = '';
 let myInventory = {};
-let curHP = 1000000000, maxHP = 1000000000, lastHP = 1000000000, frenzy = 0, multi = 1;
-let currentPhase = 0, baseDaveImg = 'phases/dave/dave_phase1.png';
-let defMulti = 1.0, lastLevel = 0, itemBuffMultiplier = 1.0, isAnimatingHit = false;
-let critChance = 0, critCost = 100, shopMultiplier = 1.0;
+let curHP = 1000000000, maxHP = 1000000000, frenzy = 0, multi = 1;
+let baseDaveImg = 'phases/dave/dave_phase1.png';
+let lastLevel = 0, itemBuffMultiplier = 1.0, isAnimatingHit = false, shopMultiplier = 1.0;
 
 const companions = {
   larry: ['chars/larry_frame1.png', 'chars/larry_frame2.png', 'chars/larry_frame3.png', 'chars/larry_frame4.png', 'chars/larry_frame5.png', 'chars/larry_frame6.png'],
@@ -134,33 +130,26 @@ let frameIndex = 0;
 /* ══ DOM REFERENCES ═════════════════════════════════════════════════════════ */
 const bossImg = document.getElementById('boss-image');
 const companionImg = document.getElementById('companion-image');
-const companionNameEl = document.getElementById('companion-name');
-const mainBossNameEl = document.getElementById('main-boss-name');
+const hpFill = document.getElementById('health-bar-fill');
+const hpText = document.getElementById('health-text');
 const richardContainer = document.getElementById('richard-event-container');
 const richardImage = document.getElementById('richard-image');
 const richardDialogue = document.getElementById('richard-dialogue');
-const hpFill = document.getElementById('health-bar-fill');
-const hpText = document.getElementById('health-text');
 
 const richardImages = ['yourbossvar/boss-pointing.png', 'yourbossvar/boss-crossing.png'];
-const richardQuotes = ["Livin' the dream!", "Another day, another dollar.", "Working hard or hardly working?", "Corporate is visiting, look busy."];
-const corpQuotes = ["SYNERGY!", "LET'S CIRCLE BACK!", "BANDWIDTH!", "ACTION ITEMS!"];
+const richardQuotes = ["Livin' the dream!", "Another day, another dollar.", "Working hard or hardly working?", "Can someone check the back room?", "Corporate is visiting, look busy."];
+const corpQuotes = ["SYNERGY!", "LET'S CIRCLE BACK!", "BANDWIDTH!", "RETURN TO OFFICE!", "PIVOT!", "ACTION ITEMS!"];
 
-/* ══ LOOT TABLE ═════════════════════════════════════════════════════════════ */
-const lootTable = [
-  { id:'paperclip', name:'Bent Paperclip', icon:'📎', buff:0.005, rarity:'common' },
-  { id:'mug', name:"World's Okayest Boss Mug", icon:'☕', buff:0.01, rarity:'uncommon' },
-  { id:'stapler', name:'Red Stapler', icon:'🖍️', buff:0.025, rarity:'rare' },
-  { id:'gold_blade', name:'The Gold Blade', icon:'🗡️', buff:0.08, rarity:'legendary' }
-];
+// Dave specific hit animations
+const daveHitFrames = ['assets/hit/dave-hit-1.png', 'assets/hit/dave-hit-2.png'];
 
 /* ══ LOOPS (CHARGE METER & RUMBLE) ══════════════════════════════════════════ */
 setInterval(() => {
   frenzy = Math.max(0, frenzy - 2);
   multi = frenzy >= 100 ? 5 : frenzy >= 75 ? 3 : frenzy >= 50 ? 2 : 1;
   const fill = document.getElementById('frenzy-bar-fill');
-  if (fill) fill.style.width = frenzy + '%';
   const txt = document.getElementById('frenzy-text');
+  if (fill) fill.style.width = frenzy + '%';
   if (txt) txt.innerText = multi > 1 ? `COMBO ${multi}x` : 'CHARGE METER';
 }, 100);
 
@@ -180,9 +169,14 @@ if (bossRef) {
   bossRef.on('value', snap => {
     let b = snap.val();
     if (!b) return;
-    lastHP = b.health; curHP = b.health; maxHP = 1000000000 * b.level;
+    if (lastLevel === 0) lastLevel = b.level;
+    
+    curHP = b.health; maxHP = 1000000000 * b.level;
     const hpPercent = Math.max(0, curHP / maxHP);
     const isDaveEncounter = (b.level % 2 !== 0);
+    
+    const companionNameEl = document.getElementById('companion-name');
+    const mainBossNameEl = document.getElementById('main-boss-name');
 
     if (isDaveEncounter) {
       currentCompanion = companions.larry;
@@ -207,53 +201,7 @@ if (bossRef) {
   });
 }
 
-/* ══ POPUPS & CINEMATIC HIT ═════════════════════════════════════════════════ */
-function createDynamicPopup(text, className, x, y) {
-  const p = document.createElement('div');
-  p.className = className; p.innerText = text;
-  const tx = (Math.random() - 0.5) * 600;
-  const ty = -Math.random() * 300 - 200;
-  const rot = (Math.random() - 0.5) * 60;
-  p.style.setProperty('--tx', `${tx}px`);
-  p.style.setProperty('--ty', `${ty}px`);
-  p.style.setProperty('--rot', `${rot}deg`);
-  p.style.left = x + 'px'; p.style.top = y + 'px';
-  document.body.appendChild(p);
-  setTimeout(() => p.remove(), className.includes('loot-popup') ? 3500 : 1200); 
-}
-
-function playHitAnimation(x, y) {
-  if (isAnimatingHit) return;
-  isAnimatingHit = true;
-
-  // Flashing Red pulse (Subtle)
-  const bossArea = document.getElementById('boss-area');
-  if (bossArea) {
-    bossArea.style.filter = 'drop-shadow(0 0 25px rgba(255, 0, 0, 0.4))';
-    setTimeout(() => bossArea.style.filter = 'none', 300);
-  }
-
-  // Dave Pops First
-  if (bossImg) {
-    bossImg.classList.add('quick-zoom');
-    setTimeout(() => bossImg.classList.remove('quick-zoom'), 250);
-  }
-
-  // Larry Pops Second (Delayed)
-  setTimeout(() => {
-    if (companionImg) {
-      companionImg.classList.add('quick-zoom');
-      setTimeout(() => {
-        companionImg.classList.remove('quick-zoom');
-        isAnimatingHit = false;
-      }, 250);
-    }
-  }, 150);
-
-  if (Math.random() < 0.1) createDynamicPopup(corpQuotes[Math.floor(Math.random() * corpQuotes.length)], 'quote-popup', x, y);
-}
-
-/* ══ ATTACK & LOOT ══════════════════════════════════════════════════════════ */
+/* ══ ATTACK LOGIC & HIT ANIMATIONS ═══════════════════════════════════════════ */
 function attack(e) {
   if (isOBS) return;
   const x = e.clientX || (e.touches ? e.touches[0].clientX : window.innerWidth / 2);
@@ -269,14 +217,69 @@ function attack(e) {
   frenzy = Math.min(100, frenzy + 8);
   updateUI(); save();
   createDynamicPopup('+' + dmg.toLocaleString(), 'damage-popup', x, y);
-  
-  // Loot Roll (15% chance)
-  if (Math.random() < 0.15) {
-    const item = lootTable[Math.floor(Math.random() * lootTable.length)];
-    myInventory[item.id] = (myInventory[item.id] || 0) + 1;
-    calculateLootBuff(); renderInventory(); save();
-    createDynamicPopup(`Loot: ${item.name}!`, 'loot-popup', x, y);
+  rollForLoot(x, y);
+}
+
+function playHitAnimation(x, y) {
+  if (isAnimatingHit) return;
+  isAnimatingHit = true;
+
+  // Flashing Red pulse
+  const bossArea = document.getElementById('boss-area');
+  if (bossArea) {
+    bossArea.style.filter = 'drop-shadow(0 0 25px rgba(255, 0, 0, 0.4))';
+    setTimeout(() => bossArea.style.filter = 'none', 300);
   }
+
+  // 1. Dave Reacts: Swapping to Dave-Hit frames
+  if (bossImg) {
+    const originalSrc = bossImg.src;
+    const hitFrame = daveHitFrames[Math.floor(Math.random() * daveHitFrames.length)];
+    bossImg.src = hitFrame;
+    bossImg.classList.add('quick-zoom');
+    
+    setTimeout(() => {
+        bossImg.src = originalSrc;
+        bossImg.classList.remove('quick-zoom');
+    }, 250);
+  }
+
+  // 2. Larry Reacts (Delayed pop)
+  setTimeout(() => {
+    if (companionImg) {
+      companionImg.classList.add('quick-zoom');
+      setTimeout(() => {
+        companionImg.classList.remove('quick-zoom');
+        isAnimatingHit = false;
+      }, 250);
+    }
+  }, 150);
+
+  if (Math.random() < 0.1) createDynamicPopup(corpQuotes[Math.floor(Math.random() * corpQuotes.length)], 'quote-popup', x, y);
+}
+
+/* ══ UTILS (POPUPS, LOOT, RICHARD) ══════════════════════════════════════════ */
+const lootTable = [
+  { id:'paperclip', name:'Bent Paperclip', icon:'📎', buff:0.005, rarity:'common' },
+  { id:'mug', name:"World's Okayest Boss Mug", icon:'☕', buff:0.01, rarity:'uncommon' },
+  { id:'stapler', name:'Red Stapler', icon:'🖍️', buff:0.025, rarity:'rare' },
+  { id:'gold_blade', name:'The Gold Blade', icon:'🗡️', buff:0.08, rarity:'legendary' }
+];
+
+function createDynamicPopup(text, className, x, y) {
+  const p = document.createElement('div');
+  p.className = className; p.innerText = text;
+  p.style.left = x + 'px'; p.style.top = y + 'px';
+  document.body.appendChild(p);
+  setTimeout(() => p.remove(), className.includes('loot-popup') ? 3500 : 1200); 
+}
+
+function rollForLoot(x, y) {
+  if (Math.random() > 0.15) return;
+  const item = lootTable[Math.floor(Math.random() * lootTable.length)];
+  myInventory[item.id] = (myInventory[item.id] || 0) + 1;
+  calculateLootBuff(); renderInventory(); save();
+  createDynamicPopup(`Loot: ${item.name}!`, 'loot-popup', x, y);
 }
 
 function renderInventory() {
@@ -307,7 +310,6 @@ function calculateLootBuff() {
 function save() {
   if (!isOBS) localStorage.setItem('gwm_v11', JSON.stringify({ c:myCoins, cd:myClickDmg, u:myUser, inv:myInventory }));
 }
-
 function load() {
   const s = localStorage.getItem('gwm_v11');
   if (s) {
@@ -317,30 +319,21 @@ function load() {
     updateUI(); renderInventory(); calculateLootBuff();
   }
 }
-
 function clockIn(u) { 
   if (employeesRef) { const r = employeesRef.push(); r.set({ name:u, e:'💼' }); r.onDisconnect().remove(); }
   bgm.play().catch(e => {});
   startRichardLoop();
 }
-
 document.getElementById('btn-clock-in').onclick = () => {
   const val = document.getElementById('username-input').value.trim().toUpperCase();
-  if (val) {
-    myUser = val;
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('game-container').style.display = 'block';
-    clockIn(myUser); save();
-  }
+  if (val) { myUser = val; document.getElementById('login-screen').style.display = 'none'; document.getElementById('game-container').style.display = 'block'; clockIn(myUser); save(); }
 };
-
 function updateUI() {
   const c = document.getElementById('coin-count');
   const d = document.getElementById('click-power');
   if (c) c.innerText = myCoins.toLocaleString();
   if (d) d.innerText = myClickDmg.toLocaleString();
 }
-
 function startRichardLoop() { setTimeout(() => { triggerRichardEvent(); startRichardLoop(); }, Math.random() * 40000 + 45000); }
 function triggerRichardEvent() {
   const container = document.getElementById('richard-event-container');
