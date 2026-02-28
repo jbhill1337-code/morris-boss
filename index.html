@@ -3,20 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Games We Miss | Corporate Takedown</title>
-  <link rel="stylesheet" href="style.css?v=50">
+  <title>Defeat Frank! | Games We Miss</title>
+  <link rel="stylesheet" href="style.css?v=31">
 </head>
 <body>
   <div class="scanlines"></div>
-
-  <!-- ── INTRO ──────────────────────────────────────────────────────────── -->
+  
   <div id="intro-container">
-    <button id="start-intro-btn" class="vapor-btn" style="display:none;">INITIALIZE SYSTEM</button>
-    <div id="yt-player" style="display:none; width:100%; height:100%; pointer-events:none;"></div>
-    <button id="skip-intro-btn" class="vapor-btn" style="display:none;">SKIP</button>
+    <button id="start-intro-btn" class="vapor-btn" style="display: none;">INITIALIZE SYSTEM</button>
+    <div id="yt-player" style="display: none; width: 100%; height: 100%; pointer-events: none;"></div>
+    <button id="skip-intro-btn" class="vapor-btn" style="display: none;">SKIP</button>
   </div>
-
-  <!-- ── LOGIN ──────────────────────────────────────────────────────────── -->
+  
   <div id="login-screen">
     <div class="login-box">
       <h2 class="title">COMPANY PORTAL</h2>
@@ -27,211 +25,83 @@
   </div>
 
   <div id="employee-container"></div>
-
-  <!-- ── MAIN GAME ───────────────────────────────────────────────────────── -->
-  <div id="game-container" style="display:none;">
-    <h1 id="boss-name" class="title">VP Dave &amp; District Manager Rich</h1>
-
+  
+  <div id="game-container" style="display: none;">
+    <h1 id="boss-name" class="title">CORPORATE DAVE</h1>
+    
     <div id="game-wrapper">
-
-      <!-- LEFT: Stats + Shop -->
       <div class="side-col" id="left-col">
         <div id="player-stats">
           <p>VAPOR COINS: <span id="coin-count">0</span></p>
           <p>CLICK DMG: <span id="click-power">2,500</span></p>
           <p>AUTO DMG: <span id="auto-power">0</span>/sec</p>
-          <p style="color:#f1c40f;">LOOT BONUS: +<span id="loot-buff">0</span>%</p>
-          <p style="color:#ff6b6b;">CRIT CHANCE: <span id="crit-chance-display">0</span>%</p>
-          <p style="color:#00ffcc;">GLOBAL MULTI: x<span id="shop-multi-display">1.00</span></p>
+          <p style="color: #f1c40f;">LOOT BONUS: +<span id="loot-buff">0</span>%</p>
         </div>
 
         <div id="shop">
           <h2 class="shop-title">-- UPGRADES --</h2>
-          <button id="buy-click"    class="shop-btn">⚔️ Sharpen Blade (+2.5k) <br><span>Cost: 10</span></button>
-          <button id="buy-auto"     class="shop-btn">Hire Merc (+1k/s) <br><span>Cost: 50</span></button>
-          <button id="buy-crit"     class="shop-btn upgrade-new">🎯 Lucky Shot (+5% crit) <br><span class="cost-tag">Cost: 100</span></button>
-          <button id="buy-overtime" class="shop-btn upgrade-new">⏱️ Overtime (faster auto) <br><span class="cost-tag">Cost: 200</span></button>
-          <button id="buy-synergy"  class="shop-btn upgrade-new">⚡ Synergy Boost (+10% dmg) <br><span class="cost-tag">Cost: 150</span></button>
-          <button id="buy-rage"     class="shop-btn upgrade-new">🔥 Rage Fuel (faster frenzy) <br><span class="cost-tag">Cost: 75</span></button>
-          <button id="buy-hustle"   class="shop-btn upgrade-new">💰 Side Hustle (+2 coins) <br><span class="cost-tag">Cost: 30</span></button>
+          <button id="buy-click" class="shop-btn">Sharpen Blade (+2.5k) <br><span>Cost: <span id="cost-click">10</span></span></button>
+          <button id="buy-auto" class="shop-btn">Hire Merc (+1k/s) <br><span>Cost: <span id="cost-auto">50</span></span></button>
+          <button id="btn-access-mainframe" class="shop-btn" style="border-color: #0f0; color: #0f0; margin-top: 15px;">💻 ACCESS MAINFRAME (Phishing)</button>
         </div>
       </div>
 
-      <!-- CENTER: Bosses + Bars + Skills + Attack -->
       <div id="center-col">
-
         <div id="boss-area">
-          <!-- LEFT: District Manager Rich -->
-          <div class="boss-char-wrapper" id="rich-wrapper">
-            <span class="boss-char-name">District Manager Rich</span>
-            <div class="boss-char-inner">
-              <img id="rich-image"     src="assets/phases/rich/rich_phase1.png" alt="Rich">
-              <img id="rich-hit-layer" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="">
-            </div>
-          </div>
-
-          <!-- RIGHT: VP Dave -->
-          <div class="boss-char-wrapper" id="dave-wrapper">
-            <span class="boss-char-name">VP Dave</span>
-            <div class="boss-char-inner">
-              <img id="boss-image"     src="assets/phases/dave/dave_phase1.png" alt="VP Dave">
-              <img id="boss-hit-layer" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="">
-            </div>
-          </div>
-
+          <img id="boss-image" class="center-phase-1" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Boss Body">
+          <img id="boss-hit-layer" class="center-phase-1" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="">
           <div id="flash-overlay"></div>
         </div>
 
-        <!-- Health + Frenzy bars -->
         <div id="health-bar-container">
           <div id="health-bar-fill"></div>
           <span id="health-text">Connecting...</span>
         </div>
+
         <div id="frenzy-container">
           <div id="frenzy-bar-fill"></div>
           <span id="frenzy-text">CHARGE METER</span>
         </div>
 
-        <!-- ── SKILL PANEL (RuneScape style) ──────────────────────────── -->
-        <div id="skill-panel">
-          <h3 class="skill-panel-title">── EMPLOYEE SKILLS ──</h3>
-          <div id="skill-grid">
-
-            <div class="skill-slot skill-active" id="skill-phishing" title="Click to learn about Phishing!">
-              <div class="skill-icon">🎣</div>
-              <div class="skill-label">Phishing</div>
-              <div class="skill-level">Lv.1</div>
-            </div>
-
-            <div class="skill-slot skill-locked" title="Coming Soon">
-              <div class="skill-icon">🛡️</div>
-              <div class="skill-label">Firewall</div>
-              <div class="skill-level">???</div>
-            </div>
-
-            <div class="skill-slot skill-locked" title="Coming Soon">
-              <div class="skill-icon">💾</div>
-              <div class="skill-label">Recovery</div>
-              <div class="skill-level">???</div>
-            </div>
-
-            <div class="skill-slot skill-locked" title="Coming Soon">
-              <div class="skill-icon">🔐</div>
-              <div class="skill-label">Encryption</div>
-              <div class="skill-level">???</div>
-            </div>
-
-            <div class="skill-slot skill-locked" title="Coming Soon">
-              <div class="skill-icon">📊</div>
-              <div class="skill-label">Analytics</div>
-              <div class="skill-level">???</div>
-            </div>
-
-            <div class="skill-slot skill-locked" title="Coming Soon">
-              <div class="skill-icon">🌐</div>
-              <div class="skill-label">Networking</div>
-              <div class="skill-level">???</div>
-            </div>
-
-          </div>
-        </div>
-
         <div class="action-buttons">
-          <button id="btn-attack" class="vapor-btn attack-btn" style="width:100%;">⚔️ ATTACK!</button>
+          <button id="btn-attack" class="vapor-btn attack-btn" style="width: 100%;">⚔️ ATTACK!</button>
         </div>
       </div>
 
-      <!-- RIGHT: Inventory -->
       <div class="side-col" id="right-col">
         <div id="inventory-panel">
           <h2 class="shop-title">-- DESK DRAWER --</h2>
-          <p style="text-align:center; font-size:10px; color:#aaa;">Items grant permanent DMG buffs!</p>
+          <p style="text-align:center; font-size: 10px; color:#aaa;">Items grant permanent DMG buffs!</p>
           <div id="inventory-grid"></div>
         </div>
       </div>
-
-    </div>
+    </div> 
   </div>
 
-  <!-- ── RICHARD SIDE EVENT ─────────────────────────────────────────────── -->
   <div id="richard-event-container">
     <div id="richard-dialogue"></div>
     <img id="richard-image" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="">
   </div>
 
-  <!-- ── MIKITA POPUP (Phishing skill tutorial) ─────────────────────────── -->
-  <div id="mikita-overlay" class="instructor-overlay" style="display:none;">
-    <div class="instructor-box">
-      <button class="instructor-close" id="mikita-close">✕</button>
-
-      <div class="instructor-inner">
-        <div class="instructor-char-side">
-          <img id="mikita-char-img" src="assets/chars/mikita_instructor.png" alt="Mikita">
-          <span class="instructor-char-name">Supply-Chain Mgr<br>Mikita</span>
+  <div id="phishing-minigame" style="display: none;">
+    <div class="terminal-window">
+      <h2 class="terminal-header">MAINFRAME TERMINAL v1.0</h2>
+      <div id="phishing-screen">
+        <img id="minigame-hand" src="morris-boss-v3/minigame/click_frame1.png" alt="Hacking...">
+        <div class="phishing-bar-container">
+          <div class="phishing-sweet-spot"></div>
+          <div id="phishing-cursor"></div>
         </div>
-
-        <div class="instructor-text-side">
-          <h2 class="instructor-title">🎣 PHISHING 101</h2>
-          <div class="instructor-dialogue" id="mikita-text">
-            <p>Hey! I'm Mikita — I run supply chain <em>and</em> somehow also IT security training.</p>
-            <p>The <strong>Phishing Minigame</strong> will test your ability to spot corporate phishing emails before they wreck the company.</p>
-            <p>When you play:<br>
-              📧 An email will appear on screen.<br>
-              ✅ Click <strong>LEGIT</strong> if it looks genuine.<br>
-              🚩 Click <strong>PHISH</strong> if something's off.<br>
-              ⏱️ You'll have <strong>8 seconds</strong> per email.
-            </p>
-            <p>Score high enough and you'll earn bonus Vapor Coins.</p>
-            <p>Watch for red flags: weird sender domains, urgent threats, suspicious links.</p>
-          </div>
-          <div class="instructor-coming-soon">
-            <span>📡 MINIGAME COMING SOON</span>
-            <button class="vapor-btn" id="mikita-close-btn" style="font-size:1rem; padding:6px 16px; margin-top:10px;">GOT IT</button>
-          </div>
-        </div>
+        <button id="btn-phish" class="vapor-btn" style="width: 100%; margin-bottom: 10px; background: #004400; border-color: #0f0; color: #0f0;">EXECUTE_HACK.exe</button>
+        <button id="btn-close-terminal" class="vapor-btn" style="width: 100%; background: #440000; border-color: #f00; color: #f00;">DISCONNECT</button>
       </div>
-
-    </div>
-  </div>
-
-  <!-- ── MANNY STRESS TEST OVERLAY ──────────────────────────────────────── -->
-  <div id="stress-test-overlay" style="display:none;">
-    <div class="stress-test-box">
-
-      <div class="stress-header">
-        <img src="assets/chars/manny_frame1.png" id="manny-char-img" class="stress-manny-img" alt="Manny">
-        <div class="stress-header-text">
-          <h2 class="stress-title">⚡ STRESS TEST</h2>
-          <p class="stress-subtitle">Graphic Design Intern Manny needs you to hit quota — NOW.</p>
-        </div>
-      </div>
-
-      <div class="stress-quota-info" id="stress-quota-info">
-        <span>TARGET: <strong id="stress-quota-num">50</strong> clicks in <strong id="stress-time-display">15</strong>s</span>
-      </div>
-
-      <div class="stress-clicker-area" id="stress-clicker-area">
-        <img id="stress-hand-img" src="assets/minigame/click_frame1.png" class="stress-hand-anim" alt="">
-        <button id="stress-click-btn" class="stress-click-btn">CLICK!</button>
-      </div>
-
-      <div class="stress-progress-row">
-        <div class="stress-progress-bar-wrap">
-          <div id="stress-progress-fill" class="stress-progress-fill" style="width:0%"></div>
-        </div>
-        <span id="stress-click-count" class="stress-count-display">0 / <span id="stress-quota-label">50</span></span>
-      </div>
-
-      <div id="stress-result" class="stress-result" style="display:none;"></div>
-
-      <button id="stress-close-btn" class="vapor-btn" style="display:none; margin-top:14px; font-size:1.1rem;">DISMISS</button>
-
+      <p id="phishing-status">Awaiting input...</p>
     </div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script src="https://www.youtube.com/iframe_api"></script>
-  <script src="script.js?v=50"></script>
+  <script src="script.js?v=31"></script>
 </body>
 </html>
