@@ -19,7 +19,7 @@ try {
     bossRef = db.ref('frank_corporate_data');
     employeesRef = db.ref('active_employees');
   }
-} catch(e) { console.warn('Firebase failed to load:', e); }
+} catch(e) { console.warn('Firebase connection failed:', e); }
 
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
@@ -36,7 +36,7 @@ const clickSfxFiles = [
 ];
 
 const attackSounds = clickSfxFiles.map(file => {
-  const audio = new Audio(file);
+  const audio = new Audio(encodeURI(file));
   audio.volume = 0.3;
   return audio;
 });
@@ -57,9 +57,13 @@ const skipIntroBtn   = document.getElementById('skip-intro-btn');
 let ytPlayer;
 
 function initSystem() {
+  // Use background.png from root
   document.body.style.backgroundImage = "url('background.png')";
+  
   const bossImg = document.getElementById('boss-image');
   const compImg = document.getElementById('companion-image');
+  
+  // Hard-coding initial images to ensure they appear
   if (bossImg) bossImg.src = 'assets/phases/dave/dave_phase1.png';
   if (compImg) compImg.src = 'assets/chars/larry_frame1.png';
 }
@@ -75,6 +79,7 @@ const endIntro = () => {
   }
 };
 
+// YouTube player setup
 function onPlayerReady(event) {
   if (!startIntroBtn) return;
   startIntroBtn.style.display = 'block';
@@ -122,11 +127,6 @@ let currentCompanion = companions.larry;
 let frameIndex = 0;
 
 /* ══ DOM REFERENCES ═════════════════════════════════════════════════════════ */
-const bossImg = document.getElementById('boss-image');
-const bossHitLayer = document.getElementById('boss-hit-layer');
-const companionImg = document.getElementById('companion-image');
-const mainBossNameEl = document.getElementById('main-boss-name');
-const companionNameEl = document.getElementById('companion-name');
 const richardContainer = document.getElementById('richard-event-container');
 const richardImage = document.getElementById('richard-image');
 const richardDialogue = document.getElementById('richard-dialogue');
@@ -134,6 +134,11 @@ const hpFill = document.getElementById('health-bar-fill');
 const hpText = document.getElementById('health-text');
 const corpQuotes = ["SYNERGY!", "LET'S CIRCLE BACK!", "BANDWIDTH!", "RETURN TO OFFICE!", "PIVOT!", "ACTION ITEMS!"];
 const richardImages = ['assets/richard/boss-pointing.png', 'assets/richard/boss-crossing.png'];
+const bossImg = document.getElementById('boss-image');
+const bossHitLayer = document.getElementById('boss-hit-layer');
+const companionImg = document.getElementById('companion-image');
+const mainBossNameEl = document.getElementById('main-boss-name');
+const companionNameEl = document.getElementById('companion-name');
 
 /* ══ IDLE RUMBLE LOOP ═══════════════════════════════════════════════════════ */
 setInterval(() => {
@@ -183,25 +188,25 @@ if (bossRef) {
   });
 }
 
-/* ══ SAVE/LOAD & AUDIO START ════════════════════════════════════════════════ */
+/* ══ SAVE/LOAD & CLOCK IN ════════════════════════════════════════════════════ */
 function save() {
   if (!isOBS) localStorage.setItem('gwm_v11', JSON.stringify({ c:myCoins, cd:myClickDmg, ad:myAutoDmg, cc:clickCost, ac:autoCost, u:myUser, inv:myInventory, shopMultiplier, synergyCost, frenzyGainBonus, rageCost, coinsPerClick, hustleCost }));
 }
+
 function load() {
   const s = localStorage.getItem('gwm_v11');
   if (s) {
     const d = JSON.parse(s);
     myCoins = d.c; myClickDmg = d.cd; myAutoDmg = d.ad;
     myUser = d.u; myInventory = d.inv || {};
+    // Forced login screen: do NOT display game container automatically
     if (myUser && !isOBS) {
       document.getElementById('username-input').value = myUser;
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('game-container').style.display = 'block';
-      startRichardLoop(); startAutoTimer(); scheduleMannyStressTest();
     }
     updateUI();
   }
 }
+
 function clockIn(u) { 
   if (employeesRef) { 
     const r = employeesRef.push(); 
@@ -210,6 +215,7 @@ function clockIn(u) {
   }
   bgm.play().catch(e => {});
 }
+
 document.getElementById('btn-clock-in').onclick = () => {
   const val = document.getElementById('username-input').value.trim().toUpperCase();
   if (val) {
@@ -220,6 +226,22 @@ document.getElementById('btn-clock-in').onclick = () => {
     startRichardLoop(); startAutoTimer(); scheduleMannyStressTest();
   }
 };
+
+/* ══ POPUPS ═════════════════════════════════════════════════════════════════ */
+function createDynamicPopup(text, className, x, y) {
+  const p = document.createElement('div');
+  p.className = className; p.innerText = text;
+  const tx = (Math.random() - 0.5) * 600;
+  const ty = -Math.random() * 300 - 200;
+  const rot = (Math.random() - 0.5) * 60;
+  p.style.setProperty('--tx', `${tx}px`);
+  p.style.setProperty('--ty', `${ty}px`);
+  p.style.setProperty('--rot', `${rot}deg`);
+  p.style.left = x + 'px'; p.style.top = y + 'px';
+  document.body.appendChild(p);
+  const isLoot = className.includes('loot-popup');
+  setTimeout(() => p.remove(), isLoot ? 3500 : 1200); 
+}
 
 /* ══ ATTACK ══════════════════════════════════════════════════════════════════ */
 function attack(e) {
@@ -249,7 +271,7 @@ function updateUI() {
 document.getElementById('btn-attack').onpointerdown = attack;
 document.getElementById('boss-area').onpointerdown = attack;
 
-/* ══ RICHARD SIDE EVENT (WITH QUOTES) ════════════════════════════════════════ */
+/* ══ RICHARD SIDE EVENT ══════════════════════════════════════════════════════ */
 const richardQuotes = ["Livin' the dream!", "Another day, another dollar.", "Working hard or hardly working?", "Can someone check the back room?", "Corporate is visiting, look busy."];
 function startRichardLoop() { setTimeout(() => { triggerRichardEvent(); startRichardLoop(); }, 60000); }
 function triggerRichardEvent() {
@@ -263,4 +285,4 @@ function triggerRichardEvent() {
 /* ══ MINIGAME TRIGGERS ══════════════════════════════════════════════════════ */
 function startAutoTimer() { if (autoTimer) clearInterval(autoTimer); autoTimer = setInterval(() => { if (myAutoDmg > 0 && bossRef) bossRef.transaction(b => { if (b) b.health -= myAutoDmg; return b; }); }, 1000); }
 function scheduleMannyStressTest() { setTimeout(() => { document.getElementById('stress-test-overlay').style.display='flex'; }, 300000); }
-function triggerVictoryScreen(lvl) { /* Victory logic */ }
+function triggerVictoryScreen(lvl) { /* Promo logic */ }
