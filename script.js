@@ -11,16 +11,130 @@ const firebaseConfig = {
   appId: "1:184892788723:web:93959fe24c883a27088c86"
 };
 
-if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
-const db = firebase.database();
-const bossRef = db.ref('frank_corporate_data');
-const employeesRef = db.ref('active_employees');
+let db, bossRef, employeesRef;
+try {
+  if (typeof firebase !== 'undefined' && !firebase.apps.length) { 
+    firebase.initializeApp(firebaseConfig); 
+    db = firebase.database();
+    bossRef = db.ref('frank_corporate_data');
+    employeesRef = db.ref('active_employees');
+  }
+} catch(e) {
+  console.warn('Firebase failed to load; running offline:', e);
+}
+
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
+
+/* ══ IMAGE FALLBACKS — use only images that exist in the project as filler ═══ */
+// All images in the repo (from RAR / assets); used for any missing animation/asset
+const FILLER_IMAGES = [
+  'assets/backgrounds/background-server-room.png',
+  'assets/phases/dave/dave_phase1.png',
+  'assets/phases/dave/dave_phase2.png',
+  'assets/phases/dave/dave_phase3.png',
+  'assets/phases/dave/dave_phase4.png',
+  'assets/phases/rich/rich_phase1.png',
+  'assets/phases/rich/rich_phase2.png',
+  'assets/phases/rich/rich_phase3.png',
+  'assets/phases/rich/rich_phase4.png',
+  'assets/phases/rich/rich_hit_a.png',
+  'assets/phases/rich/rich_hit_b.png',
+  'assets/hit/dave-hit-1.png',
+  'assets/hit/dave-hit-2.png',
+  'assets/chars/manny_frame1.png',
+  'assets/chars/manny_frame2.png',
+  'assets/chars/manny_frame3.png',
+  'assets/chars/manny_frame4.png',
+  'assets/chars/manny_frame5.png',
+  'assets/chars/manny_frame6.png',
+  'assets/chars/mikita_instructor.png',
+  'assets/chars/mikita_terminal.png',
+  'assets/chars/mikita_idle.png',
+  'assets/chars/larry_frame1.png',
+  'assets/chars/larry_frame2.png',
+  'assets/chars/larry_frame3.png',
+  'assets/chars/larry_frame4.png',
+  'assets/chars/larry_frame5.png',
+  'assets/chars/larry_frame6.png',
+  'assets/minigame/click_frame1.png',
+  'assets/minigame/click_frame2.png',
+  'assets/minigame/click_frame3.png',
+  'assets/richard/boss-pointing.png',
+  'assets/richard/boss-crossing.png'
+];
+let fillerIndex = 0;
+function getNextFiller() {
+  const src = FILLER_IMAGES[fillerIndex % FILLER_IMAGES.length];
+  fillerIndex++;
+  return src;
+}
+function resolveUrl(path) {
+  if (typeof path !== 'string') return path;
+  
+  // Get the directory of the current HTML file
+  let base;
+  if (location.protocol === 'file:') {
+    // For file:// protocol, build the absolute path
+    const href = location.href;
+    // Remove the filename (everything after the last /)
+    base = href.substring(0, href.lastIndexOf('/') + 1);
+  } else {
+    // For http/https, use pathname
+    base = (location.pathname || location.href).replace(/\/[^/]*$/, '/');
+  }
+  
+  // Remove leading slash from path if present
+  const cleanPath = path.replace(/^\//, '');
+  const result = base + cleanPath;
+  return result;
+}
+function useFiller(img) {
+  if (!img || img.dataset.fillerUsed) return;
+  img.dataset.fillerUsed = '1';
+  img.src = resolveUrl(getNextFiller());
+}
+function initImageFallbacks() {
+  var els = document.querySelectorAll(
+    '#boss-image, #rich-image, #boss-hit-layer, #rich-hit-layer, #mikita-char-img, #manny-char-img, #stress-hand-img, #richard-image'
+  );
+  els.forEach(function(el) {
+    el.addEventListener('error', function() { useFiller(this); });
+  });
+
+  // Boss and Rich: load via JS so path is resolved from HTML location; timeout fallback if load fails (e.g. file://)
+  function loadWithFallback(img, src) {
+    if (!img || img.dataset.fillerUsed) return;
+    var url = src || img.getAttribute('data-src');
+    if (!url) return;
+    img.src = resolveUrl(url);
+    // Longer timeout for file:// protocol
+    var timeout = location.protocol === 'file:' ? 2000 : 1000;
+    setTimeout(function() {
+      if (img.dataset.fillerUsed) return;
+      if (!img.complete || img.naturalWidth === 0) {
+        console.warn('Image failed to load:', url, '- using fallback');
+        useFiller(img);
+      }
+    }, timeout);
+  }
+  var bossImg = document.getElementById('boss-image');
+  var richImg = document.getElementById('rich-image');
+  if (bossImg) loadWithFallback(bossImg, 'assets/phases/dave/dave_phase1.png');
+  if (richImg) loadWithFallback(richImg, 'assets/phases/rich/rich_phase1.png');
+
+  var bg = new Image();
+  bg.onerror = function() {
+    document.body.style.backgroundImage = "url('" + resolveUrl('assets/backgrounds/background-server-room.png') + "')";
+  };
+  bg.src = resolveUrl('assets/backgrounds/background-server-room.png');
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initImageFallbacks);
+else initImageFallbacks();
 
 /* ══ PRELOADS ═══════════════════════════════════════════════════════════════ */
 // VP Dave hit layers (dramatic face-punch close-ups) — sprite_001, sprite_002
 const daveHitImages = ['assets/hit/dave-hit-1.png', 'assets/hit/dave-hit-2.png'];
-daveHitImages.forEach(s => { const i = new Image(); i.src = s; });
+daveHitImages.forEach(s => { const i = new Image(); i.src = resolveUrl(s); });
 
 // VP Dave phase images — sprite_003 (combat), sprite_004 (demonic), sprite_015 (casual)
 const davePhaseImgs = [
@@ -29,7 +143,7 @@ const davePhaseImgs = [
   'assets/phases/dave/dave_phase3.png',
   'assets/phases/dave/dave_phase4.png'
 ];
-davePhaseImgs.forEach(s => { const i = new Image(); i.src = s; });
+davePhaseImgs.forEach(s => { const i = new Image(); i.src = resolveUrl(s); });
 
 // Rich phase images — sprite_011, sprites 005–009
 const richPhaseImgs = [
@@ -39,17 +153,22 @@ const richPhaseImgs = [
   'assets/phases/rich/rich_phase4.png'
 ];
 const richHitImgs = ['assets/phases/rich/rich_hit_a.png', 'assets/phases/rich/rich_hit_b.png'];
-[...richPhaseImgs, ...richHitImgs].forEach(s => { const i = new Image(); i.src = s; });
+[...richPhaseImgs, ...richHitImgs].forEach(s => { const i = new Image(); i.src = resolveUrl(s); });
 
 // Richard side event — yourbossvar
 const richardImages = ['assets/richard/boss-pointing.png', 'assets/richard/boss-crossing.png'];
-richardImages.forEach(s => { const i = new Image(); i.src = s; });
+richardImages.forEach(s => { const i = new Image(); i.src = resolveUrl(s); });
 
 // Manny STRESS TEST — sprite_012 (Manny), sprite_010 (click minigame hands)
 ['assets/chars/manny_frame1.png','assets/chars/manny_frame2.png','assets/chars/manny_frame3.png',
  'assets/chars/manny_frame4.png','assets/chars/manny_frame5.png','assets/chars/manny_frame6.png',
  'assets/minigame/click_frame1.png','assets/minigame/click_frame2.png','assets/minigame/click_frame3.png']
-  .forEach(s => { const i = new Image(); i.src = s; });
+  .forEach(s => { const i = new Image(); i.src = resolveUrl(s); });
+
+// Larry side character (if used in future) — sprite_013
+['assets/chars/larry_frame1.png','assets/chars/larry_frame2.png','assets/chars/larry_frame3.png',
+ 'assets/chars/larry_frame4.png','assets/chars/larry_frame5.png','assets/chars/larry_frame6.png']
+  .forEach(s => { const i = new Image(); i.src = resolveUrl(s); });
 
 /* ══ INTRO ══════════════════════════════════════════════════════════════════ */
 const introContainer = document.getElementById('intro-container');
@@ -74,6 +193,29 @@ if (introContainer && !isOBS) {
   }, 4000);
 }
 
+// YouTube player setup — define callback at top level to avoid race conditions
+function onPlayerReady(event) {
+  if (!startIntroBtn) return;
+  startIntroBtn.style.display = 'block';
+  startIntroBtn.onclick = () => {
+    startIntroBtn.style.display = 'none';
+    if (document.getElementById('yt-player')) document.getElementById('yt-player').style.display = 'block';
+    if (skipIntroBtn) skipIntroBtn.style.display = 'block';
+    event.target.playVideo();
+  };
+}
+
+function onPlayerStateChange(event) { if (event.data === 0) endIntro(); }
+
+window.onYouTubeIframeAPIReady = function () {
+  if (!introContainer || isOBS) return;
+  ytPlayer = new YT.Player('yt-player', {
+    videoId: 'HeKNgnDyD7I',
+    playerVars: { playsinline:1, controls:0, disablekb:1, fs:0, modestbranding:1, rel:0 },
+    events: { onReady: onPlayerReady, onStateChange: onPlayerStateChange }
+  });
+};
+
 if (isOBS) {
   if (introContainer) introContainer.style.display = 'none';
   document.getElementById('login-screen').style.display = 'none';
@@ -84,27 +226,9 @@ if (isOBS) {
   document.getElementById('richard-event-container').style.display = 'none';
   if (document.getElementById('rich-wrapper')) document.getElementById('rich-wrapper').style.display = 'none';
   if (document.getElementById('skill-panel')) document.getElementById('skill-panel').style.display = 'none';
-} else {
-  window.onYouTubeIframeAPIReady = function () {
-    if (!introContainer) return;
-    ytPlayer = new YT.Player('yt-player', {
-      videoId: 'HeKNgnDyD7I',
-      playerVars: { playsinline:1, controls:0, disablekb:1, fs:0, modestbranding:1, rel:0 },
-      events: { onReady: onPlayerReady, onStateChange: onPlayerStateChange }
-    });
-  };
-  function onPlayerReady(event) {
-    startIntroBtn.style.display = 'block';
-    startIntroBtn.onclick = () => {
-      startIntroBtn.style.display = 'none';
-      document.getElementById('yt-player').style.display = 'block';
-      skipIntroBtn.style.display = 'block';
-      event.target.playVideo();
-    };
-  }
-  function onPlayerStateChange(event) { if (event.data === 0) endIntro(); }
-  if (skipIntroBtn) skipIntroBtn.onclick = endIntro;
 }
+
+if (skipIntroBtn) skipIntroBtn.onclick = endIntro;
 
 /* ══ GAME STATE ═════════════════════════════════════════════════════════════ */
 let myCoins = 0, myClickDmg = 2500, myAutoDmg = 0, clickCost = 10, autoCost = 50, myUser = '';
@@ -180,7 +304,13 @@ function load() {
   }
 }
 
-function clockIn(u) { const r = employeesRef.push(); r.set({ name:u, e:'💼' }); r.onDisconnect().remove(); }
+function clockIn(u) { 
+  if (employeesRef) { 
+    const r = employeesRef.push(); 
+    r.set({ name:u, e:'💼' }); 
+    r.onDisconnect().remove(); 
+  }
+}
 
 document.getElementById('btn-clock-in').onclick = () => {
   const val = document.getElementById('username-input').value.trim().toUpperCase();
@@ -194,9 +324,10 @@ document.getElementById('btn-clock-in').onclick = () => {
 };
 
 /* ══ BOSS FIREBASE LISTENER ════════════════════════════════════════════════ */
-bossRef.on('value', snap => {
-  let b = snap.val();
-  if (!b) { b = { health:1000000000, level:1 }; bossRef.set(b); }
+if (bossRef) {
+  bossRef.on('value', snap => {
+    let b = snap.val();
+    if (!b) { b = { health:1000000000, level:1 }; bossRef.set(b); }
 
   if (lastLevel === 0) {
     lastLevel = b.level;
@@ -243,7 +374,18 @@ bossRef.on('value', snap => {
   hpFill.style.width = (hpPercent * 100) + '%';
   hpText.innerText = curHP.toLocaleString() + ' / ' + maxHP.toLocaleString();
   document.getElementById('boss-name').innerText = newTitle;
-});
+  });
+} else {
+  // Firebase not available; set default values
+  curHP = 1000000000;
+  maxHP = 1000000000;
+  lastHP = 1000000000;
+  currentPhase = 1;
+  baseDaveImg = davePhaseImgs[0];
+  if (hpFill) hpFill.style.width = '100%';
+  if (hpText) hpText.innerText = '1,000,000,000 / 1,000,000,000';
+  if (document.getElementById('boss-name')) document.getElementById('boss-name').innerText = 'VP Dave & District Manager Rich · Lv.1';
+}
 
 /* ══ VICTORY SCREEN ═════════════════════════════════════════════════════════ */
 function triggerVictoryScreen(newLevel) {
@@ -457,13 +599,23 @@ function attack(e) {
   const isCrit = (Math.random() * 100) < critChance;
   const dmg = Math.floor(myClickDmg * multi * defMulti * itemBuffMultiplier * shopMultiplier * (isCrit ? 10 : 1));
 
-  bossRef.transaction(b => {
-    if (b) {
-      b.health -= dmg;
-      if (b.health <= 0) { b.level++; b.health = 1000000000 * b.level; }
+  if (bossRef) {
+    bossRef.transaction(b => {
+      if (b) {
+        b.health -= dmg;
+        if (b.health <= 0) { b.level++; b.health = 1000000000 * b.level; }
+      }
+      return b;
+    });
+  } else {
+    // Offline mode: just decrement health locally
+    curHP -= dmg;
+    if (curHP <= 0) {
+      currentPhase++;
+      if (currentPhase > 4) currentPhase = 4;
+      curHP = maxHP;
     }
-    return b;
-  });
+  }
 
   myCoins += (coinsPerClick * multi);
   frenzy = Math.min(100, frenzy + 8 + frenzyGainBonus);
@@ -537,7 +689,7 @@ document.getElementById('buy-hustle').onclick = () => {
 function startAutoTimer() {
   if (autoTimer) clearInterval(autoTimer);
   autoTimer = setInterval(() => {
-    if (myAutoDmg > 0) {
+    if (myAutoDmg > 0 && bossRef) {
       const dmg = Math.floor(myAutoDmg * defMulti * itemBuffMultiplier * shopMultiplier);
       bossRef.transaction(b => { if (b) b.health -= dmg; return b; });
       if (bossImg && !isOBS) {
@@ -579,7 +731,7 @@ function startRichardLoop() {
 
 function triggerRichardEvent() {
   if (!richardContainer || !richardImage || !richardDialogue) return;
-  richardImage.src = richardImages[Math.floor(Math.random() * richardImages.length)];
+  richardImage.src = resolveUrl(richardImages[Math.floor(Math.random() * richardImages.length)]);
   richardDialogue.innerText = richardQuotes[Math.floor(Math.random() * richardQuotes.length)];
   const fromLeft = window.innerWidth < 950 ? Math.random() < 0.5 : true;
   richardImage.className = ''; richardDialogue.className = '';
