@@ -50,29 +50,34 @@ function playClickSound() {
   } catch(e) {}
 }
 
-/* ══ LAYOUT & SIZING ENGINE (FORCING CENTERING) ═══ */
+/* ══ COMPACT LAYOUT ENGINE (MOBILE VS DESKTOP) ═══ */
 function applyBossLayout() {
   const bossArea = document.getElementById('boss-area');
   const bossImgEl = document.getElementById('boss-image');
   const compImgEl = document.getElementById('companion-image');
+  const isMobile = window.innerWidth <= 768;
 
   if (bossArea) {
     bossArea.style.display = 'flex';
     bossArea.style.justifyContent = 'center';
     bossArea.style.alignItems = 'flex-end';
-    bossArea.style.gap = '40px'; // Space between characters
-    bossArea.style.minHeight = '500px';
+    bossArea.style.gap = isMobile ? '10px' : '40px';
+    bossArea.style.minHeight = isMobile ? '250px' : '450px';
+    bossArea.style.zIndex = "1"; // Ensure UI panels sit above if needed
   }
 
-  // FORCING MASSIVE SCALE: 450px width for both
+  // Responsive Sprite Scaling
   [bossImgEl, compImgEl].forEach(el => {
     if (el) {
-      el.style.width = '450px';
+      // Dave/Larry are 450px on desktop, but scaled down for mobile to avoid overlap
+      el.style.width = isMobile ? '180px' : '400px'; 
       el.style.height = 'auto';
       el.style.objectFit = 'contain';
     }
   });
 }
+
+window.addEventListener('resize', applyBossLayout);
 
 function initSystem() {
   document.body.style.backgroundImage = "url('background.png')";
@@ -132,8 +137,6 @@ const companions = {
 };
 let currentCompanion = companions.larry;
 let frameIndex = 0;
-
-// Dave Hit Animation Paths
 const daveHitFrames = ['assets/hit/dave-hit-1.png', 'assets/hit/dave-hit-2.png'];
 
 /* ══ LOOPS (CHARGE METER & RUMBLE) ══════════════════════════════════════════ */
@@ -141,8 +144,8 @@ setInterval(() => {
   frenzy = Math.max(0, frenzy - 2);
   multi = frenzy >= 100 ? 5 : frenzy >= 75 ? 3 : frenzy >= 50 ? 2 : 1;
   const fill = document.getElementById('frenzy-bar-fill');
-  if (fill) fill.style.width = frenzy + '%';
   const txt = document.getElementById('frenzy-text');
+  if (fill) fill.style.width = frenzy + '%';
   if (txt) txt.innerText = multi > 1 ? `COMBO ${multi}x` : 'CHARGE METER';
 }, 100);
 
@@ -188,50 +191,33 @@ if (bossRef) {
     if (bossImg && !isAnimatingHit) bossImg.src = baseDaveImg;
     document.getElementById('health-bar-fill').style.width = (hpPercent * 100) + '%';
     document.getElementById('health-text').innerText = b.health.toLocaleString() + ' / ' + (1000000000 * b.level).toLocaleString();
-    applyBossLayout(); // Ensure size remains constant after phase changes
+    applyBossLayout();
   });
 }
 
-/* ══ ATTACK & HIT ANIMATIONS ═════════════════════════════════════════════════ */
+/* ══ ATTACK ══════════════════════════════════════════════════════════════════ */
 function playHitAnimation(x, y) {
   if (isAnimatingHit) return;
   isAnimatingHit = true;
-
   const bossArea = document.getElementById('boss-area');
-  if (bossArea) {
-    bossArea.style.filter = 'drop-shadow(0 0 30px rgba(255, 0, 0, 0.4))';
-    setTimeout(() => bossArea.style.filter = 'none', 300);
-  }
-
-  // Dave Specific Hit Frames
+  if (bossArea) { bossArea.style.filter = 'drop-shadow(0 0 30px rgba(255, 0, 0, 0.4))'; setTimeout(() => bossArea.style.filter = 'none', 300); }
   if (bossImg) {
     const originalSrc = bossImg.src;
-    const hitFrame = daveHitFrames[Math.floor(Math.random() * daveHitFrames.length)];
-    bossImg.src = hitFrame;
+    bossImg.src = daveHitFrames[Math.floor(Math.random() * daveHitFrames.length)];
     bossImg.classList.add('quick-zoom');
     setTimeout(() => { bossImg.src = originalSrc; bossImg.classList.remove('quick-zoom'); }, 250);
   }
-
-  // Larry Sequential React
-  setTimeout(() => {
-    if (companionImg) {
-      companionImg.classList.add('quick-zoom');
-      setTimeout(() => { companionImg.classList.remove('quick-zoom'); isAnimatingHit = false; }, 250);
-    }
-  }, 150);
+  setTimeout(() => { if (companionImg) { companionImg.classList.add('quick-zoom'); setTimeout(() => { companionImg.classList.remove('quick-zoom'); isAnimatingHit = false; }, 250); } }, 150);
 }
 
 function attack(e) {
   if (isOBS) return;
   const x = e.clientX || (e.touches ? e.touches[0].clientX : window.innerWidth / 2);
   const y = e.clientY || (e.touches ? e.touches[0].clientY : window.innerHeight / 2);
-
   playClickSound();
   playHitAnimation(x, y);
-
   const dmg = Math.floor(myClickDmg * multi * itemBuffMultiplier);
   if (bossRef) bossRef.transaction(b => { if (b) { b.health -= dmg; if (b.health <= 0) { b.level++; b.health = 1000000000 * b.level; } } return b; });
-
   myCoins += (1 * multi);
   frenzy = Math.min(100, frenzy + 8);
   updateUI(); save();
@@ -239,95 +225,71 @@ function attack(e) {
   rollForLoot(x, y);
 }
 
-/* ══ PHISHING MINIGAME & SKILLS ══════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════════════
+   PHISHING MINIGAME FIX
+═══════════════════════════════════════════════════════════════════════════ */
+const emailDatabase = [
+  { sender: "IT-Support@corp-extraction.com", body: "Please click to reset your password.", isPhish: true },
+  { sender: "HR@corporate-extraction.com", body: "The new PTO policy is attached.", isPhish: false },
+  { sender: "rich.dm@gmail.com", body: "I need 5 Apple gift cards immediately.", isPhish: true },
+  { sender: "dave.vp@corporate-extraction.com", body: "Meet in the conference room at 2 PM.", isPhish: false },
+  { sender: "Billing@paypal-security-web.net", body: "Your account is locked. Verify here.", isPhish: true }
+];
+let phishActive = false, phishScore = 0, phishEmailsPlayed = 0, phishTimerInt = null;
+
 function startPhishingGame() {
   document.getElementById('mikita-overlay').style.display = 'none';
+  if (phishActive) return;
+  phishActive = true; phishScore = 0; phishEmailsPlayed = 0;
   document.getElementById('phishing-game-overlay').style.display = 'flex';
-  // ... full minigame logic remains active here
+  loadNextEmail();
 }
 
-/* ══ UTILS (POPUPS, LOOT, RICHARD) ══════════════════════════════════════════ */
-const lootTable = [
-  { id:'paperclip', name:'Bent Paperclip', icon:'📎', buff:0.005, rarity:'common' },
-  { id:'mug', name:"World's Okayest Boss Mug", icon:'☕', buff:0.01, rarity:'uncommon' },
-  { id:'gold_blade', name:'The Gold Blade', icon:'🗡️', buff:0.08, rarity:'legendary' }
-];
-
-function createDynamicPopup(text, className, x, y) {
-  const p = document.createElement('div');
-  p.className = className; p.innerText = text;
-  p.style.left = x + 'px'; p.style.top = y + 'px';
-  document.body.appendChild(p);
-  setTimeout(() => p.remove(), className.includes('loot-popup') ? 3500 : 1200); 
+function loadNextEmail() {
+  if (phishEmailsPlayed >= 5) return endPhishingGame(true);
+  const email = emailDatabase[Math.floor(Math.random() * emailDatabase.length)];
+  document.getElementById('phish-sender').innerText = email.sender;
+  document.getElementById('phish-body').innerText = email.body;
+  document.getElementById('phish-score').innerText = phishScore;
+  
+  let timeLeft = 80;
+  clearInterval(phishTimerInt);
+  phishTimerInt = setInterval(() => {
+    timeLeft--;
+    document.getElementById('phish-timer-fill').style.width = (timeLeft / 80 * 100) + '%';
+    if (timeLeft <= 0) handleChoice(null, email.isPhish);
+  }, 100);
 }
 
-function rollForLoot(x, y) {
-  if (Math.random() > 0.15) return;
-  const item = lootTable[Math.floor(Math.random() * lootTable.length)];
-  myInventory[item.id] = (myInventory[item.id] || 0) + 1;
-  calculateLootBuff(); renderInventory(); save();
-  createDynamicPopup(`Loot: ${item.name}!`, 'loot-popup', x, y);
+function handleChoice(chosePhish, isActuallyPhish) {
+  clearInterval(phishTimerInt);
+  if (chosePhish === isActuallyPhish) { phishScore++; phishEmailsPlayed++; loadNextEmail(); }
+  else { endPhishingGame(false); }
 }
 
-function renderInventory() {
-  const grid = document.getElementById('inventory-grid');
-  if (!grid) return;
-  grid.innerHTML = '';
-  for (let id in myInventory) {
-    const item = lootTable.find(i => i.id === id);
-    if (item && myInventory[id] > 0) {
-      const slot = document.createElement('div');
-      slot.className = `inv-item rarity-${item.rarity}`;
-      slot.innerHTML = `${item.icon}<span class="inv-count">${myInventory[id]}</span>`;
-      grid.appendChild(slot);
-    }
-  }
+function endPhishingGame(won) {
+  phishActive = false; clearInterval(phishTimerInt);
+  if (won) { myCoins += 25000 * multi; createDynamicPopup("CLEANUP BONUS!", 'loot-popup', window.innerWidth/2, window.innerHeight/2); }
+  document.getElementById('phishing-game-overlay').style.display = 'none';
+  updateUI(); save();
 }
 
-function calculateLootBuff() {
-  let total = 0;
-  for (let id in myInventory) {
-    const item = lootTable.find(i => i.id === id);
-    if (item) total += item.buff * myInventory[id];
-  }
-  itemBuffMultiplier = 1.0 + total;
-}
-
-/* ══ SAVE / LOAD / UI ═══════════════════════════════════════════════════════ */
+/* ══ UTILS & SAVE/LOAD ══════════════════════════════════════════════════════ */
+const lootTable = [{ id:'paperclip', name:'Bent Paperclip', icon:'📎', buff:0.005, rarity:'common' }, { id:'mug', name:"World's Okayest Boss Mug", icon:'☕', buff:0.01, rarity:'uncommon' }, { id:'stapler', name:'Red Stapler', icon:'🖍️', buff:0.025, rarity:'rare' }, { id:'gold_blade', name:'The Gold Blade', icon:'🗡️', buff:0.08, rarity:'legendary' }];
+function createDynamicPopup(t, c, x, y) { const p = document.createElement('div'); p.className = c; p.innerText = t; p.style.left = x + 'px'; p.style.top = y + 'px'; document.body.appendChild(p); setTimeout(() => p.remove(), 1200); }
+function rollForLoot(x, y) { if (Math.random() > 0.15) return; const i = lootTable[Math.floor(Math.random() * lootTable.length)]; myInventory[i.id] = (myInventory[i.id] || 0) + 1; calculateLootBuff(); renderInventory(); save(); createDynamicPopup(`Loot: ${i.name}!`, 'loot-popup', x, y); }
+function renderInventory() { const g = document.getElementById('inventory-grid'); if (!g) return; g.innerHTML = ''; for (let id in myInventory) { const i = lootTable.find(x => x.id === id); if (i && myInventory[id] > 0) { const s = document.createElement('div'); s.className = `inv-item rarity-${i.rarity}`; s.innerHTML = `${i.icon}<span class="inv-count">${myInventory[id]}</span>`; g.appendChild(s); } } }
+function calculateLootBuff() { let t = 0; for (let id in myInventory) { const i = lootTable.find(x => x.id === id); if (i) t += i.buff * myInventory[id]; } itemBuffMultiplier = 1.0 + t; }
 function save() { if (!isOBS) localStorage.setItem('gwm_v11', JSON.stringify({ c:myCoins, cd:myClickDmg, u:myUser, inv:myInventory })); }
-function load() {
-  const s = localStorage.getItem('gwm_v11');
-  if (s) {
-    const d = JSON.parse(s);
-    myCoins = d.c || 0; myClickDmg = d.cd || 2500; myUser = d.u || ''; myInventory = d.inv || {};
-    if (myUser && !isOBS) document.getElementById('username-input').value = myUser;
-    updateUI(); renderInventory(); calculateLootBuff();
-  }
-}
-function clockIn(u) { 
-  if (employeesRef) { const r = employeesRef.push(); r.set({ name:u, e:'💼' }); r.onDisconnect().remove(); }
-  bgm.play().catch(e => {});
-  startRichardLoop();
-}
-document.getElementById('btn-clock-in').onclick = () => {
-  const val = document.getElementById('username-input').value.trim().toUpperCase();
-  if (val) { myUser = val; document.getElementById('login-screen').style.display = 'none'; document.getElementById('game-container').style.display = 'block'; clockIn(myUser); save(); }
-};
-function updateUI() {
-  document.getElementById('coin-count').innerText = myCoins.toLocaleString();
-  document.getElementById('click-power').innerText = myClickDmg.toLocaleString();
-}
-function startRichardLoop() { setTimeout(() => { triggerRichardEvent(); startRichardLoop(); }, 45000); }
-function triggerRichardEvent() {
-  const container = document.getElementById('richard-event-container');
-  if (!container) return;
-  const img = document.getElementById('richard-image');
-  img.src = 'yourbossvar/boss-pointing.png';
-  container.classList.add('active'); 
-  setTimeout(() => container.classList.remove('active'), 8000);
-}
+function load() { const s = localStorage.getItem('gwm_v11'); if (s) { const d = JSON.parse(s); myCoins = d.c || 0; myClickDmg = d.cd || 2500; myUser = d.u || ''; myInventory = d.inv || {}; if (myUser && !isOBS) document.getElementById('username-input').value = myUser; updateUI(); renderInventory(); calculateLootBuff(); } }
+function clockIn(u) { if (employeesRef) { const r = employeesRef.push(); r.set({ name:u, e:'💼' }); r.onDisconnect().remove(); } bgm.play().catch(e => {}); startRichardLoop(); }
+document.getElementById('btn-clock-in').onclick = () => { const v = document.getElementById('username-input').value.trim().toUpperCase(); if (v) { myUser = v; document.getElementById('login-screen').style.display = 'none'; document.getElementById('game-container').style.display = 'block'; clockIn(myUser); save(); } };
+function updateUI() { document.getElementById('coin-count').innerText = myCoins.toLocaleString(); document.getElementById('click-power').innerText = myClickDmg.toLocaleString(); }
+function startRichardLoop() { setTimeout(() => { const c = document.getElementById('richard-event-container'); if(c){ c.classList.add('active'); setTimeout(() => c.classList.remove('active'), 8000); } startRichardLoop(); }, 45000); }
 
 document.getElementById('btn-attack').onpointerdown = attack;
 document.getElementById('boss-area').onpointerdown = attack;
 document.getElementById('skill-phishing').onclick = () => document.getElementById('mikita-overlay').style.display = 'flex';
 document.getElementById('mikita-start-game-btn').onclick = startPhishingGame;
+document.getElementById('btn-legit').onclick = () => handleChoice(false, false);
+document.getElementById('btn-phish').onclick = () => handleChoice(true, true);
