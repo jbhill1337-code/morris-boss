@@ -248,7 +248,7 @@ const lootTable = [
 
 /* ══ SAVE / LOAD ════════════════════════════════════════════════════════════ */
 function save() {
-  if (!isOBS) localStorage.setItem('gwm_v10', JSON.stringify({
+  if (!isOBS) localStorage.setItem('gwm_v11', JSON.stringify({
     c:myCoins, cd:myClickDmg, ad:myAutoDmg, cc:clickCost, ac:autoCost,
     u:myUser, inv:myInventory, critChance, critCost, autoInterval, overtimeCost,
     shopMultiplier, synergyCost, frenzyGainBonus, rageCost, coinsPerClick, hustleCost
@@ -256,7 +256,7 @@ function save() {
 }
 
 function load() {
-  const s = localStorage.getItem('gwm_v10');
+  const s = localStorage.getItem('gwm_v11');
   if (s) {
     const d = JSON.parse(s);
     myCoins = d.c; myClickDmg = d.cd; myAutoDmg = d.ad;
