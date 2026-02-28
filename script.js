@@ -17,17 +17,18 @@ const bossRef = db.ref('frank_corporate_data');
 const employeesRef = db.ref('active_employees');
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
-/* ══ PRELOADS ═══════════════════════════════════════════════════════════════ */
-// VP Dave hit layers (dramatic face-punch close-ups) — sprite_001, sprite_002
-const daveHitImages = ['assets/hit/dave-hit-1.png', 'assets/hit/dave-hit-2.png'];
-daveHitImages.forEach(s => { const i = new Image(); i.src = s; });
+// --- UPDATED IMAGE PRELOADERS FOR DAVE & MINIGAME ---
+const preloadHit1 = new Image(); preloadHit1.src = 'morris-boss-v3/dave-hit-2.png';
+// Reusing dave-hit-2 for both frames unless you drop a dave-hit-3 in the folder!
+const hitImages = ['morris-boss-v3/dave-hit-2.png', 'morris-boss-v3/dave-hit-2.png']; 
 
-// VP Dave phase images — sprite_003 (combat), sprite_004 (demonic), sprite_015 (casual)
-const davePhaseImgs = [
-  'assets/phases/dave/dave_phase1.png',
-  'assets/phases/dave/dave_phase2.png',
-  'assets/phases/dave/dave_phase3.png',
-  'assets/phases/dave/dave_phase4.png'
+const miniFrame1 = new Image(); miniFrame1.src = 'morris-boss-v3/minigame/click_frame1.png';
+const miniFrame2 = new Image(); miniFrame2.src = 'morris-boss-v3/minigame/click_frame2.png';
+const miniFrame3 = new Image(); miniFrame3.src = 'morris-boss-v3/minigame/click_frame3.png';
+
+const preloadRichard1 = new Image(); preloadRichard1.src = 'yourbossvar/boss-pointing.png';
+const preloadRichard2 = new Image(); preloadRichard2.src = 'yourbossvar/boss-crossing.png';
+const richardImages = ['yourbossvar/boss-pointing.png', 'yourbossvar/boss-crossing.png'];
 ];
 davePhaseImgs.forEach(s => { const i = new Image(); i.src = s; });
 
