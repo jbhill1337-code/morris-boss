@@ -19,7 +19,7 @@ try {
     bossRef = db.ref('frank_corporate_data');
     employeesRef = db.ref('active_employees');
   }
-} catch(e) { console.warn('Firebase offline:', e); }
+} catch(e) { console.warn('Firebase connection failed:', e); }
 
 const isOBS = new URLSearchParams(window.location.search).get('obs') === 'true';
 
@@ -50,36 +50,52 @@ function playClickSound() {
   } catch(e) {}
 }
 
-/* ══ COMPACT LAYOUT ENGINE (MOBILE VS DESKTOP) ═══ */
-function applyBossLayout() {
-  const bossArea = document.getElementById('boss-area');
-  const bossImgEl = document.getElementById('boss-image');
-  const compImgEl = document.getElementById('companion-image');
-  const isMobile = window.innerWidth <= 768;
-
-  if (bossArea) {
-    bossArea.style.display = 'flex';
-    bossArea.style.justifyContent = 'center';
-    bossArea.style.alignItems = 'flex-end';
-    bossArea.style.gap = isMobile ? '10px' : '40px';
-    bossArea.style.minHeight = isMobile ? '250px' : '450px';
-    bossArea.style.zIndex = "1"; // Ensure UI panels sit above if needed
-  }
-
-  // Responsive Sprite Scaling
-  [bossImgEl, compImgEl].forEach(el => {
-    if (el) {
-      // Dave/Larry are 450px on desktop, but scaled down for mobile to avoid overlap
-      el.style.width = isMobile ? '180px' : '400px'; 
-      el.style.height = 'auto';
-      el.style.objectFit = 'contain';
+/* ══ COMPACT LAYOUT ENGINE (CSS-IN-JS) ═════════════════════════════════════ */
+function injectCompactStyles() {
+  const style = document.createElement('style');
+  style.innerHTML = `
+    #game-container { max-width: 1200px; margin: 0 auto; display: flex; gap: 15px; padding: 10px; }
+    #boss-area { 
+      display: flex; justify-content: center; align-items: flex-end; 
+      min-height: 400px; gap: 20px; transition: all 0.3s ease;
     }
-  });
+    #boss-image, #companion-image { 
+      height: auto; 
+      image-rendering: pixelated; /* Keeps Dave sharp when scaled up */
+      max-width: 100%;
+    }
+    /* Desktop Scaling */
+    @media (min-width: 769px) {
+      #boss-image, #companion-image { width: 380px; }
+      #left-col, #right-col { width: 280px; flex-shrink: 0; }
+    }
+    /* Mobile Compact View */
+    @media (max-width: 768px) {
+      #game-container { flex-direction: column; align-items: center; }
+      #boss-area { min-height: 250px; gap: 10px; }
+      #boss-image, #companion-image { width: 160px; }
+      .column { width: 100% !important; max-width: 400px; }
+    }
+  `;
+  document.head.appendChild(style);
 }
 
-window.addEventListener('resize', applyBossLayout);
+function applyBossLayout() {
+  const bossImgEl = document.getElementById('boss-image');
+  const compImgEl = document.getElementById('companion-image');
+  // Ensuring Dave stays as big as Larry via CSS injection
+  if (bossImgEl) bossImgEl.style.display = "block";
+  if (compImgEl) compImgEl.style.display = "block";
+}
+
+/* ══ INTRO & SYSTEM INIT ═══════════════════════════════════════════════════ */
+const introContainer = document.getElementById('intro-container');
+const startIntroBtn  = document.getElementById('start-intro-btn');
+const skipIntroBtn   = document.getElementById('skip-intro-btn');
+let ytPlayer;
 
 function initSystem() {
+  injectCompactStyles();
   document.body.style.backgroundImage = "url('background.png')";
   document.body.style.backgroundColor = "#050510"; 
   applyBossLayout();
@@ -89,12 +105,6 @@ function initSystem() {
   if (bossImgEl) bossImgEl.src = 'phases/dave/dave_phase1.png';
   if (compImgEl) compImgEl.src = 'chars/larry_frame1.png';
 }
-
-/* ══ INTRO CONTROLLER ══════════════════════════════════════════════════════ */
-const introContainer = document.getElementById('intro-container');
-const startIntroBtn  = document.getElementById('start-intro-btn');
-const skipIntroBtn   = document.getElementById('skip-intro-btn');
-let ytPlayer;
 
 const endIntro = () => {
   if (introContainer) {
@@ -126,7 +136,7 @@ window.onYouTubeIframeAPIReady = function () {
 if (skipIntroBtn) skipIntroBtn.onclick = endIntro;
 if (introContainer && !isOBS) setTimeout(() => { if(document.body.contains(introContainer)) endIntro(); }, 12000);
 
-/* ══ GAME STATE ═════════════════════════════════════════════════════════════ */
+/* ══ GAME STATE & LOOPS ═════════════════════════════════════════════════════ */
 let myCoins = 0, myClickDmg = 2500, frenzy = 0, multi = 1, itemBuffMultiplier = 1.0, myUser = '';
 let myInventory = {};
 let currentPhase = 0, baseDaveImg = 'phases/dave/dave_phase1.png', lastLevel = 0, isAnimatingHit = false;
@@ -139,7 +149,6 @@ let currentCompanion = companions.larry;
 let frameIndex = 0;
 const daveHitFrames = ['assets/hit/dave-hit-1.png', 'assets/hit/dave-hit-2.png'];
 
-/* ══ LOOPS (CHARGE METER & RUMBLE) ══════════════════════════════════════════ */
 setInterval(() => {
   frenzy = Math.max(0, frenzy - 2);
   multi = frenzy >= 100 ? 5 : frenzy >= 75 ? 3 : frenzy >= 50 ? 2 : 1;
@@ -152,12 +161,8 @@ setInterval(() => {
 setInterval(() => {
   const compImg = document.getElementById('companion-image');
   if (compImg && !isAnimatingHit) {
-    let rumbleInt = setInterval(() => {
-      if (isAnimatingHit) { clearInterval(rumbleInt); return; }
-      frameIndex = (frameIndex + 1) % currentCompanion.length;
-      compImg.src = currentCompanion[frameIndex];
-    }, 120);
-    setTimeout(() => clearInterval(rumbleInt), 360);
+    frameIndex = (frameIndex + 1) % currentCompanion.length;
+    compImg.src = currentCompanion[frameIndex];
   }
 }, 2500);
 
@@ -191,33 +196,45 @@ if (bossRef) {
     if (bossImg && !isAnimatingHit) bossImg.src = baseDaveImg;
     document.getElementById('health-bar-fill').style.width = (hpPercent * 100) + '%';
     document.getElementById('health-text').innerText = b.health.toLocaleString() + ' / ' + (1000000000 * b.level).toLocaleString();
-    applyBossLayout();
   });
 }
 
-/* ══ ATTACK ══════════════════════════════════════════════════════════════════ */
+/* ══ ATTACK LOGIC ═══════════════════════════════════════════════════════════ */
 function playHitAnimation(x, y) {
   if (isAnimatingHit) return;
   isAnimatingHit = true;
+  const bossImg = document.getElementById('boss-image');
+  const compImg = document.getElementById('companion-image');
   const bossArea = document.getElementById('boss-area');
+
   if (bossArea) { bossArea.style.filter = 'drop-shadow(0 0 30px rgba(255, 0, 0, 0.4))'; setTimeout(() => bossArea.style.filter = 'none', 300); }
+  
   if (bossImg) {
     const originalSrc = bossImg.src;
     bossImg.src = daveHitFrames[Math.floor(Math.random() * daveHitFrames.length)];
     bossImg.classList.add('quick-zoom');
     setTimeout(() => { bossImg.src = originalSrc; bossImg.classList.remove('quick-zoom'); }, 250);
   }
-  setTimeout(() => { if (companionImg) { companionImg.classList.add('quick-zoom'); setTimeout(() => { companionImg.classList.remove('quick-zoom'); isAnimatingHit = false; }, 250); } }, 150);
+  
+  setTimeout(() => {
+    if (compImg) {
+      compImg.classList.add('quick-zoom');
+      setTimeout(() => { compImg.classList.remove('quick-zoom'); isAnimatingHit = false; }, 250);
+    }
+  }, 150);
 }
 
 function attack(e) {
   if (isOBS) return;
   const x = e.clientX || (e.touches ? e.touches[0].clientX : window.innerWidth / 2);
   const y = e.clientY || (e.touches ? e.touches[0].clientY : window.innerHeight / 2);
+
   playClickSound();
   playHitAnimation(x, y);
+
   const dmg = Math.floor(myClickDmg * multi * itemBuffMultiplier);
   if (bossRef) bossRef.transaction(b => { if (b) { b.health -= dmg; if (b.health <= 0) { b.level++; b.health = 1000000000 * b.level; } } return b; });
+
   myCoins += (1 * multi);
   frenzy = Math.min(100, frenzy + 8);
   updateUI(); save();
@@ -226,15 +243,15 @@ function attack(e) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   PHISHING MINIGAME FIX
+   PHISHING MINIGAME (RESTORED DATABASE & LOGIC) ════════════════════════════
 ═══════════════════════════════════════════════════════════════════════════ */
 const emailDatabase = [
-  { sender: "IT-Support@corp-extraction.com", body: "Please click to reset your password.", isPhish: true },
-  { sender: "HR@corporate-extraction.com", body: "The new PTO policy is attached.", isPhish: false },
-  { sender: "rich.dm@gmail.com", body: "I need 5 Apple gift cards immediately.", isPhish: true },
-  { sender: "dave.vp@corporate-extraction.com", body: "Meet in the conference room at 2 PM.", isPhish: false },
-  { sender: "Billing@paypal-security-web.net", body: "Your account is locked. Verify here.", isPhish: true }
+  { sender: "IT-Support@corp-extraction.com", body: "URGENT: Your password expires in 2 hours. Click here to reset.", isPhish: true },
+  { sender: "HR@corporate-extraction.com", body: "Please find the updated PTO policy for Q1 attached.", isPhish: false },
+  { sender: "rich.dm@gmail.com", body: "I am in a meeting. Please buy 5 Apple Gift Cards ($100 each) and send codes.", isPhish: true },
+  { sender: "Mikita.Supply@corporate-extraction.com", body: "The monitor shipment has arrived. Please verify counts.", isPhish: false }
 ];
+
 let phishActive = false, phishScore = 0, phishEmailsPlayed = 0, phishTimerInt = null;
 
 function startPhishingGame() {
